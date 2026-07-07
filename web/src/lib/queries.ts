@@ -1,8 +1,47 @@
-import groq from 'groq'
+import groq, {defineQuery} from 'groq'
 
-export const SITE_SETTINGS_QUERY = groq`*[_type == "siteSettings"][0]{
+export const LOGIN_SCREEN_QUERY = defineQuery(groq`*[
+  _type == "appScreen" &&
+  screenKey.current == "login" &&
+  isActive == true
+][0]{
+  title,
+  "screenKey": screenKey.current,
+  headline,
+  subline,
+  heroImage,
+  primaryCta,
+  sections[]{
+    _key,
+    title,
+    eyebrow,
+    text,
+    layout,
+    visibleFor,
+    sortOrder,
+    image
+  }
+}`)
+
+export const SITE_SETTINGS_QUERY = defineQuery(groq`*[_type == "siteSettings"][0]{
   _id,
   _type,
   title,
-  companyName
-}`
+  companyName,
+  logo
+}`)
+
+export const LOGIN_RIGHT_PATTERN_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive == true &&
+  (
+    category == "login-right-pattern" ||
+    "login-right-pattern" in tags[] ||
+    title == "login-right-pattern"
+  )
+] | order(sortOrder asc)[0]{
+  title,
+  altText,
+  image
+}`)
