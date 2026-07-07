@@ -1,10 +1,12 @@
 import {LoginScreen} from '@/components/auth/LoginScreen'
+import {auth} from '@/lib/auth'
 import {
   LOGIN_RIGHT_PATTERN_QUERY,
   LOGIN_SCREEN_QUERY,
   SITE_SETTINGS_QUERY,
 } from '@/lib/queries'
 import {sanityClient, urlForImage} from '@/lib/sanity'
+import {redirect} from 'next/navigation'
 
 type SanityImage = {
   asset?: {_ref?: string; _id?: string; url?: string} | null
@@ -28,6 +30,12 @@ type LoginScreenDocument = {
   headline?: string | null
   subline?: string | null
   heroImage?: SanityImage
+  heroMedia?: {
+    title?: string | null
+    altText?: string | null
+    mediaType?: string | null
+    image?: SanityImage
+  } | null
   primaryCta?: {
     label?: string | null
     target?: string | null
@@ -47,6 +55,12 @@ type LoginPatternDocument = {
   image?: SanityImage
 } | null
 
+type LoginPageProps = {
+  searchParams?: Promise<{
+    error?: string | string[]
+  }>
+}
+
 export const metadata = {
   title: 'Anmelden | Conversio Energie',
 }
@@ -59,7 +73,7 @@ function buildImageUrl(image: SanityImage | undefined, width: number, height?: n
   }
 
   try {
-    let builder = urlForImage(image).width(width).auto('format').quality(85)
+    let builder = urlForImage(image).width(width).fit('max').auto('format').quality(85)
 
     if (height) {
       builder = builder.height(height).fit('crop')
@@ -89,20 +103,36 @@ async function getLoginContent() {
   }
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({searchParams}: LoginPageProps) {
+  const session = await auth()
+
+  if (session?.user) {
+    redirect('/')
+  }
+
+  const params = searchParams ? await searchParams : undefined
+  const error = Array.isArray(params?.error) ? params.error[0] : params?.error
   const {screen, siteSettings, rightPattern} = await getLoginContent()
+  const rightPatternImage = screen?.heroMedia?.image || rightPattern?.image
+  const rightPatternAlt =
+    screen?.heroMedia?.altText ||
+    screen?.heroMedia?.title ||
+    rightPattern?.altText ||
+    rightPattern?.title ||
+    ''
 
   return (
     <LoginScreen
+      authError={error ? 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.' : undefined}
       headline={screen?.headline}
       subline={screen?.subline}
       ctaLabel={screen?.primaryCta?.label}
       sections={screen?.sections}
-      heroImageUrl={buildImageUrl(screen?.heroImage, 1400, 1000)}
+      heroImageUrl={buildImageUrl(screen?.heroImage, 2200)}
       logoUrl={buildImageUrl(siteSettings?.logo, 260)}
       logoAlt={siteSettings?.companyName || siteSettings?.title || 'Conversio Energie'}
-      rightPatternUrl={buildImageUrl(rightPattern?.image, 900)}
-      rightPatternAlt={rightPattern?.altText || rightPattern?.title || ''}
+      rightPatternUrl={buildImageUrl(rightPatternImage, 1200)}
+      rightPatternAlt={rightPatternAlt}
     />
   )
 }

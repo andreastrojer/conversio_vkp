@@ -1,8 +1,5 @@
-'use client'
-
-import {motion} from 'framer-motion'
+import {signIn} from '@/lib/auth'
 import {ArrowRight} from 'lucide-react'
-import {signIn} from 'next-auth/react'
 import type {CSSProperties} from 'react'
 
 type LoginSection = {
@@ -14,6 +11,7 @@ type LoginSection = {
 } | null
 
 type LoginScreenProps = {
+  authError?: string
   headline?: string | null
   subline?: string | null
   ctaLabel?: string | null
@@ -26,8 +24,6 @@ type LoginScreenProps = {
 }
 
 const fallbackHeadline = 'Der Weg zur intelligenten Energieberatung'
-const fallbackSubline = 'Melden Sie sich mit Ihrem Microsoft-Konto an.'
-const fallbackCtaLabel = 'Mit Microsoft anmelden'
 
 function splitHeadline(headline: string) {
   const marker = 'Energieberatung'
@@ -76,28 +72,21 @@ function MicrosoftMark() {
 }
 
 export function LoginScreen({
+  authError,
   headline,
-  subline,
-  ctaLabel,
   heroImageUrl,
   logoUrl,
   logoAlt = 'Conversio Energie',
   rightPatternUrl,
   rightPatternAlt = '',
-  sections,
 }: LoginScreenProps) {
-  const handleMicrosoftSignIn = () => {
-    void signIn('microsoft-entra-id')
+  async function startMicrosoftSignIn() {
+    'use server'
+    await signIn('microsoft-entra-id', {redirectTo: '/'})
   }
 
   const resolvedHeadline = headline?.trim() || fallbackHeadline
-  const resolvedSubline = subline?.trim() || fallbackSubline
-  const resolvedCtaLabel = ctaLabel?.trim() || fallbackCtaLabel
   const headlineParts = splitHeadline(resolvedHeadline)
-  const visibleSections = (sections || [])
-    .filter((section): section is NonNullable<LoginSection> => Boolean(section?.title || section?.text))
-    .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-    .slice(0, 2)
 
   const heroStyle = heroImageUrl
     ? ({
@@ -127,7 +116,7 @@ export function LoginScreen({
             <span
               aria-label={logoAlt}
               role="img"
-              className="block h-12 w-[240px] max-w-[52vw] bg-contain bg-left bg-no-repeat"
+              className="block h-12 w-[170px] max-w-[52vw] bg-contain bg-left bg-no-repeat"
               style={logoStyle}
             />
           ) : (
@@ -160,55 +149,56 @@ export function LoginScreen({
           <span
             aria-hidden="true"
             title={rightPatternAlt || undefined}
-            className="pointer-events-none absolute bottom-0 right-0 z-0 block h-[76%] w-[82%] bg-contain bg-right-bottom bg-no-repeat opacity-25"
+            className="login-right-pattern pointer-events-none absolute inset-0 z-0 block bg-no-repeat"
             style={patternStyle}
           />
         ) : null}
 
-        <motion.div
-          initial={{opacity: 0, y: 16}}
-          animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.28, ease: 'easeOut'}}
-          className="relative z-10 w-full max-w-[470px] bg-[#fff6d8]/92 p-9 shadow-[0_24px_70px_rgba(36,28,0,0.18)] backdrop-blur-sm sm:p-10 lg:p-11"
+        <form
+          action={startMicrosoftSignIn}
+          className="relative z-10 flex min-h-[292px] w-full max-w-[390px] flex-col bg-[#fff5d8]/92 p-8 shadow-[0_14px_34px_rgba(36,28,0,0.08)] backdrop-blur-sm"
         >
           <div className="flex items-center gap-3 text-[#5f6368]">
             <MicrosoftMark />
-            <span className="text-[27px] font-normal tracking-[-0.02em]">Microsoft</span>
+            <span className="text-[26px] font-normal tracking-[-0.02em]">Microsoft</span>
           </div>
 
-          <div className="mt-14">
-            <h2 className="text-[30px] font-semibold tracking-[0.01em] text-neutral-950">Anmelden</h2>
-            <p className="mt-6 max-w-sm text-base leading-7 text-neutral-700">
-              {resolvedSubline}
-            </p>
-          </div>
-
-          {visibleSections.length > 0 ? (
-            <div className="mt-7 space-y-3 text-sm leading-6 text-neutral-700">
-              {visibleSections.map((section, index) => (
-                <div key={section._key || `${section.title || 'section'}-${index}`}>
-                  {section.eyebrow ? (
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
-                      {section.eyebrow}
-                    </p>
-                  ) : null}
-                  {section.title ? <p className="font-medium text-neutral-900">{section.title}</p> : null}
-                  {section.text ? <p>{section.text}</p> : null}
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="mt-12 flex justify-end">
+          <div className="mt-12">
+            <h2 className="text-2xl font-semibold tracking-[0.01em] text-neutral-950">Anmelden</h2>
             <button
-              type="button"
-              onClick={handleMicrosoftSignIn}
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-[#3f4650] px-7 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#303640] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+              type="submit"
+              aria-label="Microsoft-Anmeldung starten"
+              className="mt-7 block w-full cursor-pointer text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-950/60 focus-visible:ring-offset-4 focus-visible:ring-offset-[#fff5d8] group"
             >
-              {resolvedCtaLabel}
+              <span className="text-[15px] tracking-[0.02em] text-neutral-700 transition-colors group-hover:text-neutral-950">
+                E-Mail, Telefon oder Skype
+              </span>
+              <span className="mt-4 block h-px w-full bg-neutral-700/80 transition-colors group-hover:bg-neutral-950" />
+            </button>
+
+            <p className="mt-5 text-[13px] leading-none text-neutral-600">
+              Klicken Sie auf Weiter, um zur Microsoft-Anmeldung zu wechseln.
+            </p>
+
+            {authError ? (
+              <p
+                role="alert"
+                className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium leading-5 text-red-700"
+              >
+                {authError}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-auto flex justify-end pt-8">
+            <button
+              type="submit"
+              className="inline-flex h-[38px] w-[92px] items-center justify-center rounded-lg bg-[#3d4248] text-sm font-semibold text-white transition-colors hover:bg-[#303640] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+            >
+              Weiter
             </button>
           </div>
-        </motion.div>
+        </form>
       </section>
     </main>
   )
