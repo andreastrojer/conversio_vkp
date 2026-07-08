@@ -47,6 +47,14 @@ type SiteSettingsDocument = {
   title?: string | null
   companyName?: string | null
   logo?: SanityImage
+  logoDark?: SanityImage
+  contact?: {
+    address?: string | null
+  } | null
+  legalLinks?: {
+    label?: string | null
+    url?: string | null
+  }[] | null
 } | null
 
 type LoginPatternDocument = {
@@ -55,31 +63,37 @@ type LoginPatternDocument = {
   image?: SanityImage
 } | null
 
-type LoginPageProps = {
-  searchParams?: Promise<{
-    error?: string | string[]
-  }>
-}
-
 export const metadata = {
   title: 'Anmelden | Conversio Energie',
 }
 
 export const dynamic = 'force-dynamic'
 
-function buildImageUrl(image: SanityImage | undefined, width: number, height?: number) {
+function buildImageUrl(image: SanityImage | undefined, width: number, height?: number, quality = 85) {
   if (!image?.asset) {
     return undefined
   }
 
   try {
-    let builder = urlForImage(image).width(width).fit('max').auto('format').quality(85)
+    let builder = urlForImage(image).width(width).fit('max').auto('format').quality(quality)
 
     if (height) {
       builder = builder.height(height).fit('crop')
     }
 
     return builder.url()
+  } catch {
+    return undefined
+  }
+}
+
+function buildLogoUrl(image: SanityImage | undefined) {
+  if (!image?.asset) {
+    return undefined
+  }
+
+  try {
+    return urlForImage(image).width(1200).fit('max').quality(100).url()
   } catch {
     return undefined
   }
@@ -103,15 +117,13 @@ async function getLoginContent() {
   }
 }
 
-export default async function LoginPage({searchParams}: LoginPageProps) {
+export default async function LoginPage() {
   const session = await auth()
 
   if (session?.user) {
     redirect('/')
   }
 
-  const params = searchParams ? await searchParams : undefined
-  const error = Array.isArray(params?.error) ? params.error[0] : params?.error
   const {screen, siteSettings, rightPattern} = await getLoginContent()
   const rightPatternImage = screen?.heroMedia?.image || rightPattern?.image
   const rightPatternAlt =
@@ -120,19 +132,19 @@ export default async function LoginPage({searchParams}: LoginPageProps) {
     rightPattern?.altText ||
     rightPattern?.title ||
     ''
+  const logoImage = siteSettings?.logo || siteSettings?.logoDark
 
   return (
     <LoginScreen
-      authError={error ? 'Anmeldung fehlgeschlagen. Bitte erneut versuchen.' : undefined}
       headline={screen?.headline}
       subline={screen?.subline}
       ctaLabel={screen?.primaryCta?.label}
-      sections={screen?.sections}
-      heroImageUrl={buildImageUrl(screen?.heroImage, 2200)}
-      logoUrl={buildImageUrl(siteSettings?.logo, 260)}
+      logoUrl={buildLogoUrl(logoImage)}
       logoAlt={siteSettings?.companyName || siteSettings?.title || 'Conversio Energie'}
       rightPatternUrl={buildImageUrl(rightPatternImage, 1200)}
       rightPatternAlt={rightPatternAlt}
+      footerAddress={siteSettings?.contact?.address}
+      legalLinks={siteSettings?.legalLinks}
     />
   )
 }

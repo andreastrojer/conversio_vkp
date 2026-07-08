@@ -34,7 +34,15 @@ export const SITE_SETTINGS_QUERY = defineQuery(groq`*[_type == "siteSettings"][0
   _type,
   title,
   companyName,
-  logo
+  logo,
+  logoDark,
+  contact{
+    address
+  },
+  legalLinks[]{
+    label,
+    url
+  }
 }`)
 
 export const LOGIN_RIGHT_PATTERN_QUERY = defineQuery(groq`*[

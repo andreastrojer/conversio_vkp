@@ -1,5 +1,13 @@
 import type {Metadata} from 'next'
+import {Barlow} from 'next/font/google'
 import './globals.css'
+
+const barlow = Barlow({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-barlow',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Conversio VKP',
@@ -13,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body>{children}</body>
+      <body className={barlow.variable}>{children}</body>
     </html>
   )
 }
