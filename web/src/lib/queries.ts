@@ -34,8 +34,20 @@ export const SITE_SETTINGS_QUERY = defineQuery(groq`*[_type == "siteSettings"][0
   _type,
   title,
   companyName,
-  logo,
-  logoDark,
+  logo{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  },
+  logoDark{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  },
   contact{
     address
   },

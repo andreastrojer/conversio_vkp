@@ -15,7 +15,12 @@ async function getPostLogoutRedirectUri() {
   return new URL('/login', `${protocol}://${host}`).toString()
 }
 
-export function LogoutButton() {
+type LogoutButtonProps = {
+  label?: string
+  className?: string
+}
+
+export function LogoutButton({label = 'Logout', className}: LogoutButtonProps) {
   return (
     <form
       action={async () => {
@@ -30,9 +35,12 @@ export function LogoutButton() {
     >
       <button
         type="submit"
-        className="inline-flex h-9 items-center justify-center rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100"
+        className={
+          className ||
+          'inline-flex h-9 items-center justify-center rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100'
+        }
       >
-        Logout
+        {label}
       </button>
     </form>
   )

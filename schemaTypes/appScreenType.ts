@@ -1,9 +1,9 @@
-import {defineField, defineType} from 'sanity'
+import { defineField, defineType } from 'sanity'
 
 const targetAudienceOptions = [
-  {title: 'Privatkunden', value: 'b2c'},
-  {title: 'Geschäftskunden', value: 'b2b'},
-  {title: 'Beide', value: 'both'},
+  { title: 'Privatkunden', value: 'b2c' },
+  { title: 'Geschäftskunden', value: 'b2b' },
+  { title: 'Beide', value: 'both' },
 ]
 
 export const appScreenType = defineType({
@@ -11,11 +11,11 @@ export const appScreenType = defineType({
   title: 'App Screen',
   type: 'document',
   groups: [
-    {name: 'basis', title: 'Basis', default: true},
-    {name: 'content', title: 'Inhalt'},
-    {name: 'media', title: 'Medien'},
-    {name: 'actions', title: 'Aktionen'},
-    {name: 'settings', title: 'Einstellungen'},
+    { name: 'basis', title: 'Basis', default: true },
+    { name: 'content', title: 'Inhalt' },
+    { name: 'media', title: 'Medien' },
+    { name: 'actions', title: 'Aktionen' },
+    { name: 'settings', title: 'Einstellungen' },
   ],
   fields: [
     defineField({
@@ -32,7 +32,7 @@ export const appScreenType = defineType({
       type: 'slug',
       group: 'basis',
       description: 'Muss mit dem Navigation-Step-Key übereinstimmen, z. B. „customer-selection“.',
-      options: {source: 'title', maxLength: 96},
+      options: { source: 'title', maxLength: 96 },
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -43,17 +43,17 @@ export const appScreenType = defineType({
       description: 'Legt fest, welche technische Screen-Komponente in der Web-App verwendet wird.',
       options: {
         list: [
-          {title: 'Start / Hero', value: 'hero'},
-          {title: 'Normale Inhaltsseite', value: 'content'},
-          {title: 'Kundengruppe auswählen', value: 'customerSelection'},
-          {title: 'Fragebogen / Beratung', value: 'questionnaire'},
-          {title: 'Szenario-Matrix', value: 'scenarioMatrix'},
-          {title: 'Szenario / Empfehlung', value: 'recommendation'},
-          {title: 'Medien & Referenzen', value: 'mediaReferences'},
-          {title: 'Dokumentauswahl', value: 'documentSelection'},
-          {title: 'Kontakt / Lead-Erfassung', value: 'contact'},
-          {title: 'AR / Scan', value: 'ar'},
-          {title: 'Abschluss / Zusammenfassung', value: 'closing'},
+          { title: 'Start / Hero', value: 'hero' },
+          { title: 'Content / Start', value: 'welcome' },
+          { title: 'Kundengruppe auswählen', value: 'customerSelection' },
+          { title: 'Fragebogen / Beratung', value: 'questionnaire' },
+          { title: 'Szenario-Matrix', value: 'scenarioMatrix' },
+          { title: 'Szenario / Empfehlung', value: 'recommendation' },
+          { title: 'Medien & Referenzen', value: 'mediaReferences' },
+          { title: 'Dokumentauswahl', value: 'documentSelection' },
+          { title: 'Kontakt / Lead-Erfassung', value: 'contact' },
+          { title: 'AR / Scan', value: 'ar' },
+          { title: 'Abschluss / Zusammenfassung', value: 'closing' },
         ],
       },
       validation: (Rule) => Rule.required(),
@@ -66,20 +66,21 @@ export const appScreenType = defineType({
       description: 'Beschreibt, wofür der Screen fachlich im Beratungsflow verwendet wird.',
       options: {
         list: [
-          {title: 'Startseite', value: 'start'},
-          {title: 'Intro', value: 'intro'},
-          {title: 'Kundengruppe', value: 'customerGroup'},
-          {title: 'Wer wir sind', value: 'about'},
-          {title: 'Was wir bieten', value: 'offer'},
-          {title: 'Vorteile / Nutzen', value: 'benefits'},
-          {title: 'Ablauf / Prozess', value: 'process'},
-          {title: 'Bedarf erfassen', value: 'needs'},
-          {title: 'Beratungsmatrix', value: 'scenarioMatrix'},
-          {title: 'Empfehlung', value: 'recommendation'},
-          {title: 'Medien & Referenzen', value: 'mediaReferences'},
-          {title: 'Dokumente / Unterlagen', value: 'salesDocuments'},
-          {title: 'Kontakt', value: 'contact'},
-          {title: 'Abschluss', value: 'closing'},
+          { title: 'Startseite', value: 'start' },
+          { title: 'Startseite nach Login', value: 'welcome' },
+          { title: 'Intro', value: 'intro' },
+          { title: 'Kundengruppe', value: 'customerGroup' },
+          { title: 'Wer wir sind', value: 'about' },
+          { title: 'Was wir bieten', value: 'offer' },
+          { title: 'Vorteile / Nutzen', value: 'benefits' },
+          { title: 'Ablauf / Prozess', value: 'process' },
+          { title: 'Bedarf erfassen', value: 'needs' },
+          { title: 'Beratungsmatrix', value: 'scenarioMatrix' },
+          { title: 'Empfehlung', value: 'recommendation' },
+          { title: 'Medien & Referenzen', value: 'mediaReferences' },
+          { title: 'Dokumente / Unterlagen', value: 'salesDocuments' },
+          { title: 'Kontakt', value: 'contact' },
+          { title: 'Abschluss', value: 'closing' },
         ],
       },
       validation: (Rule) => Rule.required(),
@@ -90,7 +91,7 @@ export const appScreenType = defineType({
       type: 'string',
       group: 'basis',
       description: 'Legt fest, ob der Screen für Privatkunden, Geschäftskunden oder beide gedacht ist.',
-      options: {list: targetAudienceOptions, layout: 'radio'},
+      options: { list: targetAudienceOptions, layout: 'radio' },
       initialValue: 'both',
       validation: (Rule) => Rule.required(),
     }),
@@ -114,14 +115,14 @@ export const appScreenType = defineType({
       title: 'Hero-Bild',
       type: 'image',
       group: 'media',
-      options: {hotspot: true},
+      options: { hotspot: true },
     }),
     defineField({
       name: 'heroMedia',
       title: 'Hero-Medium / Video optional',
       type: 'reference',
       group: 'media',
-      to: [{type: 'mediaAsset'}],
+      to: [{ type: 'mediaAsset' }],
       description: 'Optionales Bild, Video oder externer Link aus der Mediathek.',
     }),
     defineField({
@@ -136,22 +137,22 @@ export const appScreenType = defineType({
           name: 'screenSection',
           title: 'Section',
           fields: [
-            defineField({name: 'title', title: 'Section-Titel', type: 'string'}),
-            defineField({name: 'eyebrow', title: 'Kleines Label / Eyebrow', type: 'string'}),
-            defineField({name: 'text', title: 'Text', type: 'text', rows: 5}),
-            defineField({name: 'image', title: 'Bild', type: 'image', options: {hotspot: true}}),
+            defineField({ name: 'title', title: 'Section-Titel', type: 'string' }),
+            defineField({ name: 'eyebrow', title: 'Kleines Label / Eyebrow', type: 'string' }),
+            defineField({ name: 'text', title: 'Text', type: 'text', rows: 5 }),
+            defineField({ name: 'image', title: 'Bild', type: 'image', options: { hotspot: true } }),
             defineField({
               name: 'media',
               title: 'Medium / Video optional',
               type: 'reference',
-              to: [{type: 'mediaAsset'}],
+              to: [{ type: 'mediaAsset' }],
             }),
             defineField({
               name: 'visibleFor',
               title: 'Sichtbar für',
               type: 'string',
               description: 'Damit einzelne Sections je nach B2B/B2C unterschiedlich angezeigt werden können.',
-              options: {list: targetAudienceOptions, layout: 'radio'},
+              options: { list: targetAudienceOptions, layout: 'radio' },
               initialValue: 'both',
             }),
             defineField({
@@ -160,22 +161,22 @@ export const appScreenType = defineType({
               type: 'string',
               options: {
                 list: [
-                  {title: 'Text', value: 'text'},
-                  {title: 'Text + Bild', value: 'textImage'},
-                  {title: 'Karten', value: 'cards'},
-                  {title: 'Medien / Video', value: 'media'},
-                  {title: 'Vergleich / Matrix', value: 'comparison'},
-                  {title: 'Timeline / Prozess', value: 'timeline'},
-                  {title: 'CTA', value: 'cta'},
+                  { title: 'Text', value: 'text' },
+                  { title: 'Text + Bild', value: 'textImage' },
+                  { title: 'Karten', value: 'cards' },
+                  { title: 'Medien / Video', value: 'media' },
+                  { title: 'Vergleich / Matrix', value: 'comparison' },
+                  { title: 'Timeline / Prozess', value: 'timeline' },
+                  { title: 'CTA', value: 'cta' },
                 ],
               },
               initialValue: 'text',
             }),
-            defineField({name: 'sortOrder', title: 'Reihenfolge', type: 'number', initialValue: 0}),
+            defineField({ name: 'sortOrder', title: 'Reihenfolge', type: 'number', initialValue: 0 }),
           ],
           preview: {
-            select: {title: 'title', subtitle: 'layout', media: 'image'},
-            prepare({title, subtitle, media}) {
+            select: { title: 'title', subtitle: 'layout', media: 'image' },
+            prepare({ title, subtitle, media }) {
               return {
                 title: title || 'Unbenannte Section',
                 subtitle: subtitle ? `Layout: ${subtitle}` : 'Keine Layout-Auswahl',
@@ -192,7 +193,7 @@ export const appScreenType = defineType({
       type: 'object',
       group: 'actions',
       fields: [
-        defineField({name: 'label', title: 'Button-Text', type: 'string'}),
+        defineField({ name: 'label', title: 'Button-Text', type: 'string' }),
         defineField({
           name: 'target',
           title: 'Ziel / Route',
@@ -207,14 +208,14 @@ export const appScreenType = defineType({
       type: 'object',
       group: 'actions',
       fields: [
-        defineField({name: 'label', title: 'Button-Text', type: 'string'}),
-        defineField({name: 'target', title: 'Ziel / Route', type: 'string'}),
+        defineField({ name: 'label', title: 'Button-Text', type: 'string' }),
+        defineField({ name: 'target', title: 'Ziel / Route', type: 'string' }),
       ],
     }),
-    defineField({name: 'sortOrder', title: 'Reihenfolge', type: 'number', group: 'settings', initialValue: 0}),
-    defineField({name: 'isActive', title: 'Aktiv', type: 'boolean', group: 'settings', initialValue: true}),
+    defineField({ name: 'sortOrder', title: 'Reihenfolge', type: 'number', group: 'settings', initialValue: 0 }),
+    defineField({ name: 'isActive', title: 'Aktiv', type: 'boolean', group: 'settings', initialValue: true }),
   ],
-  orderings: [{title: 'Reihenfolge', name: 'sortOrderAsc', by: [{field: 'sortOrder', direction: 'asc'}]}],
+  orderings: [{ title: 'Reihenfolge', name: 'sortOrderAsc', by: [{ field: 'sortOrder', direction: 'asc' }] }],
   preview: {
     select: {
       title: 'title',
@@ -223,7 +224,7 @@ export const appScreenType = defineType({
       targetAudience: 'targetAudience',
       media: 'heroImage',
     },
-    prepare({title, screenType, contentPurpose, targetAudience, media}) {
+    prepare({ title, screenType, contentPurpose, targetAudience, media }) {
       return {
         title: title || 'Unbenannter Screen',
         subtitle: `${screenType || 'kein Typ'} · ${contentPurpose || 'kein Zweck'} · ${targetAudience || 'keine Zielgruppe'}`,
