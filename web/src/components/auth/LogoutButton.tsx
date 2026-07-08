@@ -1,11 +1,31 @@
-import {signOut} from '@/lib/auth'
+import {getMicrosoftLogoutUrl, signOut} from '@/lib/auth'
+import {headers} from 'next/headers'
+import {redirect} from 'next/navigation'
+
+async function getPostLogoutRedirectUri() {
+  const requestHeaders = await headers()
+  const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host')
+  const protocol =
+    requestHeaders.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https')
+
+  if (!host) {
+    return new URL('/login', process.env.AUTH_URL || 'http://localhost:3000').toString()
+  }
+
+  return new URL('/login', `${protocol}://${host}`).toString()
+}
 
 export function LogoutButton() {
   return (
     <form
       action={async () => {
         'use server'
-        await signOut({redirectTo: '/login'})
+
+        const postLogoutRedirectUri = await getPostLogoutRedirectUri()
+        const microsoftLogoutUrl = getMicrosoftLogoutUrl(postLogoutRedirectUri)
+
+        await signOut({redirect: false})
+        redirect(microsoftLogoutUrl || '/login')
       }}
     >
       <button

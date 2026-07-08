@@ -1,6 +1,6 @@
-import {isMicrosoftAuthConfigured, MICROSOFT_ENTRA_PROVIDER_ID, signIn} from '@/lib/auth'
-import {ArrowRight} from 'lucide-react'
-import type {CSSProperties} from 'react'
+import { isMicrosoftAuthConfigured, MICROSOFT_ENTRA_PROVIDER_ID, signIn } from '@/lib/auth'
+import { ArrowRight } from 'lucide-react'
+import type { CSSProperties } from 'react'
 
 type LoginSection = {
   _key?: string
@@ -87,7 +87,7 @@ export function LoginScreen({
       return
     }
 
-    await signIn(MICROSOFT_ENTRA_PROVIDER_ID, {redirectTo: '/'})
+    await signIn(MICROSOFT_ENTRA_PROVIDER_ID, { redirectTo: '/' })
   }
 
   const microsoftLoginEnabled = isMicrosoftAuthConfigured
@@ -96,18 +96,18 @@ export function LoginScreen({
 
   const heroStyle = heroImageUrl
     ? ({
-        '--login-hero-image': `url("${heroImageUrl}")`,
-      } as CSSProperties)
+      '--login-hero-image': `url("${heroImageUrl}")`,
+    } as CSSProperties)
     : undefined
   const logoStyle = logoUrl
     ? ({
-        backgroundImage: `url("${logoUrl}")`,
-      } as CSSProperties)
+      backgroundImage: `url("${logoUrl}")`,
+    } as CSSProperties)
     : undefined
   const patternStyle = rightPatternUrl
     ? ({
-        backgroundImage: `url("${rightPatternUrl}")`,
-      } as CSSProperties)
+      backgroundImage: `url("${rightPatternUrl}")`,
+    } as CSSProperties)
     : undefined
 
   return (

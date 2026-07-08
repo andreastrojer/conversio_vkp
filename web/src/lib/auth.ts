@@ -97,6 +97,19 @@ export const isMicrosoftAuthConfigured =
   microsoftAuthStatus.clientSecretSet &&
   microsoftAuthStatus.issuerValid
 
+export function getMicrosoftLogoutUrl(postLogoutRedirectUri: string) {
+  const tenant = getMicrosoftIssuerTenant(microsoftIssuer)
+
+  if (!isMicrosoftAuthConfigured || !tenant) {
+    return undefined
+  }
+
+  const logoutUrl = new URL(`${MICROSOFT_ISSUER_PREFIX}${tenant}/oauth2/v2.0/logout`)
+  logoutUrl.searchParams.set('post_logout_redirect_uri', postLogoutRedirectUri)
+
+  return logoutUrl.toString()
+}
+
 function getRequestedIssuerFromDiscoveryUrl(url: URL) {
   if (!url.pathname.endsWith(MICROSOFT_OPENID_CONFIGURATION_PATH)) {
     return undefined
