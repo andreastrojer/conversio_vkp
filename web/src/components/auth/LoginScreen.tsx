@@ -1,4 +1,4 @@
-import {signIn} from '@/lib/auth'
+import {isMicrosoftAuthConfigured, MICROSOFT_ENTRA_PROVIDER_ID, signIn} from '@/lib/auth'
 import {ArrowRight} from 'lucide-react'
 import type {CSSProperties} from 'react'
 
@@ -82,9 +82,15 @@ export function LoginScreen({
 }: LoginScreenProps) {
   async function startMicrosoftSignIn() {
     'use server'
-    await signIn('microsoft-entra-id', {redirectTo: '/'})
+
+    if (!isMicrosoftAuthConfigured) {
+      return
+    }
+
+    await signIn(MICROSOFT_ENTRA_PROVIDER_ID, {redirectTo: '/'})
   }
 
+  const microsoftLoginEnabled = isMicrosoftAuthConfigured
   const resolvedHeadline = headline?.trim() || fallbackHeadline
   const headlineParts = splitHeadline(resolvedHeadline)
 
@@ -167,8 +173,9 @@ export function LoginScreen({
             <h2 className="text-2xl font-semibold tracking-[0.01em] text-neutral-950">Anmelden</h2>
             <button
               type="submit"
+              disabled={!microsoftLoginEnabled}
               aria-label="Microsoft-Anmeldung starten"
-              className="mt-7 block w-full cursor-pointer text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-950/60 focus-visible:ring-offset-4 focus-visible:ring-offset-[#fff5d8] group"
+              className="group mt-7 block w-full cursor-pointer text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-neutral-950/60 focus-visible:ring-offset-4 focus-visible:ring-offset-[#fff5d8] disabled:cursor-not-allowed disabled:opacity-70"
             >
               <span className="text-[15px] tracking-[0.02em] text-neutral-700 transition-colors group-hover:text-neutral-950">
                 E-Mail, Telefon oder Skype
@@ -176,9 +183,18 @@ export function LoginScreen({
               <span className="mt-4 block h-px w-full bg-neutral-700/80 transition-colors group-hover:bg-neutral-950" />
             </button>
 
-            <p className="mt-5 text-[13px] leading-none text-neutral-600">
-              Klicken Sie auf Weiter, um zur Microsoft-Anmeldung zu wechseln.
-            </p>
+            {microsoftLoginEnabled ? (
+              <p className="mt-5 text-[13px] leading-none text-neutral-600">
+                Klicken Sie auf Weiter, um zur Microsoft-Anmeldung zu wechseln.
+              </p>
+            ) : (
+              <p
+                role="status"
+                className="mt-5 rounded-md border border-amber-200 bg-amber-50/75 px-3 py-2 text-xs font-medium leading-5 text-amber-800"
+              >
+                Microsoft Login ist noch nicht korrekt konfiguriert.
+              </p>
+            )}
 
             {authError ? (
               <p
@@ -193,7 +209,8 @@ export function LoginScreen({
           <div className="mt-auto flex justify-end pt-8">
             <button
               type="submit"
-              className="inline-flex h-[38px] w-[92px] items-center justify-center rounded-lg bg-[#3d4248] text-sm font-semibold text-white transition-colors hover:bg-[#303640] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
+              disabled={!microsoftLoginEnabled}
+              className="inline-flex h-[38px] w-[92px] items-center justify-center rounded-lg bg-[#3d4248] text-sm font-semibold text-white transition-colors hover:bg-[#303640] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#3d4248]"
             >
               Weiter
             </button>
