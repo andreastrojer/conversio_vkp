@@ -2,15 +2,16 @@ import {
   LOGIN_RIGHT_PATTERN_QUERY,
   LOGIN_SCREEN_QUERY,
   SITE_SETTINGS_QUERY,
+  WELCOME_SCREEN_QUERY,
 } from '@/lib/queries'
 import {sanityClient, urlForImage} from '@/lib/sanity'
 
 export type SanityImage = {
   asset?: {_ref?: string; _id?: string; url?: string} | null
-  assetUrl?: string | null
-  mimeType?: string | null
-  extension?: string | null
-  originalFilename?: string | null
+  assetUrl?: string
+  mimeType?: string
+  extension?: string
+  originalFilename?: string
   crop?: unknown
   hotspot?: unknown
 } | null
@@ -28,6 +29,10 @@ export type LoginScreenDocument = {
     image?: SanityImage
   } | null
   primaryCta?: {
+    label?: string | null
+    target?: string | null
+  } | null
+  secondaryCta?: {
     label?: string | null
     target?: string | null
   } | null
@@ -59,8 +64,14 @@ type AuthPageContent = {
   rightPattern: LoginPatternDocument
 }
 
+type AuthScreenKey = 'login' | 'welcome'
+
 const authBrandingClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
+const screenQueries: Record<AuthScreenKey, string> = {
+  login: LOGIN_SCREEN_QUERY,
+  welcome: WELCOME_SCREEN_QUERY,
+}
 
 export function buildImageUrl(image: SanityImage | undefined, width: number, height?: number, quality = 85) {
   if (!image?.asset) {
@@ -104,13 +115,25 @@ export function buildLogoUrl(image: SanityImage | undefined) {
   }
 }
 
-export async function getAuthPageContent(): Promise<AuthPageContent> {
+export async function getAuthPageContent(screenKey: AuthScreenKey = 'login'): Promise<AuthPageContent> {
   try {
-    const [screen, siteSettings, rightPattern] = await Promise.all([
-      authBrandingClient.fetch<LoginScreenDocument>(LOGIN_SCREEN_QUERY, {}, freshFetchOptions),
+    const screenQuery = screenQueries[screenKey]
+    const [screen, siteSettings, mediaPattern, loginScreen] = await Promise.all([
+      authBrandingClient.fetch<LoginScreenDocument>(screenQuery, {}, freshFetchOptions),
       authBrandingClient.fetch<SiteSettingsDocument>(SITE_SETTINGS_QUERY, {}, freshFetchOptions),
       authBrandingClient.fetch<LoginPatternDocument>(LOGIN_RIGHT_PATTERN_QUERY, {}, freshFetchOptions),
+      screenKey === 'login'
+        ? Promise.resolve(null)
+        : authBrandingClient.fetch<LoginScreenDocument>(LOGIN_SCREEN_QUERY, {}, freshFetchOptions),
     ])
+    const loginHeroPattern = loginScreen?.heroMedia?.image
+      ? {
+          title: loginScreen.heroMedia.title,
+          altText: loginScreen.heroMedia.altText,
+          image: loginScreen.heroMedia.image,
+        }
+      : null
+    const rightPattern = screenKey === 'login' ? mediaPattern : loginHeroPattern || mediaPattern
 
     return {screen, siteSettings, rightPattern}
   } catch {
@@ -123,12 +146,14 @@ export async function getAuthPageContent(): Promise<AuthPageContent> {
 }
 
 export function resolveAuthBrandingProps({screen, siteSettings, rightPattern}: AuthPageContent) {
-  const rightPatternImage = screen?.heroMedia?.image || rightPattern?.image
+  const usesLoginPattern = screen?.screenKey !== 'login'
+  const rightPatternImage = usesLoginPattern
+    ? rightPattern?.image
+    : screen?.heroMedia?.image || rightPattern?.image
   const rightPatternAlt =
-    screen?.heroMedia?.altText ||
-    screen?.heroMedia?.title ||
-    rightPattern?.altText ||
-    rightPattern?.title ||
+    (usesLoginPattern
+      ? rightPattern?.altText || rightPattern?.title
+      : screen?.heroMedia?.altText || screen?.heroMedia?.title || rightPattern?.altText || rightPattern?.title) ||
     ''
   const logoImage = siteSettings?.logo || siteSettings?.logoDark
 

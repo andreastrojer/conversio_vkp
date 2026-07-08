@@ -17,6 +17,37 @@ export const LOGIN_SCREEN_QUERY = defineQuery(groq`*[
     image
   },
   primaryCta,
+  secondaryCta,
+  sections[]{
+    _key,
+    title,
+    eyebrow,
+    text,
+    layout,
+    visibleFor,
+    sortOrder,
+    image
+  }
+}`)
+
+export const WELCOME_SCREEN_QUERY = defineQuery(groq`*[
+  _type == "appScreen" &&
+  screenKey.current == "welcome" &&
+  isActive == true
+][0]{
+  title,
+  "screenKey": screenKey.current,
+  headline,
+  subline,
+  heroImage,
+  heroMedia->{
+    title,
+    altText,
+    mediaType,
+    image
+  },
+  primaryCta,
+  secondaryCta,
   sections[]{
     _key,
     title,

@@ -1,10 +1,23 @@
 import NextAuth, {customFetch} from 'next-auth'
+import {getToken, type JWT} from 'next-auth/jwt'
 import MicrosoftEntraID from 'next-auth/providers/microsoft-entra-id'
+import {headers} from 'next/headers'
 
 export const MICROSOFT_ENTRA_PROVIDER_ID = 'microsoft-entra-id'
 const MICROSOFT_ISSUER_PREFIX = 'https://login.microsoftonline.com/'
 const MICROSOFT_ISSUER_SUFFIX = '/v2.0'
 const MICROSOFT_OPENID_CONFIGURATION_PATH = '/.well-known/openid-configuration'
+const MICROSOFT_GRAPH_PHOTO_ENDPOINTS = [
+  'https://graph.microsoft.com/v1.0/me/photos/240x240/$value',
+  'https://graph.microsoft.com/v1.0/me/photo/$value',
+  'https://graph.microsoft.com/v1.0/me/photos/120x120/$value',
+  'https://graph.microsoft.com/v1.0/me/photos/96x96/$value',
+  'https://graph.microsoft.com/v1.0/me/photos/48x48/$value',
+]
+
+type MicrosoftJwt = JWT & {
+  microsoftAccessToken?: unknown
+}
 
 function readEnvValue(name: string) {
   const value = process.env[name]?.trim()
@@ -168,8 +181,64 @@ function createMicrosoftEntraProvider() {
       clientId: microsoftClientId,
       clientSecret: microsoftClientSecret,
       issuer: microsoftIssuer,
+      profilePhotoSize: 48,
     }),
     [customFetch]: microsoftEntraFetch,
+  }
+}
+
+async function fetchMicrosoftPhotoDataUrl(accessToken: string) {
+  for (const endpoint of MICROSOFT_GRAPH_PHOTO_ENDPOINTS) {
+    try {
+      const response = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        continue
+      }
+
+      const contentType = response.headers.get('content-type') || 'image/jpeg'
+      const photoBuffer = Buffer.from(await response.arrayBuffer())
+
+      if (photoBuffer.byteLength === 0) {
+        continue
+      }
+
+      return `data:${contentType};base64,${photoBuffer.toString('base64')}`
+    } catch {
+      continue
+    }
+  }
+
+  return undefined
+}
+
+export async function getMicrosoftProfilePhotoDataUrl() {
+  if (!authSecret) {
+    return undefined
+  }
+
+  try {
+    const requestHeaders = await headers()
+    const token = (await getToken({
+      req: {headers: requestHeaders},
+      secret: authSecret,
+      secureCookie: process.env.NODE_ENV === 'production',
+    })) as MicrosoftJwt | null
+    const accessToken =
+      typeof token?.microsoftAccessToken === 'string' ? token.microsoftAccessToken : undefined
+
+    if (!accessToken) {
+      return undefined
+    }
+
+    return fetchMicrosoftPhotoDataUrl(accessToken)
+  } catch {
+    return undefined
   }
 }
 
@@ -192,6 +261,15 @@ export const {handlers, auth, signIn, signOut} = NextAuth({
   },
   pages: {
     signIn: '/login',
+  },
+  callbacks: {
+    async jwt({token, account}) {
+      if (account?.access_token) {
+        token.microsoftAccessToken = account.access_token
+      }
+
+      return token
+    },
   },
   providers: [
     ...(isMicrosoftAuthConfigured ? [createMicrosoftEntraProvider()] : []),
