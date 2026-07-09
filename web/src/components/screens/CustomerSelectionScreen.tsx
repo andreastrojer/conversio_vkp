@@ -1,16 +1,12 @@
 'use client'
 
-import {
-  AuthBrandingShell,
-  type AuthBrandingLegalLink,
-} from '@/components/layout/AuthBrandingShell'
 import type {
   CustomerGroup,
   CustomerInfoQuestion,
   CustomerSegmentDocument,
 } from '@/lib/customerSelection'
-import type {LoginScreenDocument} from '@/lib/authBranding'
-import {type CSSProperties, useMemo, useState} from 'react'
+import type { LoginScreenDocument } from '@/lib/authBranding'
+import { type CSSProperties, useMemo, useState } from 'react'
 
 type ScreenSection = NonNullable<NonNullable<LoginScreenDocument>['sections']>[number]
 
@@ -18,12 +14,7 @@ type CustomerSelectionScreenProps = {
   screen?: LoginScreenDocument
   segments?: CustomerSegmentDocument[]
   formQuestions?: CustomerInfoQuestion[]
-  logoUrl?: string
-  logoAlt?: string
   rightPatternUrl?: string
-  rightPatternAlt?: string
-  footerAddress?: string | null
-  legalLinks?: AuthBrandingLegalLink[] | null
 }
 
 type CustomerCard = {
@@ -35,18 +26,27 @@ type CustomerCard = {
   patternUrl?: string | null
 }
 
+type CustomerInfoFieldError = {
+  message: string
+}
+
+type CustomerInfoValidationResult = {
+  success: boolean
+  errors: Record<string, CustomerInfoFieldError>
+}
+
 const fallbackCards: Record<CustomerGroup, CustomerCard> = {
   b2c: {
     customerType: 'b2c',
     title: 'PRIVAT',
-    text: 'Beratung für Privatkunden mit Fokus auf Eigenheim, Energieunabhängigkeit und verständliche Produktlösungen.',
+    text: 'Veniam mollit nostrud eu quis cupidatat velit ad exercitation aute qui ullamco in tempor.',
     ctaLabel: 'JETZT STARTEN',
     ctaTarget: 'customer-type:b2c',
   },
   b2b: {
     customerType: 'b2b',
     title: 'GEWERBE',
-    text: 'Beratung für Gewerbekunden mit Fokus auf Wirtschaftlichkeit, Skalierbarkeit und professionelle Energielösungen.',
+    text: 'Veniam mollit nostrud eu quis cupidatat velit ad exercitation aute qui ullamco in tempor.',
     ctaLabel: 'JETZT STARTEN',
     ctaTarget: 'customer-type:b2b',
   },
@@ -119,7 +119,7 @@ function buildCustomerCards(
     const section = findSectionForGroup(sortedSections, group, index)
     const segment = findSegmentForGroup(segments || [], group)
     const title = section?.title || segment?.headline || segment?.title || fallback.title
-    const text = section?.text || segment?.mainText || segment?.focusText || fallback.text
+    const text = segment?.mainText || segment?.focusText || section?.text || fallback.text
     const ctaLabel = section?.cta?.label || segment?.ctaText || fallback.ctaLabel
     const ctaTarget = section?.cta?.target || fallback.ctaTarget
 
@@ -154,108 +154,264 @@ function getQuestionLabel(question: CustomerInfoQuestion) {
   return (question.questionText || question.title || 'Feld').replace(/\s*\*+\s*$/, '')
 }
 
+function isQuestionRequired(question: CustomerInfoQuestion) {
+  const visibleLabel = question.questionText || question.title || ''
+
+  return Boolean(question.isRequired) || /\*\s*$/.test(visibleLabel)
+}
+
+function getAnswerKind(answerType: string | null | undefined) {
+  const normalized = answerType?.toLocaleLowerCase('de-AT') || ''
+
+  if (normalized.includes('mail')) {
+    return 'email'
+  }
+
+  if (normalized.includes('tel') || normalized.includes('phone')) {
+    return 'phone'
+  }
+
+  if (normalized.includes('name')) {
+    return 'name'
+  }
+
+  return 'text'
+}
+
+function validateCustomerInfoSchema(
+  questions: CustomerInfoQuestion[],
+  values: Record<string, string>,
+): CustomerInfoValidationResult {
+  const errors: Record<string, CustomerInfoFieldError> = {}
+
+  questions.forEach((question, index) => {
+    const questionKey = getQuestionKey(question, index)
+    const questionLabel = getQuestionLabel(question)
+    const answerKind = getAnswerKind(question.answerType)
+    const value = values[questionKey]?.trim() || ''
+
+    if (isQuestionRequired(question) && !value) {
+      errors[questionKey] = {
+        message: `${questionLabel} ist ein Pflichtfeld.`,
+      }
+      return
+    }
+
+    if (!value) {
+      return
+    }
+
+    if (answerKind === 'name' && value.length < 2) {
+      errors[questionKey] = {
+        message: 'Bitte einen vollständigen Namen eingeben.',
+      }
+      return
+    }
+
+    if (answerKind === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      errors[questionKey] = {
+        message: 'Bitte eine gültige E-Mail-Adresse eingeben.',
+      }
+      return
+    }
+
+    if (answerKind === 'phone' && value.replace(/\D/g, '').length < 6) {
+      errors[questionKey] = {
+        message: 'Bitte eine gültige Telefonnummer eingeben.',
+      }
+    }
+  })
+
+  return {
+    success: Object.keys(errors).length === 0,
+    errors,
+  }
+}
+
+function getErrorSummary(errorCount: number) {
+  if (errorCount === 1) {
+    return 'Bitte prüfe die markierte Angabe. Danach kannst du die Kundengruppe starten.'
+  }
+
+  return 'Bitte prüfe die markierten Angaben. Danach kannst du die Kundengruppe starten.'
+}
+
+function getFieldId(questionKey: string, index: number) {
+  return `customer-info-${index}-${questionKey.toLocaleLowerCase('de-AT').replace(/[^a-z0-9]+/g, '-')}`
+}
+
 export function CustomerSelectionScreen({
   screen,
   segments,
   formQuestions,
-  logoUrl,
-  logoAlt,
   rightPatternUrl,
-  rightPatternAlt,
-  footerAddress,
-  legalLinks,
 }: CustomerSelectionScreenProps) {
   const cards = useMemo(() => buildCustomerCards(screen?.sections, segments), [screen?.sections, segments])
   const questions = formQuestions && formQuestions.length > 0 ? formQuestions : fallbackQuestions
   const [selectedCustomerType, setSelectedCustomerType] = useState<CustomerGroup | null>(null)
   const [formValues, setFormValues] = useState<Record<string, string>>({})
+  const [fieldErrors, setFieldErrors] = useState<Record<string, CustomerInfoFieldError>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+
+  function validateCustomerInfo() {
+    const validation = validateCustomerInfoSchema(questions, formValues)
+    const nextErrors = validation.errors
+    const errorCount = Object.keys(nextErrors).length
+
+    setFieldErrors(nextErrors)
+
+    if (!validation.success) {
+      setSelectedCustomerType(null)
+      setFormError(getErrorSummary(errorCount))
+
+      const firstErrorIndex = questions.findIndex((question, index) => nextErrors[getQuestionKey(question, index)])
+
+      if (firstErrorIndex >= 0) {
+        const firstQuestion = questions[firstErrorIndex]
+        const firstQuestionKey = getQuestionKey(firstQuestion, firstErrorIndex)
+        const firstFieldId = getFieldId(firstQuestionKey, firstErrorIndex)
+
+        window.requestAnimationFrame(() => {
+          document.getElementById(firstFieldId)?.focus()
+        })
+      }
+
+      return false
+    }
+
+    setFormError(null)
+    return true
+  }
+
+  function handleCustomerStart(customerType: CustomerGroup) {
+    if (!validateCustomerInfo()) {
+      return
+    }
+
+    setSelectedCustomerType(customerType)
+  }
 
   return (
-    <AuthBrandingShell
-      logoUrl={logoUrl}
-      logoAlt={logoAlt}
-      rightPatternUrl={rightPatternUrl}
-      rightPatternAlt={rightPatternAlt}
-      footerAddress={footerAddress}
-      legalLinks={legalLinks}
-    >
-      <section className="customer-selection-layout font-barlow absolute z-10">
-        <div className="customer-selection-cards" aria-label={screen?.headline || 'Kundengruppe auswählen'}>
-          {cards.map((card) => {
-            const isActive = selectedCustomerType === card.customerType
-            const patternUrl = card.patternUrl || rightPatternUrl
-            const cardPatternStyle = patternUrl
-              ? ({
-                  '--selection-card-pattern-image': `url("${patternUrl}")`,
-                } as CSSProperties & {'--selection-card-pattern-image': string})
-              : undefined
+    <section className="customer-selection-layout font-barlow absolute z-10">
+      <div className="customer-selection-cards" aria-label={screen?.headline || 'Kundengruppe auswählen'}>
+        {cards.map((card) => {
+          const isActive = selectedCustomerType === card.customerType
+          const patternUrl = card.patternUrl || rightPatternUrl
+          const cardPatternStyle = patternUrl
+            ? ({
+              '--selection-card-pattern-image': `url("${patternUrl}")`,
+            } as CSSProperties & { '--selection-card-pattern-image': string })
+            : undefined
+
+          return (
+            <article
+              key={card.customerType}
+              className={`customer-selection-card customer-selection-card--${card.customerType} ${isActive ? 'is-active' : ''
+                }`}
+            >
+              {cardPatternStyle ? (
+                <span
+                  className="customer-selection-card-pattern"
+                  style={cardPatternStyle}
+                  aria-hidden="true"
+                />
+              ) : null}
+
+              <div className="customer-selection-card-content">
+                <h2>{card.title}</h2>
+                <p>{card.text}</p>
+                <button
+                  type="button"
+                  data-target={card.ctaTarget}
+                  aria-pressed={isActive}
+                  className="customer-selection-card-button"
+                  onClick={() => handleCustomerStart(card.customerType)}
+                >
+                  {card.ctaLabel}
+                </button>
+              </div>
+            </article>
+          )
+        })}
+      </div>
+
+      <form className="customer-info-form" aria-label="Kundeninfos">
+        <h2>KUNDENINFOS</h2>
+
+        {formError ? (
+          <div
+            id="customer-info-error-summary"
+            className="customer-info-error-summary"
+            role="alert"
+            aria-live="polite"
+          >
+            <span className="customer-info-error-mark" aria-hidden="true" />
+            <div>
+              <strong>Angaben prüfen</strong>
+              <p>{formError}</p>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="customer-info-fields">
+          {questions.map((question, index) => {
+            const questionKey = getQuestionKey(question, index)
+            const questionLabel = getQuestionLabel(question)
+            const required = isQuestionRequired(question)
+            const error = fieldErrors[questionKey]
+            const fieldId = getFieldId(questionKey, index)
 
             return (
-              <article
-                key={card.customerType}
-                className={`customer-selection-card customer-selection-card--${card.customerType} ${
-                  isActive ? 'is-active' : ''
-                }`}
+              <label
+                key={`${questionKey}-${index}`}
+                className={`customer-info-field ${error ? 'has-error' : ''}`}
+                htmlFor={fieldId}
               >
-                {cardPatternStyle ? (
-                  <span
-                    className="customer-selection-card-pattern"
-                    style={cardPatternStyle}
-                    aria-hidden="true"
-                  />
-                ) : null}
+                <span>
+                  {questionLabel.toLocaleUpperCase('de-AT')}
+                  {required ? ' *' : ''}
+                </span>
+                <input
+                  id={fieldId}
+                  type={getInputType(question.answerType)}
+                  value={formValues[questionKey] || ''}
+                  placeholder={question.placeholder || ''}
+                  required={required}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? `${fieldId}-error` : undefined}
+                  onChange={(event) =>
+                    {
+                      const nextValue = event.target.value
 
-                <div className="customer-selection-card-content">
-                  <h2>{card.title}</h2>
-                  <p>{card.text}</p>
-                  <button
-                    type="button"
-                    data-target={card.ctaTarget}
-                    aria-pressed={isActive}
-                    className="customer-selection-card-button"
-                    onClick={() => setSelectedCustomerType(card.customerType)}
-                  >
-                    {card.ctaLabel}
-                  </button>
-                </div>
-              </article>
+                      setFormValues((currentValues) => ({
+                        ...currentValues,
+                        [questionKey]: nextValue,
+                      }))
+
+                      if (error && nextValue.trim()) {
+                        setFieldErrors((currentErrors) => {
+                          const nextErrors = {...currentErrors}
+                          delete nextErrors[questionKey]
+                          return nextErrors
+                        })
+                      }
+
+                      if (formError) {
+                        setFormError(null)
+                      }
+                    }
+                  }
+                />
+                {error ? (
+                  <p id={`${fieldId}-error`} className="customer-info-field-error">
+                    {error.message}
+                  </p>
+                ) : null}
+              </label>
             )
           })}
         </div>
-
-        <form className="customer-info-form" aria-label="Kundeninfos">
-          <h2>KUNDENINFOS</h2>
-
-          <div className="customer-info-fields">
-            {questions.map((question, index) => {
-              const questionKey = getQuestionKey(question, index)
-              const questionLabel = getQuestionLabel(question)
-              const required = Boolean(question.isRequired)
-
-              return (
-                <label key={`${questionKey}-${index}`} className="customer-info-field">
-                  <span>
-                    {questionLabel.toLocaleUpperCase('de-AT')}
-                    {required ? ' *' : ''}
-                  </span>
-                  <input
-                    type={getInputType(question.answerType)}
-                    value={formValues[questionKey] || ''}
-                    placeholder={question.placeholder || ''}
-                    required={required}
-                    onChange={(event) =>
-                      setFormValues((currentValues) => ({
-                        ...currentValues,
-                        [questionKey]: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-              )
-            })}
-          </div>
-        </form>
-      </section>
-    </AuthBrandingShell>
+      </form>
+    </section>
   )
 }

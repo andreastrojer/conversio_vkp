@@ -1,4 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react'
+import Link from 'next/link'
 
 export type AuthBrandingLegalLink = {
   label?: string | null
@@ -97,16 +98,18 @@ export function AuthBrandingShell({
       )}
 
       <div className="login-logo absolute z-10">
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl}
-            alt={logoAlt}
-            className="login-logo-image"
-          />
-        ) : (
-          <ConversioLogo />
-        )}
+        <Link href="/" className="login-logo-link" aria-label="Zur Welcome-Seite">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={logoAlt}
+              className="login-logo-image"
+            />
+          ) : (
+            <ConversioLogo />
+          )}
+        </Link>
       </div>
 
       {children}

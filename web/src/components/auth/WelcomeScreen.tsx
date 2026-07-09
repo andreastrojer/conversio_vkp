@@ -1,4 +1,4 @@
-import {LogoutButton} from '@/components/auth/LogoutButton'
+import {AccountMenu} from '@/components/auth/AccountMenu'
 import {
   AuthBrandingShell,
   type AuthBrandingLegalLink,
@@ -8,7 +8,6 @@ import Link from 'next/link'
 type WelcomeScreenProps = {
   userName?: string | null
   userEmail?: string | null
-  userImage?: string | null
   headline?: string | null
   subline?: string | null
   ctaLabel?: string | null
@@ -18,8 +17,7 @@ type WelcomeScreenProps = {
   logoAlt?: string
   rightPatternUrl?: string
   rightPatternAlt?: string
-  profileChevronUrl?: string
-  profileFallbackUrl?: string
+  informationIconUrl?: string
   footerAddress?: string | null
   legalLinks?: AuthBrandingLegalLink[] | null
 }
@@ -95,7 +93,6 @@ function resolveTargetHref(target: string | null | undefined) {
 export function WelcomeScreen({
   userName,
   userEmail,
-  userImage,
   headline,
   subline,
   ctaLabel,
@@ -105,20 +102,15 @@ export function WelcomeScreen({
   logoAlt,
   rightPatternUrl,
   rightPatternAlt,
-  profileChevronUrl,
-  profileFallbackUrl,
+  informationIconUrl,
   footerAddress,
   legalLinks,
 }: WelcomeScreenProps) {
   const firstName = getFirstName(userName, userEmail)
-  const resolvedUserImage = userImage?.trim() || undefined
-  const resolvedProfileFallbackUrl = profileFallbackUrl?.trim() || undefined
-  const hasUserImage = Boolean(resolvedUserImage)
   const headlineLines = resolveWelcomeHeadline(headline, firstName)
   const resolvedSubline = subline?.trim()
   const resolvedCtaLabel = ctaLabel?.trim() || fallbackCtaLabel
   const resolvedLogoutLabel = logoutLabel?.trim() || fallbackLogoutLabel
-  const loginIdentity = userEmail || userName || 'Microsoft-Konto'
   const ctaHref = resolveTargetHref(ctaTarget)
 
   return (
@@ -130,6 +122,13 @@ export function WelcomeScreen({
       footerAddress={footerAddress}
       legalLinks={legalLinks}
     >
+      <AccountMenu
+        userName={userName}
+        userEmail={userEmail}
+        menuIconUrl={informationIconUrl}
+        logoutLabel={resolvedLogoutLabel}
+      />
+
       <section className="welcome-main-content absolute z-10 -translate-y-1/2">
         <h1 className="welcome-title font-barlow font-bold uppercase leading-[1.02] text-[#3d4248]">
           {headlineLines.map((line, index) => (
@@ -140,63 +139,13 @@ export function WelcomeScreen({
           ))}
         </h1>
 
-        <div className="welcome-profile-row">
-          <div className="welcome-profile-panel" aria-label={userName || userEmail || 'Profil'}>
-            <div className="welcome-profile-figure" aria-label={userName || userEmail || 'Profil'}>
-              {hasUserImage ? (
-                <>
-                  <div className="welcome-portrait-frame">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={resolvedUserImage}
-                      alt={userName || userEmail || 'Microsoft Profilbild'}
-                      className="welcome-portrait-image"
-                    />
-                  </div>
-                  <span className="welcome-profile-chevron" aria-hidden="true">
-                    {profileChevronUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={profileChevronUrl}
-                        alt=""
-                        className="welcome-profile-chevron-image"
-                      />
-                    ) : (
-                      <span className="welcome-profile-chevron-fallback" />
-                    )}
-                  </span>
-                </>
-              ) : resolvedProfileFallbackUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={resolvedProfileFallbackUrl}
-                  alt=""
-                  className="welcome-profile-fallback-image"
-                  aria-hidden="true"
-                />
-              ) : null}
-            </div>
-
-            <div className="welcome-session-panel font-barlow">
-              <p className="welcome-session-label">Sie sind eingeloggt mit</p>
-              <p className="welcome-email">{loginIdentity}</p>
-
-              <LogoutButton
-                label={resolvedLogoutLabel}
-                className="welcome-logout-button font-barlow inline-flex items-center justify-center rounded-full border border-[#3d4248]/18 bg-white px-5 text-[14px] font-medium text-[#3d4248] transition hover:border-[#3d4248]/35 hover:bg-[#f6f6f6]"
-              />
-            </div>
-          </div>
-        </div>
-
-        {resolvedSubline ? (
-          <p className="welcome-subline font-barlow font-normal text-[#3d4248]">
-            {resolvedSubline}
-          </p>
-        ) : null}
-
-        <div className="welcome-step-row font-barlow">
-          <div className="welcome-selection-panel">
+        <div className="welcome-action-area font-barlow">
+          <div className="welcome-start-panel">
+            {resolvedSubline ? (
+              <p className="welcome-subline font-barlow font-normal text-[#3d4248]">
+                {resolvedSubline}
+              </p>
+            ) : null}
             <Link href={ctaHref} className="welcome-next-button">
               <span>{resolvedCtaLabel}</span>
               <span className="welcome-next-arrow" aria-hidden="true" />

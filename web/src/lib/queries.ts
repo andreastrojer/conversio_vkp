@@ -268,3 +268,57 @@ export const WELCOME_PROFILE_FALLBACK_QUERY = defineQuery(groq`*[
     "originalFilename": asset->originalFilename
   }
 }`)
+
+export const ACCOUNT_INFORMATION_ICON_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  isActive != false &&
+  defined(image.asset) &&
+  (
+    title == "InformationIcon" ||
+    title == "Information Icon" ||
+    title == "Information-Icon" ||
+    title == "InfoIcon" ||
+    title == "Info Icon" ||
+    title == "Info-Icon" ||
+    title == "information-icon" ||
+    title == "info-icon" ||
+    title match "*Information*" ||
+    title match "*information*" ||
+    title match "*Info*" ||
+    title match "*info*" ||
+    category == "information-icon" ||
+    category == "info-icon" ||
+    category == "information" ||
+    category == "info" ||
+    usage match "*Information*" ||
+    usage match "*information*" ||
+    usage match "*Info*" ||
+    usage match "*info*" ||
+    altText match "*Information*" ||
+    altText match "*information*" ||
+    altText match "*Info*" ||
+    altText match "*info*" ||
+    caption match "*Information*" ||
+    caption match "*information*" ||
+    caption match "*Info*" ||
+    caption match "*info*" ||
+    "information-icon" in tags[] ||
+    "InformationIcon" in tags[] ||
+    "info-icon" in tags[] ||
+    "info" in tags[] ||
+    image.asset->originalFilename match "*Information*" ||
+    image.asset->originalFilename match "*information*" ||
+    image.asset->originalFilename match "*Info*" ||
+    image.asset->originalFilename match "*info*"
+  )
+] | order(_updatedAt desc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)

@@ -40,6 +40,12 @@ body {
   top: clamp(46px, 3.9vw, 60px);
 }
 
+.login-logo-link {
+  display: block;
+  width: max-content;
+  cursor: pointer;
+}
+
 .login-logo-image {
   display: block;
   width: clamp(152px, 10.8vw, 176px);
@@ -85,31 +91,139 @@ body {
 
 .welcome-main-content {
   left: clamp(48px, 3.9vw, 60px);
-  top: 54%;
-  max-width: min(860px, calc(100vw - 620px));
+  top: 47%;
+  max-width: min(600px, calc(100vw - 570px));
 }
 
 .welcome-title {
-  font-size: clamp(62px, 5vw, 72px);
+  font-size: clamp(44px, 3.6vw, 56px);
   letter-spacing: 0.028em;
 }
 
 .welcome-subline {
-  margin-top: clamp(92px, 11vh, 128px);
-  max-width: 520px;
-  font-size: 22px;
+  margin: 0;
+  max-width: 390px;
+  font-size: clamp(20px, 1.45vw, 24px);
   letter-spacing: 0.006em;
-  line-height: 1.3;
+  line-height: 1.28;
 }
 
-.welcome-profile-row {
-  margin-top: clamp(36px, 4.4vh, 54px);
+.welcome-action-area {
+  margin-top: clamp(26px, 3.4vh, 38px);
+  display: block;
+  max-width: 430px;
 }
 
-.welcome-profile-panel {
-  display: flex;
+.welcome-account-menu {
+  position: absolute;
+  top: clamp(46px, 3.9vw, 60px);
+  right: clamp(48px, 3.9vw, 64px);
+  z-index: 20;
+}
+
+.welcome-account-summary {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  cursor: pointer;
+  list-style: none;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(61, 66, 72, 0.14);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(61, 66, 72, 0.12);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.welcome-account-summary::-webkit-details-marker {
+  display: none;
+}
+
+.welcome-account-summary:hover {
+  border-color: rgba(61, 66, 72, 0.26);
+  box-shadow: 0 14px 30px rgba(61, 66, 72, 0.16);
+  transform: translateY(-1px);
+}
+
+.welcome-account-avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.welcome-account-menu-icon {
+  display: block;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.welcome-account-avatar-fallback {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  background: #f3f4f5;
+  color: #3d4248;
+}
+
+.welcome-account-popover {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: 292px;
+  border: 1px solid rgba(61, 66, 72, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 18px;
+  box-shadow: 0 18px 44px rgba(61, 66, 72, 0.16);
+}
+
+.welcome-account-kicker {
+  color: rgba(61, 66, 72, 0.58);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.welcome-account-name {
+  margin-top: 8px;
+  color: #3d4248;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.welcome-account-email {
+  margin-top: 4px;
+  color: rgba(61, 66, 72, 0.68);
+  font-size: 13px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.welcome-account-logout {
+  margin-top: 16px;
+  height: 38px;
+}
+
+.welcome-profile-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  gap: clamp(28px, 3.2vw, 44px);
+  gap: 26px;
+  min-height: 132px;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 .welcome-profile-figure {
@@ -181,15 +295,26 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 7px;
 }
 
 .welcome-session-label {
   color: #3d4248;
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.012em;
   line-height: 1.2;
+}
+
+.welcome-start-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 22px;
+  border-left: 0;
+  padding-left: 0;
 }
 
 .welcome-step-row {
@@ -208,16 +333,16 @@ body {
 
 .welcome-next-button {
   display: inline-flex;
-  min-width: clamp(312px, 25vw, 368px);
-  height: 50px;
+  min-width: clamp(280px, 22vw, 360px);
+  height: 42px;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 18px;
   border-radius: 999px;
   background: #efb804;
-  padding-inline: 30px;
+  padding-inline: 24px;
   color: #3d4248;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -277,27 +402,30 @@ body {
 }
 
 .customer-selection-layout {
+  --selection-shift: clamp(120px, 7vw, 170px);
   left: clamp(48px, 3.9vw, 60px);
-  right: clamp(52px, 4.2vw, 60px);
+  right: calc(clamp(52px, 4.2vw, 60px) + var(--selection-shift));
   top: clamp(188px, 21vh, 215px);
   bottom: clamp(74px, 7.2vh, 92px);
   display: grid;
-  grid-template-columns: clamp(860px, 65vw, 1160px) minmax(340px, 370px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 370px);
   column-gap: clamp(46px, 4.8vw, 70px);
   justify-content: start;
   align-items: stretch;
-  transform: translateX(clamp(120px, 7vw, 170px));
+  transform: translateX(var(--selection-shift));
 }
 
 .customer-selection-cards {
-  --selection-card-left-expansion: clamp(122px, 6.7vw, 164px);
+  --selection-card-left-expansion: 72px;
+  --selection-card-left-offset: 64px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-  width: calc(100% + var(--selection-card-left-expansion));
-  min-height: 540px;
-  max-height: 735px;
-  transform: translateX(calc(var(--selection-card-left-expansion) * -1));
+  width: calc(100% + var(--selection-card-left-expansion) - var(--selection-card-left-offset));
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  transform: translateX(calc((var(--selection-card-left-expansion) + var(--selection-card-left-offset)) * -1));
 }
 
 .customer-selection-card {
@@ -413,6 +541,7 @@ body {
 }
 
 .customer-info-form {
+  --customer-info-text-offset: clamp(112px, 7vw, 150px);
   position: relative;
   z-index: 1;
   width: min(370px, 100%);
@@ -426,10 +555,58 @@ body {
   font-weight: 700;
   letter-spacing: 0.018em;
   line-height: 1;
+  transform: translateX(calc(var(--customer-info-text-offset) * -1));
 }
 
 .customer-info-fields {
   margin-top: 72px;
+}
+
+.customer-info-error-summary {
+  margin-top: 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: calc(100% + var(--customer-info-text-offset));
+  padding: 12px 14px;
+  border: 1px solid rgba(61, 66, 72, 0.11);
+  border-left: 4px solid #efb804;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #3d4248;
+  box-shadow: 0 14px 34px rgba(61, 66, 72, 0.09);
+  transform: translateX(calc(var(--customer-info-text-offset) * -1));
+}
+
+.customer-info-error-summary + .customer-info-fields {
+  margin-top: 44px;
+}
+
+.customer-info-error-mark {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #efb804;
+  box-shadow: 0 0 0 5px rgba(239, 184, 4, 0.16);
+}
+
+.customer-info-error-summary strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.customer-info-error-summary p {
+  margin-top: 4px;
+  color: rgba(61, 66, 72, 0.72);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .customer-info-field {
@@ -443,12 +620,13 @@ body {
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.2;
+  transform: translateX(calc(var(--customer-info-text-offset) * -1));
 }
 
 .customer-info-field input {
   display: block;
-  width: 100%;
-  max-width: 100%;
+  width: calc(100% + var(--customer-info-text-offset));
+  max-width: none;
   height: 38px;
   border: 0;
   border-bottom: 2px solid #3d4248;
@@ -457,6 +635,7 @@ body {
   font: inherit;
   font-size: 18px;
   outline: none;
+  transform: translateX(calc(var(--customer-info-text-offset) * -1));
 }
 
 .customer-info-field input::placeholder {
@@ -465,6 +644,34 @@ body {
 
 .customer-info-field input:focus {
   border-bottom-color: #efb804;
+}
+
+.customer-info-field.has-error input {
+  border-bottom-color: #efb804;
+  box-shadow: 0 2px 0 rgba(239, 184, 4, 0.26);
+}
+
+.customer-info-field-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  width: calc(100% + var(--customer-info-text-offset));
+  color: rgba(61, 66, 72, 0.76);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  transform: translateX(calc(var(--customer-info-text-offset) * -1));
+}
+
+.customer-info-field-error::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #efb804;
+  box-shadow: 0 0 0 4px rgba(239, 184, 4, 0.14);
 }
 
 .login-footer {
@@ -478,7 +685,7 @@ body {
 .login-start-pattern {
   position: fixed;
   right: clamp(-170px, -7vw, -90px);
-  bottom: clamp(-220px, -14vh, -130px);
+  bottom: clamp(-360px, -22vh, -220px);
   width: clamp(780px, min(62vw, 94vh), 1120px);
   height: clamp(780px, min(62vw, 94vh), 1120px);
   z-index: 0;
@@ -525,17 +732,30 @@ body {
   }
 
   .welcome-main-content {
-    top: 54%;
-    max-width: min(800px, calc(100vw - 560px));
+    top: 47%;
+    max-width: min(560px, calc(100vw - 540px));
   }
 
   .welcome-title {
-    font-size: 62px;
+    font-size: 50px;
   }
 
   .welcome-profile-figure {
     width: 140px;
     height: 112px;
+  }
+
+  .welcome-action-area {
+    max-width: 400px;
+  }
+
+  .welcome-profile-card {
+    min-height: 126px;
+  }
+
+  .welcome-start-panel {
+    min-height: 0;
+    border-left: 0;
   }
 
   .welcome-portrait-frame {
@@ -550,17 +770,19 @@ body {
 
   .customer-selection-layout {
     left: clamp(46px, 3.4vw, 56px);
-    right: clamp(48px, 4vw, 58px);
+    right: calc(clamp(48px, 4vw, 58px) + var(--selection-shift));
     top: clamp(166px, 20vh, 190px);
     bottom: 72px;
-    grid-template-columns: clamp(760px, 62vw, 1040px) minmax(312px, 340px);
+    grid-template-columns: minmax(0, 1fr) minmax(312px, 340px);
     column-gap: clamp(42px, 4vw, 58px);
     justify-content: start;
+    transform: translateX(var(--selection-shift));
   }
 
   .customer-selection-cards {
     gap: 18px;
-    min-height: 510px;
+    height: 100%;
+    min-height: 0;
   }
 
   .customer-selection-card {
@@ -593,7 +815,7 @@ body {
 
   .login-start-pattern {
     right: clamp(-150px, -7vw, -86px);
-    bottom: clamp(-190px, -13vh, -118px);
+    bottom: clamp(-330px, -21vh, -205px);
     width: clamp(720px, min(59vw, 90vh), 940px);
     height: clamp(720px, min(59vw, 90vh), 940px);
   }
@@ -645,18 +867,18 @@ body {
 
   .welcome-main-content {
     left: clamp(46px, 3.6vw, 60px);
-    top: 54%;
-    max-width: min(760px, calc(100vw - 520px));
+    top: 47%;
+    max-width: min(520px, calc(100vw - 500px));
   }
 
   .welcome-title {
-    font-size: clamp(52px, 4vw, 60px);
+    font-size: clamp(42px, 3.5vw, 50px);
     letter-spacing: 0.024em;
   }
 
   .welcome-subline {
-    margin-top: 74px;
-    font-size: 20px;
+    margin: 0;
+    font-size: 19px;
   }
 
   .welcome-profile-figure {
@@ -670,8 +892,22 @@ body {
     height: 94px;
   }
 
-  .welcome-profile-row {
-    margin-top: 32px;
+  .welcome-action-area {
+    margin-top: 30px;
+    max-width: 380px;
+  }
+
+  .welcome-profile-card {
+    min-height: 118px;
+    gap: 18px;
+    padding: 0;
+  }
+
+  .welcome-start-panel {
+    min-height: 0;
+    gap: 22px;
+    border-left: 0;
+    padding-left: 0;
   }
 
   .welcome-step-row {
@@ -679,23 +915,25 @@ body {
   }
 
   .welcome-next-button {
-    min-width: 300px;
-    height: 46px;
-    font-size: 16px;
+    min-width: 292px;
+    height: 40px;
+    font-size: 13px;
   }
 
   .customer-selection-layout {
     left: clamp(46px, 3.4vw, 56px);
-    right: clamp(46px, 3.8vw, 56px);
+    right: calc(clamp(46px, 3.8vw, 56px) + var(--selection-shift));
     top: clamp(154px, 18.5vh, 178px);
     bottom: 66px;
-    grid-template-columns: clamp(840px, 60vw, 1140px) minmax(286px, 320px);
+    grid-template-columns: minmax(0, 1fr) minmax(286px, 320px);
     column-gap: clamp(44px, 3vw, 56px);
     justify-content: start;
+    transform: translateX(var(--selection-shift));
   }
 
   .customer-selection-cards {
-    min-height: 470px;
+    height: 100%;
+    min-height: 0;
   }
 
   .customer-selection-card {
@@ -743,7 +981,7 @@ body {
 
   .login-start-pattern {
     right: clamp(-150px, -7vw, -96px);
-    bottom: clamp(-190px, -13vh, -122px);
+    bottom: clamp(-340px, -22vh, -215px);
     width: clamp(760px, min(58vw, 92vh), 980px);
     height: clamp(760px, min(58vw, 92vh), 980px);
   }

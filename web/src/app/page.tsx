@@ -1,5 +1,5 @@
 import {WelcomeScreen} from '@/components/auth/WelcomeScreen'
-import {auth, getMicrosoftProfilePhotoDataUrl} from '@/lib/auth'
+import {auth} from '@/lib/auth'
 import {
   getAuthPageContent,
   resolveAuthBrandingProps,
@@ -15,7 +15,6 @@ export default async function Home() {
   }
 
   const content = await getAuthPageContent('welcome')
-  const microsoftProfilePhoto = await getMicrosoftProfilePhotoDataUrl()
   const {screen} = content
   const brandingProps = resolveAuthBrandingProps(content)
   const profileProps = resolveWelcomeProfileProps(content)
@@ -24,7 +23,6 @@ export default async function Home() {
     <WelcomeScreen
       userName={session.user.name}
       userEmail={session.user.email}
-      userImage={microsoftProfilePhoto || session.user.image}
       headline={screen?.headline}
       subline={screen?.subline}
       ctaLabel={screen?.primaryCta?.label}

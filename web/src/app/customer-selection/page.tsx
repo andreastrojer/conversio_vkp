@@ -1,6 +1,12 @@
+import {AccountMenu} from '@/components/auth/AccountMenu'
+import {AuthBrandingShell} from '@/components/layout/AuthBrandingShell'
 import {CustomerSelectionScreen} from '@/components/screens/CustomerSelectionScreen'
 import {auth} from '@/lib/auth'
-import {getAuthPageContent, resolveAuthBrandingProps} from '@/lib/authBranding'
+import {
+  getAuthPageContent,
+  resolveAuthBrandingProps,
+  resolveWelcomeProfileProps,
+} from '@/lib/authBranding'
 import {getCustomerSelectionData} from '@/lib/customerSelection'
 import {redirect} from 'next/navigation'
 
@@ -16,13 +22,22 @@ export default async function CustomerSelectionPage() {
     getCustomerSelectionData(),
   ])
   const brandingProps = resolveAuthBrandingProps(content)
+  const profileProps = resolveWelcomeProfileProps(content)
 
   return (
-    <CustomerSelectionScreen
-      screen={content.screen}
-      segments={customerSelectionData.segments}
-      formQuestions={customerSelectionData.formQuestions}
-      {...brandingProps}
-    />
+    <AuthBrandingShell {...brandingProps}>
+      <AccountMenu
+        userName={session.user.name}
+        userEmail={session.user.email}
+        menuIconUrl={profileProps.informationIconUrl}
+      />
+
+      <CustomerSelectionScreen
+        screen={content.screen}
+        segments={customerSelectionData.segments}
+        formQuestions={customerSelectionData.formQuestions}
+        rightPatternUrl={brandingProps.rightPatternUrl}
+      />
+    </AuthBrandingShell>
   )
 }
