@@ -48,8 +48,8 @@ body {
 
 .login-logo-image {
   display: block;
-  width: clamp(152px, 10.8vw, 176px);
-  max-width: 190px;
+  width: clamp(174px, 11.6vw, 202px);
+  max-width: 212px;
   height: auto;
   object-fit: contain;
   filter: none;
@@ -123,8 +123,8 @@ body {
 
 .welcome-account-summary {
   display: grid;
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   cursor: pointer;
   list-style: none;
   place-items: center;
@@ -158,8 +158,8 @@ body {
 
 .welcome-account-menu-icon {
   display: block;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
 }
 
@@ -684,7 +684,7 @@ body {
 
 .login-start-pattern {
   position: fixed;
-  right: clamp(-170px, -7vw, -90px);
+  right: clamp(-360px, -15vw, -210px);
   bottom: clamp(-360px, -22vh, -220px);
   width: clamp(780px, min(62vw, 94vh), 1120px);
   height: clamp(780px, min(62vw, 94vh), 1120px);
@@ -704,7 +704,7 @@ body {
 
 @media (max-width: 1400px) {
   .login-logo-image {
-    width: 160px;
+    width: clamp(164px, 12vw, 188px);
   }
 
   .login-main-content {
@@ -814,7 +814,7 @@ body {
   }
 
   .login-start-pattern {
-    right: clamp(-150px, -7vw, -86px);
+    right: clamp(-320px, -15vw, -190px);
     bottom: clamp(-330px, -21vh, -205px);
     width: clamp(720px, min(59vw, 90vh), 940px);
     height: clamp(720px, min(59vw, 90vh), 940px);
@@ -828,7 +828,7 @@ body {
   }
 
   .login-logo-image {
-    width: clamp(142px, 9.2vw, 166px);
+    width: clamp(160px, 10.6vw, 184px);
   }
 
   .login-main-content {
@@ -980,7 +980,7 @@ body {
   }
 
   .login-start-pattern {
-    right: clamp(-150px, -7vw, -96px);
+    right: clamp(-340px, -16vw, -200px);
     bottom: clamp(-340px, -22vh, -215px);
     width: clamp(760px, min(58vw, 92vh), 980px);
     height: clamp(760px, min(58vw, 92vh), 980px);

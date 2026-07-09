@@ -41,7 +41,7 @@ export function AccountMenu({
           <img src={resolvedMenuIcon} alt="" className="welcome-account-menu-icon" />
         ) : (
           <span className="welcome-account-avatar-fallback">
-            <Info aria-hidden="true" size={32} strokeWidth={2.1} />
+            <Info aria-hidden="true" size={36} strokeWidth={2.1} />
           </span>
         )}
       </summary>
