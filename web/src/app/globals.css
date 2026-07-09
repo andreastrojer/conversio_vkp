@@ -113,6 +113,7 @@ body {
   position: relative;
   width: clamp(176px, 14.2vw, 204px);
   height: clamp(218px, 17.2vw, 250px);
+  isolation: isolate;
 }
 
 .welcome-portrait-frame {
@@ -125,6 +126,7 @@ body {
   border-radius: 0;
   background: #f2f3f4;
   transform: translateX(-50%);
+  z-index: 1;
 }
 
 .welcome-portrait-image {
@@ -136,29 +138,39 @@ body {
   filter: grayscale(1);
 }
 
-.welcome-portrait-fallback {
-  display: grid;
-  width: 100%;
-  height: 100%;
-  place-items: center;
-  border: 1px solid rgba(61, 66, 72, 0.12);
-  background: #f1f3f5;
-  color: #3d4248;
-  font-family: var(--font-barlow, Arial, Helvetica, sans-serif);
-  font-size: clamp(34px, 3vw, 42px);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
 .welcome-profile-chevron {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: clamp(58px, 5vw, 74px);
+  display: block;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.welcome-profile-chevron-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.welcome-profile-chevron-fallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 176 / 84;
   background: #efb804;
-  clip-path: polygon(0 42%, 50% 78%, 100% 42%, 100% 66%, 50% 100%, 0 66%);
-  z-index: -1;
+  clip-path: polygon(0 34%, 50% 76%, 100% 34%, 100% 56%, 50% 100%, 0 56%);
+}
+
+.welcome-profile-fallback-image {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(14px, 1.25vw, 22px);
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: translateX(-50%);
+  z-index: 1;
 }
 
 .welcome-actions {

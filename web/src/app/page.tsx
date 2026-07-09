@@ -1,6 +1,10 @@
 import {WelcomeScreen} from '@/components/auth/WelcomeScreen'
 import {auth, getMicrosoftProfilePhotoDataUrl} from '@/lib/auth'
-import {getAuthPageContent, resolveAuthBrandingProps} from '@/lib/authBranding'
+import {
+  getAuthPageContent,
+  resolveAuthBrandingProps,
+  resolveWelcomeProfileProps,
+} from '@/lib/authBranding'
 import {redirect} from 'next/navigation'
 
 export default async function Home() {
@@ -14,6 +18,7 @@ export default async function Home() {
   const microsoftProfilePhoto = await getMicrosoftProfilePhotoDataUrl()
   const {screen} = content
   const brandingProps = resolveAuthBrandingProps(content)
+  const profileProps = resolveWelcomeProfileProps(content)
 
   return (
     <WelcomeScreen
@@ -26,6 +31,7 @@ export default async function Home() {
       ctaTarget={screen?.primaryCta?.target}
       logoutLabel={screen?.secondaryCta?.label}
       {...brandingProps}
+      {...profileProps}
     />
   )
 }

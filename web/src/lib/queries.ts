@@ -107,3 +107,62 @@ export const LOGIN_RIGHT_PATTERN_QUERY = defineQuery(groq`*[
   altText,
   image
 }`)
+
+export const WELCOME_PROFILE_CHEVRON_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive == true &&
+  defined(image.asset) &&
+  (
+    title == "Profilcken" ||
+    title == "Profilhaken" ||
+    title == "Profil Haken" ||
+    title == "Profil-Haken" ||
+    title == "profile-chevron" ||
+    title == "welcome-profile-chevron" ||
+    category == "profil-haken" ||
+    category == "profile-chevron" ||
+    category == "welcome-profile-chevron" ||
+    "profil-haken" in tags[] ||
+    "profile-chevron" in tags[] ||
+    "welcome-profile-chevron" in tags[] ||
+    image.asset->originalFilename match "*Profilhacken*"
+  )
+] | order(sortOrder asc, title asc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)
+
+export const WELCOME_PROFILE_FALLBACK_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive == true &&
+  defined(image.asset) &&
+  (
+    title == "Profilcon" ||
+    title == "Profilicon" ||
+    title == "Welcome Profilicon" ||
+    category == "welcome-profile-fallback" ||
+    category == "profile-fallback" ||
+    "welcome-profile-fallback" in tags[] ||
+    "profile-fallback" in tags[] ||
+    image.asset->originalFilename match "*Profilicon*"
+  )
+] | order(_updatedAt desc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)

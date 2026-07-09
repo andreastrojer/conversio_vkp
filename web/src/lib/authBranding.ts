@@ -2,6 +2,8 @@ import {
   LOGIN_RIGHT_PATTERN_QUERY,
   LOGIN_SCREEN_QUERY,
   SITE_SETTINGS_QUERY,
+  WELCOME_PROFILE_CHEVRON_QUERY,
+  WELCOME_PROFILE_FALLBACK_QUERY,
   WELCOME_SCREEN_QUERY,
 } from '@/lib/queries'
 import {sanityClient, urlForImage} from '@/lib/sanity'
@@ -58,10 +60,24 @@ type LoginPatternDocument = {
   image?: SanityImage
 } | null
 
+type ProfileChevronDocument = {
+  title?: string | null
+  altText?: string | null
+  image?: SanityImage
+} | null
+
+type ProfileFallbackDocument = {
+  title?: string | null
+  altText?: string | null
+  image?: SanityImage
+} | null
+
 type AuthPageContent = {
   screen: LoginScreenDocument
   siteSettings: SiteSettingsDocument
   rightPattern: LoginPatternDocument
+  profileChevron: ProfileChevronDocument
+  profileFallback: ProfileFallbackDocument
 }
 
 type AuthScreenKey = 'login' | 'welcome'
@@ -118,13 +134,27 @@ export function buildLogoUrl(image: SanityImage | undefined) {
 export async function getAuthPageContent(screenKey: AuthScreenKey = 'login'): Promise<AuthPageContent> {
   try {
     const screenQuery = screenQueries[screenKey]
-    const [screen, siteSettings, mediaPattern, loginScreen] = await Promise.all([
+    const [screen, siteSettings, mediaPattern, loginScreen, profileChevron, profileFallback] = await Promise.all([
       authBrandingClient.fetch<LoginScreenDocument>(screenQuery, {}, freshFetchOptions),
       authBrandingClient.fetch<SiteSettingsDocument>(SITE_SETTINGS_QUERY, {}, freshFetchOptions),
       authBrandingClient.fetch<LoginPatternDocument>(LOGIN_RIGHT_PATTERN_QUERY, {}, freshFetchOptions),
       screenKey === 'login'
         ? Promise.resolve(null)
         : authBrandingClient.fetch<LoginScreenDocument>(LOGIN_SCREEN_QUERY, {}, freshFetchOptions),
+      screenKey === 'welcome'
+        ? authBrandingClient.fetch<ProfileChevronDocument>(
+            WELCOME_PROFILE_CHEVRON_QUERY,
+            {},
+            freshFetchOptions,
+          )
+        : Promise.resolve(null),
+      screenKey === 'welcome'
+        ? authBrandingClient.fetch<ProfileFallbackDocument>(
+            WELCOME_PROFILE_FALLBACK_QUERY,
+            {},
+            freshFetchOptions,
+          )
+        : Promise.resolve(null),
     ])
     const loginHeroPattern = loginScreen?.heroMedia?.image
       ? {
@@ -135,12 +165,14 @@ export async function getAuthPageContent(screenKey: AuthScreenKey = 'login'): Pr
       : null
     const rightPattern = screenKey === 'login' ? mediaPattern : loginHeroPattern || mediaPattern
 
-    return {screen, siteSettings, rightPattern}
+    return {screen, siteSettings, rightPattern, profileChevron, profileFallback}
   } catch {
     return {
       screen: null,
       siteSettings: null,
       rightPattern: null,
+      profileChevron: null,
+      profileFallback: null,
     }
   }
 }
@@ -164,5 +196,14 @@ export function resolveAuthBrandingProps({screen, siteSettings, rightPattern}: A
     rightPatternAlt,
     footerAddress: siteSettings?.contact?.address,
     legalLinks: siteSettings?.legalLinks,
+  }
+}
+
+export function resolveWelcomeProfileProps({profileChevron, profileFallback}: AuthPageContent) {
+  return {
+    profileChevronUrl:
+      buildLogoUrl(profileChevron?.image) || buildImageUrl(profileChevron?.image, 360, undefined, 100),
+    profileFallbackUrl:
+      buildLogoUrl(profileFallback?.image) || buildImageUrl(profileFallback?.image, 420, undefined, 100),
   }
 }

@@ -18,6 +18,8 @@ type WelcomeScreenProps = {
   logoAlt?: string
   rightPatternUrl?: string
   rightPatternAlt?: string
+  profileChevronUrl?: string
+  profileFallbackUrl?: string
   footerAddress?: string | null
   legalLinks?: AuthBrandingLegalLink[] | null
 }
@@ -44,15 +46,6 @@ function getFirstName(userName?: string | null, userEmail?: string | null) {
   const [firstName] = source.split(/\s+/)
 
   return (firstName || 'Benutzer').toLocaleUpperCase('de-AT')
-}
-
-function getInitials(userName?: string | null, userEmail?: string | null) {
-  const source = getDisplaySource(userName, userEmail)
-  const parts = source.split(/\s+/).filter(Boolean)
-  const firstInitial = parts[0]?.charAt(0) || 'B'
-  const secondInitial = parts[1]?.charAt(0) || parts[0]?.charAt(1) || ''
-
-  return `${firstInitial}${secondInitial}`.toLocaleUpperCase('de-AT')
 }
 
 function resolveWelcomeHeadline(headline: string | null | undefined, firstName: string) {
@@ -102,11 +95,15 @@ export function WelcomeScreen({
   logoAlt,
   rightPatternUrl,
   rightPatternAlt,
+  profileChevronUrl,
+  profileFallbackUrl,
   footerAddress,
   legalLinks,
 }: WelcomeScreenProps) {
   const firstName = getFirstName(userName, userEmail)
-  const initials = getInitials(userName, userEmail)
+  const resolvedUserImage = userImage?.trim() || undefined
+  const resolvedProfileFallbackUrl = profileFallbackUrl?.trim() || undefined
+  const hasUserImage = Boolean(resolvedUserImage)
   const headlineLines = resolveWelcomeHeadline(headline, firstName)
   const resolvedSubline = subline?.trim()
   const resolvedCtaLabel = ctaLabel?.trim() || fallbackCtaLabel
@@ -140,21 +137,38 @@ export function WelcomeScreen({
 
         <div className="welcome-lower-row">
           <div className="welcome-profile-figure" aria-label={userName || userEmail || 'Profil'}>
-            <div className="welcome-portrait-frame">
-              {userImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={userImage}
-                  alt={userName || userEmail || 'Microsoft Profilbild'}
-                  className="welcome-portrait-image"
-                />
-              ) : (
-                <span className="welcome-portrait-fallback" aria-hidden="true">
-                  {initials}
+            {hasUserImage ? (
+              <>
+                <div className="welcome-portrait-frame">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolvedUserImage}
+                    alt={userName || userEmail || 'Microsoft Profilbild'}
+                    className="welcome-portrait-image"
+                  />
+                </div>
+                <span className="welcome-profile-chevron" aria-hidden="true">
+                  {profileChevronUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profileChevronUrl}
+                      alt=""
+                      className="welcome-profile-chevron-image"
+                    />
+                  ) : (
+                    <span className="welcome-profile-chevron-fallback" />
+                  )}
                 </span>
-              )}
-            </div>
-            <span className="welcome-profile-chevron" aria-hidden="true" />
+              </>
+            ) : resolvedProfileFallbackUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={resolvedProfileFallbackUrl}
+                alt=""
+                className="welcome-profile-fallback-image"
+                aria-hidden="true"
+              />
+            ) : null}
           </div>
 
           <div className="welcome-actions font-barlow">
