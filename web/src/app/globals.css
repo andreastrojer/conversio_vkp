@@ -85,8 +85,8 @@ body {
 
 .welcome-main-content {
   left: clamp(48px, 3.9vw, 60px);
-  top: 58%;
-  max-width: min(760px, calc(100vw - 660px));
+  top: 54%;
+  max-width: min(860px, calc(100vw - 620px));
 }
 
 .welcome-title {
@@ -95,33 +95,37 @@ body {
 }
 
 .welcome-subline {
-  margin-top: 24px;
+  margin-top: clamp(92px, 11vh, 128px);
   max-width: 520px;
   font-size: 22px;
   letter-spacing: 0.006em;
   line-height: 1.3;
 }
 
-.welcome-lower-row {
-  margin-top: clamp(58px, 7.4vh, 82px);
+.welcome-profile-row {
+  margin-top: clamp(36px, 4.4vh, 54px);
+}
+
+.welcome-profile-panel {
   display: flex;
-  align-items: flex-end;
-  gap: clamp(42px, 4vw, 64px);
+  align-items: center;
+  gap: clamp(28px, 3.2vw, 44px);
 }
 
 .welcome-profile-figure {
   position: relative;
-  width: clamp(176px, 14.2vw, 204px);
-  height: clamp(218px, 17.2vw, 250px);
+  width: clamp(136px, 10vw, 158px);
+  height: clamp(106px, 7.8vw, 128px);
+  flex: 0 0 auto;
   isolation: isolate;
 }
 
 .welcome-portrait-frame {
   position: absolute;
   left: 50%;
-  bottom: clamp(28px, 2.6vw, 36px);
-  width: clamp(122px, 10.2vw, 148px);
-  height: clamp(152px, 13.2vw, 190px);
+  bottom: clamp(20px, 1.7vw, 26px);
+  width: clamp(80px, 5.8vw, 94px);
+  height: clamp(98px, 7vw, 116px);
   overflow: hidden;
   border-radius: 0;
   background: #f2f3f4;
@@ -165,7 +169,7 @@ body {
 .welcome-profile-fallback-image {
   position: absolute;
   left: 50%;
-  bottom: clamp(14px, 1.25vw, 22px);
+  bottom: 0;
   display: block;
   width: 100%;
   height: auto;
@@ -173,25 +177,45 @@ body {
   z-index: 1;
 }
 
-.welcome-actions {
+.welcome-session-panel {
   display: flex;
-  min-width: 220px;
-  max-width: 310px;
   flex-direction: column;
   align-items: flex-start;
-  gap: 18px;
-  padding-bottom: clamp(18px, 2vw, 28px);
+  gap: 8px;
+}
+
+.welcome-session-label {
+  color: #3d4248;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.welcome-step-row {
+  margin-top: clamp(48px, 6vh, 72px);
+  display: flex;
+  align-items: center;
+}
+
+.welcome-selection-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding-top: 0;
 }
 
 .welcome-next-button {
   display: inline-flex;
-  min-width: 152px;
-  height: 44px;
+  min-width: clamp(312px, 25vw, 368px);
+  height: 50px;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 20px;
   border-radius: 999px;
   background: #efb804;
-  padding-inline: 28px;
+  padding-inline: 30px;
   color: #3d4248;
   font-size: 17px;
   font-weight: 700;
@@ -207,11 +231,38 @@ body {
   box-shadow: 0 10px 24px rgba(239, 184, 4, 0.22);
 }
 
-.welcome-logout-area {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+.welcome-next-arrow {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.welcome-next-arrow::before,
+.welcome-next-arrow::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.welcome-next-arrow::before {
+  top: 50%;
+  left: 0;
+  width: 27px;
+  height: 2px;
+  background: currentColor;
+  transform: translateY(-50%);
+}
+
+.welcome-next-arrow::after {
+  top: 50%;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
 }
 
 .welcome-email {
@@ -223,6 +274,197 @@ body {
 
 .welcome-logout-button {
   height: 36px;
+}
+
+.customer-selection-layout {
+  left: clamp(48px, 3.9vw, 60px);
+  right: clamp(52px, 4.2vw, 60px);
+  top: clamp(188px, 21vh, 215px);
+  bottom: clamp(74px, 7.2vh, 92px);
+  display: grid;
+  grid-template-columns: clamp(860px, 65vw, 1160px) minmax(340px, 370px);
+  column-gap: clamp(46px, 4.8vw, 70px);
+  justify-content: start;
+  align-items: stretch;
+  transform: translateX(clamp(120px, 7vw, 170px));
+}
+
+.customer-selection-cards {
+  --selection-card-left-expansion: clamp(122px, 6.7vw, 164px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: calc(100% + var(--selection-card-left-expansion));
+  min-height: 540px;
+  max-height: 735px;
+  transform: translateX(calc(var(--selection-card-left-expansion) * -1));
+}
+
+.customer-selection-card {
+  position: relative;
+  display: flex;
+  min-height: 100%;
+  overflow: hidden;
+  border-radius: 22px;
+  isolation: isolate;
+  padding: clamp(34px, 2.8vw, 40px);
+  transition:
+    outline-color 160ms ease,
+    transform 160ms ease;
+}
+
+.customer-selection-card.is-active {
+  outline: 3px solid rgba(61, 66, 72, 0.26);
+  outline-offset: 5px;
+  transform: translateY(-4px);
+}
+
+.customer-selection-card--b2c {
+  background: #efb804;
+  color: #3d4248;
+}
+
+.customer-selection-card--b2b {
+  background: #3d4248;
+  color: #ffffff;
+}
+
+.customer-selection-card-pattern {
+  position: absolute;
+  top: -70px;
+  right: -118px;
+  z-index: 0;
+  display: block;
+  width: 390px;
+  height: 390px;
+  background-image: var(--selection-card-pattern-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+}
+
+.customer-selection-card--b2c .customer-selection-card-pattern {
+  filter: brightness(0) saturate(100%) invert(21%) sepia(7%) saturate(703%) hue-rotate(169deg) brightness(92%) contrast(88%);
+  opacity: 0.92;
+}
+
+.customer-selection-card--b2b .customer-selection-card-pattern {
+  filter: brightness(0) saturate(100%) invert(76%) sepia(79%) saturate(1396%) hue-rotate(359deg) brightness(99%) contrast(91%);
+  opacity: 0.62;
+}
+
+.customer-selection-card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 350px;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-self: flex-end;
+}
+
+.customer-selection-card h2 {
+  font-size: clamp(42px, 3.35vw, 48px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.customer-selection-card p {
+  margin-top: 24px;
+  max-width: 340px;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.012em;
+  line-height: 1.42;
+}
+
+.customer-selection-card-button {
+  margin-top: 34px;
+  display: inline-flex;
+  width: 206px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.customer-selection-card-button:hover {
+  transform: translateY(-1px);
+}
+
+.customer-selection-card--b2c .customer-selection-card-button {
+  background: #3d4248;
+  color: #ffffff;
+}
+
+.customer-selection-card--b2b .customer-selection-card-button {
+  background: #ffffff;
+  color: #3d4248;
+}
+
+.customer-info-form {
+  position: relative;
+  z-index: 1;
+  width: min(370px, 100%);
+  padding-top: 14px;
+  justify-self: end;
+  color: #3d4248;
+}
+
+.customer-info-form h2 {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.018em;
+  line-height: 1;
+}
+
+.customer-info-fields {
+  margin-top: 72px;
+}
+
+.customer-info-field {
+  display: block;
+  margin-bottom: 28px;
+}
+
+.customer-info-field span {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.customer-info-field input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 38px;
+  border: 0;
+  border-bottom: 2px solid #3d4248;
+  background: transparent;
+  color: #3d4248;
+  font: inherit;
+  font-size: 18px;
+  outline: none;
+}
+
+.customer-info-field input::placeholder {
+  color: rgba(61, 66, 72, 0.38);
+}
+
+.customer-info-field input:focus {
+  border-bottom-color: #efb804;
 }
 
 .login-footer {
@@ -283,29 +525,70 @@ body {
   }
 
   .welcome-main-content {
-    max-width: min(680px, calc(100vw - 600px));
+    top: 54%;
+    max-width: min(800px, calc(100vw - 560px));
   }
 
   .welcome-title {
     font-size: 62px;
   }
 
-  .welcome-lower-row {
-    margin-top: 58px;
-  }
-
   .welcome-profile-figure {
-    width: 184px;
-    height: 226px;
+    width: 140px;
+    height: 112px;
   }
 
   .welcome-portrait-frame {
-    width: 132px;
-    height: 166px;
+    bottom: 21px;
+    width: 82px;
+    height: 104px;
   }
 
-  .welcome-actions {
-    max-width: 290px;
+  .welcome-step-row {
+    margin-top: 82px;
+  }
+
+  .customer-selection-layout {
+    left: clamp(46px, 3.4vw, 56px);
+    right: clamp(48px, 4vw, 58px);
+    top: clamp(166px, 20vh, 190px);
+    bottom: 72px;
+    grid-template-columns: clamp(760px, 62vw, 1040px) minmax(312px, 340px);
+    column-gap: clamp(42px, 4vw, 58px);
+    justify-content: start;
+  }
+
+  .customer-selection-cards {
+    gap: 18px;
+    min-height: 510px;
+  }
+
+  .customer-selection-card {
+    border-radius: 20px;
+    padding: 34px;
+  }
+
+  .customer-selection-card-pattern {
+    top: -68px;
+    right: -120px;
+    width: 350px;
+    height: 350px;
+  }
+
+  .customer-selection-card h2 {
+    font-size: 42px;
+  }
+
+  .customer-selection-card p {
+    font-size: 17px;
+  }
+
+  .customer-info-form h2 {
+    font-size: 30px;
+  }
+
+  .customer-info-fields {
+    margin-top: 64px;
   }
 
   .login-start-pattern {
@@ -362,8 +645,8 @@ body {
 
   .welcome-main-content {
     left: clamp(46px, 3.6vw, 60px);
-    top: 58%;
-    max-width: min(640px, calc(100vw - 600px));
+    top: 54%;
+    max-width: min(760px, calc(100vw - 520px));
   }
 
   .welcome-title {
@@ -372,29 +655,90 @@ body {
   }
 
   .welcome-subline {
-    margin-top: 20px;
+    margin-top: 74px;
     font-size: 20px;
   }
 
-  .welcome-lower-row {
-    margin-top: clamp(44px, 6vh, 58px);
-    gap: 38px;
-  }
-
   .welcome-profile-figure {
-    width: 172px;
-    height: 212px;
+    width: 126px;
+    height: 100px;
   }
 
   .welcome-portrait-frame {
-    width: 124px;
-    height: 156px;
+    bottom: 19px;
+    width: 74px;
+    height: 94px;
   }
 
-  .welcome-actions {
-    min-width: 200px;
-    max-width: 280px;
-    padding-bottom: 18px;
+  .welcome-profile-row {
+    margin-top: 32px;
+  }
+
+  .welcome-step-row {
+    margin-top: clamp(36px, 5vh, 56px);
+  }
+
+  .welcome-next-button {
+    min-width: 300px;
+    height: 46px;
+    font-size: 16px;
+  }
+
+  .customer-selection-layout {
+    left: clamp(46px, 3.4vw, 56px);
+    right: clamp(46px, 3.8vw, 56px);
+    top: clamp(154px, 18.5vh, 178px);
+    bottom: 66px;
+    grid-template-columns: clamp(840px, 60vw, 1140px) minmax(286px, 320px);
+    column-gap: clamp(44px, 3vw, 56px);
+    justify-content: start;
+  }
+
+  .customer-selection-cards {
+    min-height: 470px;
+  }
+
+  .customer-selection-card {
+    padding: 30px;
+  }
+
+  .customer-selection-card-pattern {
+    top: -64px;
+    right: -116px;
+    width: 315px;
+    height: 315px;
+  }
+
+  .customer-selection-card h2 {
+    font-size: 38px;
+  }
+
+  .customer-selection-card p {
+    margin-top: 22px;
+    font-size: 16px;
+  }
+
+  .customer-selection-card-button {
+    margin-top: 28px;
+    width: 186px;
+    height: 31px;
+    font-size: 14px;
+  }
+
+  .customer-info-form h2 {
+    font-size: 28px;
+  }
+
+  .customer-info-fields {
+    margin-top: 58px;
+  }
+
+  .customer-info-field {
+    margin-bottom: 24px;
+  }
+
+  .customer-info-field span {
+    font-size: 15px;
   }
 
   .login-start-pattern {

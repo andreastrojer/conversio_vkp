@@ -53,11 +53,113 @@ export const WELCOME_SCREEN_QUERY = defineQuery(groq`*[
     title,
     eyebrow,
     text,
+    cta,
     layout,
     visibleFor,
     sortOrder,
     image
   }
+}`)
+
+export const CUSTOMER_SELECTION_SCREEN_QUERY = defineQuery(groq`*[
+  _type == "appScreen" &&
+  screenKey.current == "customer-selection" &&
+  isActive == true
+][0]{
+  title,
+  "screenKey": screenKey.current,
+  headline,
+  subline,
+  heroImage,
+  heroMedia->{
+    title,
+    altText,
+    mediaType,
+    image
+  },
+  primaryCta,
+  secondaryCta,
+  sections[]{
+    _key,
+    title,
+    eyebrow,
+    text,
+    visibleFor,
+    layout,
+    sortOrder,
+    cta,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    media->{
+      title,
+      altText,
+      mediaType,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    "patternUrl": coalesce(media->image.asset->url, image.asset->url)
+  }
+}`)
+
+export const CUSTOMER_SEGMENT_CONTENT_QUERY = defineQuery(groq`*[
+  _type == "segmentContent" &&
+  isActive == true
+] | order(sortOrder asc){
+  title,
+  "segmentKey": segmentKey.current,
+  targetGroup,
+  headline,
+  mainText,
+  focusText,
+  ctaText,
+  sortOrder
+}`)
+
+export const CUSTOMER_INFO_QUESTION_SET_QUERY = defineQuery(groq`*[
+  _type == "questionSet" &&
+  slug.current == "customer-info" &&
+  isActive == true
+][0]{
+  title,
+  "slug": slug.current,
+  introText,
+  questions[]->{
+    title,
+    questionText,
+    helpText,
+    targetGroup,
+    answerType,
+    unit,
+    placeholder,
+    isRequired,
+    sortOrder
+  }
+}`)
+
+export const CUSTOMER_INFO_FORM_QUESTIONS_QUERY = defineQuery(groq`*[
+  _type == "formQuestion" &&
+  isActive == true &&
+  answerType in ["name", "telefon", "email"]
+] | order(sortOrder asc){
+  title,
+  questionText,
+  helpText,
+  targetGroup,
+  answerType,
+  unit,
+  placeholder,
+  isRequired,
+  sortOrder
 }`)
 
 export const SITE_SETTINGS_QUERY = defineQuery(groq`*[_type == "siteSettings"][0]{

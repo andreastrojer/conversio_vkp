@@ -25,8 +25,8 @@ type WelcomeScreenProps = {
 }
 
 const fallbackHeadline = 'WILLKOMMEN,'
-const fallbackCtaLabel = 'Weiter'
-const fallbackCtaTarget = '/beratung'
+const fallbackCtaLabel = 'Kundengruppe auswählen'
+const fallbackCtaTarget = '/customer-selection'
 const fallbackLogoutLabel = 'Abmelden'
 
 function getDisplaySource(userName?: string | null, userEmail?: string | null) {
@@ -71,6 +71,16 @@ function resolveTargetHref(target: string | null | undefined) {
   }
 
   if (
+    cleanTarget === 'intro' ||
+    cleanTarget === '/intro' ||
+    cleanTarget === 'kundengruppe' ||
+    cleanTarget === 'customerSelection' ||
+    cleanTarget === 'customer-selection'
+  ) {
+    return fallbackCtaTarget
+  }
+
+  if (
     cleanTarget.startsWith('/') ||
     cleanTarget.startsWith('#') ||
     cleanTarget.startsWith('http://') ||
@@ -108,6 +118,7 @@ export function WelcomeScreen({
   const resolvedSubline = subline?.trim()
   const resolvedCtaLabel = ctaLabel?.trim() || fallbackCtaLabel
   const resolvedLogoutLabel = logoutLabel?.trim() || fallbackLogoutLabel
+  const loginIdentity = userEmail || userName || 'Microsoft-Konto'
   const ctaHref = resolveTargetHref(ctaTarget)
 
   return (
@@ -129,63 +140,67 @@ export function WelcomeScreen({
           ))}
         </h1>
 
-        {resolvedSubline ? (
-          <p className="welcome-subline font-barlow font-normal text-[#3d4248]">
-            {resolvedSubline}
-          </p>
-        ) : null}
-
-        <div className="welcome-lower-row">
-          <div className="welcome-profile-figure" aria-label={userName || userEmail || 'Profil'}>
-            {hasUserImage ? (
-              <>
-                <div className="welcome-portrait-frame">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={resolvedUserImage}
-                    alt={userName || userEmail || 'Microsoft Profilbild'}
-                    className="welcome-portrait-image"
-                  />
-                </div>
-                <span className="welcome-profile-chevron" aria-hidden="true">
-                  {profileChevronUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+        <div className="welcome-profile-row">
+          <div className="welcome-profile-panel" aria-label={userName || userEmail || 'Profil'}>
+            <div className="welcome-profile-figure" aria-label={userName || userEmail || 'Profil'}>
+              {hasUserImage ? (
+                <>
+                  <div className="welcome-portrait-frame">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={profileChevronUrl}
-                      alt=""
-                      className="welcome-profile-chevron-image"
+                      src={resolvedUserImage}
+                      alt={userName || userEmail || 'Microsoft Profilbild'}
+                      className="welcome-portrait-image"
                     />
-                  ) : (
-                    <span className="welcome-profile-chevron-fallback" />
-                  )}
-                </span>
-              </>
-            ) : resolvedProfileFallbackUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={resolvedProfileFallbackUrl}
-                alt=""
-                className="welcome-profile-fallback-image"
-                aria-hidden="true"
-              />
-            ) : null}
-          </div>
-
-          <div className="welcome-actions font-barlow">
-            <Link href={ctaHref} className="welcome-next-button">
-              {resolvedCtaLabel}
-            </Link>
-
-            <div className="welcome-logout-area">
-              {userEmail ? (
-                <p className="welcome-email">Angemeldet als {userEmail}</p>
+                  </div>
+                  <span className="welcome-profile-chevron" aria-hidden="true">
+                    {profileChevronUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={profileChevronUrl}
+                        alt=""
+                        className="welcome-profile-chevron-image"
+                      />
+                    ) : (
+                      <span className="welcome-profile-chevron-fallback" />
+                    )}
+                  </span>
+                </>
+              ) : resolvedProfileFallbackUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={resolvedProfileFallbackUrl}
+                  alt=""
+                  className="welcome-profile-fallback-image"
+                  aria-hidden="true"
+                />
               ) : null}
+            </div>
+
+            <div className="welcome-session-panel font-barlow">
+              <p className="welcome-session-label">Sie sind eingeloggt mit</p>
+              <p className="welcome-email">{loginIdentity}</p>
 
               <LogoutButton
                 label={resolvedLogoutLabel}
                 className="welcome-logout-button font-barlow inline-flex items-center justify-center rounded-full border border-[#3d4248]/18 bg-white px-5 text-[14px] font-medium text-[#3d4248] transition hover:border-[#3d4248]/35 hover:bg-[#f6f6f6]"
               />
             </div>
+          </div>
+        </div>
+
+        {resolvedSubline ? (
+          <p className="welcome-subline font-barlow font-normal text-[#3d4248]">
+            {resolvedSubline}
+          </p>
+        ) : null}
+
+        <div className="welcome-step-row font-barlow">
+          <div className="welcome-selection-panel">
+            <Link href={ctaHref} className="welcome-next-button">
+              <span>{resolvedCtaLabel}</span>
+              <span className="welcome-next-arrow" aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </section>

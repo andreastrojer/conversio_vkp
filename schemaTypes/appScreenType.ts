@@ -148,6 +148,39 @@ export const appScreenType = defineType({
               to: [{ type: 'mediaAsset' }],
             }),
             defineField({
+              name: 'cta',
+              title: 'Section CTA / Button',
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'label',
+                  title: 'Button-Text',
+                  type: 'string',
+                  initialValue: 'JETZT STARTEN',
+                }),
+                defineField({
+                  name: 'target',
+                  title: 'Ziel / Aktion',
+                  type: 'string',
+                  description: 'Z. B. customer-type:b2c, customer-type:b2b oder ein Screen-Key.',
+                }),
+                defineField({
+                  name: 'style',
+                  title: 'Button-Stil',
+                  type: 'string',
+                  options: {
+                    list: [
+                      { title: 'Dunkel', value: 'dark' },
+                      { title: 'Hell', value: 'light' },
+                      { title: 'Gelb', value: 'yellow' },
+                    ],
+                    layout: 'radio',
+                  },
+                  initialValue: 'dark',
+                }),
+              ],
+            }),
+            defineField({
               name: 'visibleFor',
               title: 'Sichtbar für',
               type: 'string',

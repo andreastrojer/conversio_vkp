@@ -1,4 +1,5 @@
 import {
+  CUSTOMER_SELECTION_SCREEN_QUERY,
   LOGIN_RIGHT_PATTERN_QUERY,
   LOGIN_SCREEN_QUERY,
   SITE_SETTINGS_QUERY,
@@ -38,6 +39,21 @@ export type LoginScreenDocument = {
     label?: string | null
     target?: string | null
   } | null
+  sections?: {
+    _key?: string | null
+    title?: string | null
+    eyebrow?: string | null
+    text?: string | null
+    visibleFor?: string | null
+    layout?: string | null
+    sortOrder?: number | null
+    cta?: {
+      label?: string | null
+      target?: string | null
+      style?: string | null
+    } | null
+    patternUrl?: string | null
+  }[] | null
 } | null
 
 export type SiteSettingsDocument = {
@@ -80,13 +96,14 @@ type AuthPageContent = {
   profileFallback: ProfileFallbackDocument
 }
 
-type AuthScreenKey = 'login' | 'welcome'
+type AuthScreenKey = 'login' | 'welcome' | 'customer-selection'
 
 const authBrandingClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
 const screenQueries: Record<AuthScreenKey, string> = {
   login: LOGIN_SCREEN_QUERY,
   welcome: WELCOME_SCREEN_QUERY,
+  'customer-selection': CUSTOMER_SELECTION_SCREEN_QUERY,
 }
 
 export function buildImageUrl(image: SanityImage | undefined, width: number, height?: number, quality = 85) {
