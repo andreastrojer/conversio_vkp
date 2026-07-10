@@ -1,4 +1,4 @@
-import type {CSSProperties, ReactNode} from 'react'
+import type {ReactNode} from 'react'
 import Link from 'next/link'
 
 export type AuthBrandingLegalLink = {
@@ -18,10 +18,24 @@ type AuthBrandingShellProps = {
 
 const fallbackFooterAddress = 'KOSCHATSTRASSE 24, 9800 SPITTAL/DRAU'
 
+const screenClassName =
+  'relative isolate min-h-screen w-screen overflow-hidden bg-white text-[#3d4248] max-[900px]:min-h-[100svh] max-[900px]:overflow-x-hidden max-[900px]:overflow-y-auto'
+const patternFrameClassName =
+  'fixed right-[clamp(-360px,-15vw,-210px)] bottom-[clamp(-360px,-22vh,-220px)] z-0 block h-[clamp(780px,min(62vw,94vh),1120px)] w-[clamp(780px,min(62vw,94vh),1120px)] pointer-events-none max-[1400px]:right-[clamp(-320px,-15vw,-190px)] max-[1400px]:bottom-[clamp(-330px,-21vh,-205px)] max-[1400px]:h-[clamp(720px,min(59vw,90vh),940px)] max-[1400px]:w-[clamp(720px,min(59vw,90vh),940px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!right-[clamp(-340px,-16vw,-200px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!bottom-[clamp(-340px,-22vh,-215px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!h-[clamp(760px,min(58vw,92vh),980px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(760px,min(58vw,92vh),980px)]'
+const patternImageClassName =
+  `${patternFrameClassName} bg-contain bg-center bg-no-repeat opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]`
+const patternFallbackClassName = `${patternFrameClassName} opacity-[0.08] [transform:rotate(30deg)]`
+const logoPositionClassName =
+  'absolute left-[clamp(48px,3.9vw,60px)] top-[clamp(46px,3.9vw,60px)] z-10 [@media_(min-width:1024px)_and_(max-height:950px)]:left-[clamp(46px,3.2vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:top-[clamp(40px,4.6vh,52px)]'
+const logoImageClassName =
+  'block h-auto w-[clamp(196px,13.2vw,236px)] max-w-[242px] object-contain opacity-100 [filter:none] [image-rendering:auto] [transform:none] max-[1400px]:w-[clamp(184px,13.2vw,222px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(176px,11.8vw,210px)]'
+const footerClassName =
+  'absolute bottom-9 left-[clamp(48px,3.9vw,60px)] z-10 flex items-center gap-[clamp(22px,1.8vw,28px)] font-sans text-[16px] font-normal uppercase tracking-[0.02em] text-[#3d4248] [@media_(min-width:1024px)_and_(max-height:950px)]:bottom-[30px] [@media_(min-width:1024px)_and_(max-height:950px)]:gap-[22px] [@media_(min-width:1024px)_and_(max-height:950px)]:text-[14px]'
+
 function ConversioLogo() {
   return (
     <div
-      className="conversio-logo-fallback flex items-center gap-3 text-[#3d4248]"
+      className="flex items-center gap-3 font-[Arial,Helvetica,sans-serif] text-[#3d4248]"
       aria-label="Conversio Energie"
     >
       <div className="relative grid h-10 w-10 place-items-center text-[#efb804]">
@@ -76,35 +90,36 @@ export function AuthBrandingShell({
   const imprintLink = findLegalLink(legalLinks, /impress/i, 'IMPRESSUM')
   const privacyLink = findLegalLink(legalLinks, /(datenschutz|privacy)/i, 'DATENSCHUTZ')
   const patternStyle = rightPatternUrl
-    ? ({
-        '--login-pattern-image': `url("${rightPatternUrl}")`,
-      } as CSSProperties & {'--login-pattern-image': string})
+    ? {backgroundImage: `url("${rightPatternUrl}")`}
     : undefined
 
   return (
-    <main className="login-start-screen relative min-h-screen w-screen overflow-hidden bg-white text-[#3d4248]">
+    <main className={screenClassName}>
       {rightPatternUrl ? (
         <span
           aria-hidden="true"
           title={rightPatternAlt || undefined}
-          className="login-start-pattern pointer-events-none z-0 block bg-contain bg-center bg-no-repeat"
+          className={patternImageClassName}
           style={patternStyle}
         />
       ) : (
         <span
           aria-hidden="true"
-          className="login-start-pattern login-start-pattern-fallback pointer-events-none z-0"
-        />
+          className={patternFallbackClassName}
+        >
+          <span className="absolute inset-[84px] border-[58px] border-solid border-[#3d4248] [clip-path:polygon(50%_0,92%_25%,92%_75%,50%_100%,8%_75%,8%_25%)]" />
+          <span className="absolute bottom-[18px] left-[30px] right-[30px] h-[58px] bg-[#3d4248] [box-shadow:-84px_-184px_0_#3d4248,122px_-332px_0_#3d4248,-22px_-514px_0_#3d4248] [transform:skewY(-31deg)]" />
+        </span>
       )}
 
-      <div className="login-logo absolute z-10">
-        <Link href="/" className="login-logo-link" aria-label="Zur Welcome-Seite">
+      <div className={logoPositionClassName}>
+        <Link href="/" className="block w-max cursor-pointer" aria-label="Zur Welcome-Seite">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt={logoAlt}
-              className="login-logo-image"
+              className={logoImageClassName}
             />
           ) : (
             <ConversioLogo />
@@ -114,7 +129,7 @@ export function AuthBrandingShell({
 
       {children}
 
-      <footer className="login-footer font-barlow absolute z-10 flex items-center font-normal uppercase text-[#3d4248]">
+      <footer className={footerClassName}>
         <FooterLink label={imprintLink.label.toLocaleUpperCase('de-AT')} url={imprintLink.url} />
         <FooterLink label={privacyLink.label.toLocaleUpperCase('de-AT')} url={privacyLink.url} />
         <span aria-hidden="true" className="text-[20px] font-normal leading-none">
