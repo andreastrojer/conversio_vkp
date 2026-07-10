@@ -159,6 +159,15 @@ export const appScreenType = defineType({
                   initialValue: 'JETZT STARTEN',
                 }),
                 defineField({
+                  name: 'image',
+                  title: 'Button-Bild / Pfeil-Bild',
+                  type: 'image',
+                  description: 'Bild für den CTA, z. B. ein Pfeil-Icon oder runder Weiter-Button.',
+                  options: {
+                    hotspot: true,
+                  },
+                }),
+                defineField({
                   name: 'target',
                   title: 'Ziel / Aktion',
                   type: 'string',

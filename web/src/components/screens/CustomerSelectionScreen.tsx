@@ -14,6 +14,8 @@ type CustomerSelectionScreenProps = {
   screen?: LoginScreenDocument
   segments?: CustomerSegmentDocument[]
   formQuestions?: CustomerInfoQuestion[]
+  privateCtaIconUrl?: string
+  businessCtaIconUrl?: string
   rightPatternUrl?: string
 }
 
@@ -23,6 +25,7 @@ type CustomerCard = {
   text: string
   ctaLabel: string
   ctaTarget: string
+  ctaIconUrl?: string | null
   patternUrl?: string | null
 }
 
@@ -110,6 +113,8 @@ function findSegmentForGroup(segments: CustomerSegmentDocument[], group: Custome
 function buildCustomerCards(
   sections: ScreenSection[] | null | undefined,
   segments: CustomerSegmentDocument[] | null | undefined,
+  privateCtaIconUrl?: string,
+  businessCtaIconUrl?: string,
 ) {
   const sortedSections = [...(sections || [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
   const groups: CustomerGroup[] = ['b2c', 'b2b']
@@ -129,6 +134,7 @@ function buildCustomerCards(
       text,
       ctaLabel: ctaLabel.toLocaleUpperCase('de-AT'),
       ctaTarget,
+      ctaIconUrl: group === 'b2c' ? privateCtaIconUrl : businessCtaIconUrl,
       patternUrl: section?.patternUrl,
     }
   })
@@ -244,9 +250,14 @@ export function CustomerSelectionScreen({
   screen,
   segments,
   formQuestions,
+  privateCtaIconUrl,
+  businessCtaIconUrl,
   rightPatternUrl,
 }: CustomerSelectionScreenProps) {
-  const cards = useMemo(() => buildCustomerCards(screen?.sections, segments), [screen?.sections, segments])
+  const cards = useMemo(
+    () => buildCustomerCards(screen?.sections, segments, privateCtaIconUrl, businessCtaIconUrl),
+    [screen?.sections, segments, privateCtaIconUrl, businessCtaIconUrl],
+  )
   const questions = formQuestions && formQuestions.length > 0 ? formQuestions : fallbackQuestions
   const [selectedCustomerType, setSelectedCustomerType] = useState<CustomerGroup | null>(null)
   const [formValues, setFormValues] = useState<Record<string, string>>({})
@@ -327,7 +338,18 @@ export function CustomerSelectionScreen({
                   className="customer-selection-card-button"
                   onClick={() => handleCustomerStart(card.customerType)}
                 >
-                  {card.ctaLabel}
+                  <span className="customer-selection-card-button-label">{card.ctaLabel}</span>
+                  {card.ctaIconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={card.ctaIconUrl}
+                      alt=""
+                      className="customer-selection-card-button-icon"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <span className="customer-selection-card-button-arrow-fallback" aria-hidden="true" />
+                  )}
                 </button>
               </div>
             </article>

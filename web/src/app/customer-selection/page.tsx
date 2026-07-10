@@ -36,6 +36,8 @@ export default async function CustomerSelectionPage() {
         screen={content.screen}
         segments={customerSelectionData.segments}
         formQuestions={customerSelectionData.formQuestions}
+        privateCtaIconUrl={customerSelectionData.privateCtaIconUrl}
+        businessCtaIconUrl={customerSelectionData.businessCtaIconUrl}
         rightPatternUrl={brandingProps.rightPatternUrl}
       />
     </AuthBrandingShell>

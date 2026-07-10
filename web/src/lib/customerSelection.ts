@@ -1,9 +1,11 @@
 import {
   CUSTOMER_INFO_FORM_QUESTIONS_QUERY,
   CUSTOMER_INFO_QUESTION_SET_QUERY,
+  CUSTOMER_SELECTION_BUSINESS_CTA_ICON_QUERY,
+  CUSTOMER_SELECTION_PRIVATE_CTA_ICON_QUERY,
   CUSTOMER_SEGMENT_CONTENT_QUERY,
 } from '@/lib/queries'
-import {sanityClient} from '@/lib/sanity'
+import {sanityClient, urlForImage} from '@/lib/sanity'
 
 export type CustomerGroup = 'b2c' | 'b2b'
 
@@ -30,6 +32,22 @@ export type CustomerInfoQuestion = {
   sortOrder?: number | null
 }
 
+type SanityImage = {
+  asset?: {_ref?: string; _id?: string; url?: string} | null
+  assetUrl?: string
+  mimeType?: string
+  extension?: string
+  originalFilename?: string
+  crop?: unknown
+  hotspot?: unknown
+} | null
+
+type CustomerSelectionIconDocument = {
+  title?: string | null
+  altText?: string | null
+  image?: SanityImage
+} | null
+
 type CustomerInfoQuestionSet = {
   title?: string | null
   slug?: string | null
@@ -44,9 +62,33 @@ function sortQuestions(questions: CustomerInfoQuestion[]) {
   return [...questions].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
 }
 
+function buildIconUrl(image: SanityImage | undefined) {
+  if (!image?.asset) {
+    return undefined
+  }
+
+  const directAssetUrl = image.assetUrl || image.asset.url
+  const isSvg =
+    image.mimeType === 'image/svg+xml' ||
+    image.extension === 'svg' ||
+    image.originalFilename?.toLowerCase().endsWith('.svg') ||
+    directAssetUrl?.toLowerCase().endsWith('.svg') ||
+    image.asset._ref?.endsWith('-svg')
+
+  if (isSvg && directAssetUrl) {
+    return directAssetUrl
+  }
+
+  try {
+    return urlForImage(image).width(96).fit('max').quality(100).url()
+  } catch {
+    return undefined
+  }
+}
+
 export async function getCustomerSelectionData() {
   try {
-    const [segments, questionSet, formQuestions] = await Promise.all([
+    const [segments, questionSet, formQuestions, privateCtaIcon, businessCtaIcon] = await Promise.all([
       customerSelectionClient.fetch<CustomerSegmentDocument[]>(
         CUSTOMER_SEGMENT_CONTENT_QUERY,
         {},
@@ -62,6 +104,16 @@ export async function getCustomerSelectionData() {
         {},
         freshFetchOptions,
       ),
+      customerSelectionClient.fetch<CustomerSelectionIconDocument>(
+        CUSTOMER_SELECTION_PRIVATE_CTA_ICON_QUERY,
+        {},
+        freshFetchOptions,
+      ),
+      customerSelectionClient.fetch<CustomerSelectionIconDocument>(
+        CUSTOMER_SELECTION_BUSINESS_CTA_ICON_QUERY,
+        {},
+        freshFetchOptions,
+      ),
     ])
 
     const questionSetQuestions = questionSet?.questions?.filter(Boolean) || []
@@ -71,11 +123,15 @@ export async function getCustomerSelectionData() {
       formQuestions: sortQuestions(
         questionSetQuestions.length > 0 ? questionSetQuestions : formQuestions || [],
       ),
+      privateCtaIconUrl: buildIconUrl(privateCtaIcon?.image),
+      businessCtaIconUrl: buildIconUrl(businessCtaIcon?.image),
     }
   } catch {
     return {
       segments: [],
       formQuestions: [],
+      privateCtaIconUrl: undefined,
+      businessCtaIconUrl: undefined,
     }
   }
 }

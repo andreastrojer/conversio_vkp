@@ -36,24 +36,46 @@ export function AccountMenu({
   return (
     <details className="welcome-account-menu font-barlow">
       <summary className="welcome-account-summary" aria-label="Profilmenü öffnen">
-        {resolvedMenuIcon ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={resolvedMenuIcon} alt="" className="welcome-account-menu-icon" />
-        ) : (
-          <span className="welcome-account-avatar-fallback">
-            <Info aria-hidden="true" size={36} strokeWidth={2.1} />
-          </span>
-        )}
+        <span className="welcome-account-icon-wrap" aria-hidden="true">
+          {resolvedMenuIcon ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={resolvedMenuIcon} alt="" className="welcome-account-menu-icon" />
+          ) : (
+            <span className="welcome-account-avatar-fallback">
+              <Info aria-hidden="true" size={25} strokeWidth={2.1} />
+            </span>
+          )}
+        </span>
+        <span className="welcome-account-summary-text">
+          <span>Profil</span>
+          <strong>Konto</strong>
+        </span>
       </summary>
 
       <div className="welcome-account-popover">
-        <p className="welcome-account-kicker">Microsoft-Konto</p>
-        <p className="welcome-account-name">{displayName}</p>
-        <p className="welcome-account-email">{loginIdentity}</p>
+        <div className="welcome-account-popover-head">
+          <span className="welcome-account-popover-icon" aria-hidden="true">
+            {resolvedMenuIcon ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={resolvedMenuIcon} alt="" />
+            ) : (
+              <Info aria-hidden="true" size={22} strokeWidth={2.1} />
+            )}
+          </span>
+          <div>
+            <p className="welcome-account-kicker">Microsoft-Konto</p>
+            <p className="welcome-account-name">{displayName}</p>
+          </div>
+        </div>
+
+        <div className="welcome-account-identity">
+          <span>Angemeldet als</span>
+          <p>{loginIdentity}</p>
+        </div>
 
         <LogoutButton
           label={resolvedLogoutLabel}
-          className="welcome-account-logout font-barlow inline-flex w-full items-center justify-center rounded-full border border-[#3d4248]/18 bg-white px-5 text-[14px] font-medium text-[#3d4248] transition hover:border-[#3d4248]/35 hover:bg-[#f6f6f6]"
+          className="welcome-account-logout font-barlow inline-flex w-full items-center justify-center rounded-full px-5 text-[14px] text-[#3d4248] transition"
         />
       </div>
     </details>

@@ -111,6 +111,118 @@ export const CUSTOMER_SELECTION_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const CUSTOMER_SELECTION_PRIVATE_CTA_ICON_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive != false &&
+  defined(image.asset) &&
+  (
+    targetGroup == "b2c" ||
+    title match "*Privat*" ||
+    title match "*privat*" ||
+    usage match "*Privat*" ||
+    usage match "*privat*" ||
+    category match "*privat*" ||
+    category match "*Privat*" ||
+    "privat" in tags[] ||
+    "b2c" in tags[]
+  ) &&
+  (
+    title match "*Pfeil*" ||
+    title match "*pfeil*" ||
+    title match "*Arrow*" ||
+    title match "*arrow*" ||
+    usage match "*Pfeil*" ||
+    usage match "*pfeil*" ||
+    usage match "*Arrow*" ||
+    usage match "*arrow*" ||
+    category match "*pfeil*" ||
+    category match "*arrow*" ||
+    "pfeil" in tags[] ||
+    "arrow" in tags[] ||
+    "white-arrow" in tags[] ||
+    image.asset->originalFilename match "*Pfeil*" ||
+    image.asset->originalFilename match "*pfeil*" ||
+    image.asset->originalFilename match "*Arrow*" ||
+    image.asset->originalFilename match "*arrow*"
+  )
+] | order(_updatedAt desc, sortOrder asc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)
+
+export const CUSTOMER_SELECTION_BUSINESS_CTA_ICON_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive != false &&
+  defined(image.asset) &&
+  (
+    targetGroup == "b2b" ||
+    title match "*Gewerbe*" ||
+    title match "*gewerbe*" ||
+    title match "*Business*" ||
+    title match "*business*" ||
+    title match "*Schwarz*" ||
+    title match "*schwarz*" ||
+    title match "*Black*" ||
+    title match "*black*" ||
+    usage match "*Gewerbe*" ||
+    usage match "*gewerbe*" ||
+    usage match "*Business*" ||
+    usage match "*business*" ||
+    usage match "*Schwarz*" ||
+    usage match "*schwarz*" ||
+    usage match "*Black*" ||
+    usage match "*black*" ||
+    category match "*gewerbe*" ||
+    category match "*business*" ||
+    category match "*schwarz*" ||
+    category match "*black*" ||
+    "gewerbe" in tags[] ||
+    "business" in tags[] ||
+    "schwarz" in tags[] ||
+    "black" in tags[] ||
+    "black-arrow" in tags[] ||
+    "b2b" in tags[]
+  ) &&
+  (
+    title match "*Pfeil*" ||
+    title match "*pfeil*" ||
+    title match "*Arrow*" ||
+    title match "*arrow*" ||
+    usage match "*Pfeil*" ||
+    usage match "*pfeil*" ||
+    usage match "*Arrow*" ||
+    usage match "*arrow*" ||
+    category match "*pfeil*" ||
+    category match "*arrow*" ||
+    "pfeil" in tags[] ||
+    "arrow" in tags[] ||
+    "black-arrow" in tags[] ||
+    image.asset->originalFilename match "*Pfeil*" ||
+    image.asset->originalFilename match "*pfeil*" ||
+    image.asset->originalFilename match "*Arrow*" ||
+    image.asset->originalFilename match "*arrow*"
+  )
+] | order(_updatedAt desc, sortOrder asc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)
+
 export const CUSTOMER_SEGMENT_CONTENT_QUERY = defineQuery(groq`*[
   _type == "segmentContent" &&
   isActive == true
