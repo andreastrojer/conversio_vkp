@@ -7,6 +7,7 @@ import type {
 } from '@/lib/customerSelection'
 import type { LoginScreenDocument } from '@/lib/authBranding'
 import {ArrowUpRight} from 'lucide-react'
+import {useRouter} from 'next/navigation'
 import {useMemo, useState} from 'react'
 
 type ScreenSection = NonNullable<NonNullable<LoginScreenDocument>['sections']>[number]
@@ -283,6 +284,7 @@ export function CustomerSelectionScreen({
   businessCtaIconUrl,
   rightPatternUrl,
 }: CustomerSelectionScreenProps) {
+  const router = useRouter()
   const cards = useMemo(
     () => buildCustomerCards(screen?.sections, segments, privateCtaIconUrl, businessCtaIconUrl),
     [screen?.sections, segments, privateCtaIconUrl, businessCtaIconUrl],
@@ -329,6 +331,7 @@ export function CustomerSelectionScreen({
     }
 
     setSelectedCustomerType(customerType)
+    router.push(`/about?type=${customerType}`)
   }
 
   return (

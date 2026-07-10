@@ -111,6 +111,48 @@ export const CUSTOMER_SELECTION_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const ABOUT_SCREEN_QUERY = defineQuery(groq`*[
+  _type == "appScreen" &&
+  screenKey.current == "about" &&
+  isActive == true
+][0]{
+  title,
+  "screenKey": screenKey.current,
+  headline,
+  subline,
+  targetAudience,
+  isActive,
+  sections[]{
+    _key,
+    title,
+    eyebrow,
+    text,
+    visibleFor,
+    layout,
+    sortOrder
+  }
+}`)
+
+export const NAVIGATION_STEPS_QUERY = defineQuery(groq`*[
+  _type == "navigationStep" &&
+  isActive == true
+] | order(order asc){
+  _id,
+  title,
+  "stepKey": stepKey.current,
+  order,
+  chapter,
+  visibleFor,
+  requiresCustomerType,
+  showNextButton,
+  showBackButton,
+  screen->{
+    title,
+    "screenKey": screenKey.current,
+    primaryCta
+  }
+}`)
+
 export const CUSTOMER_SELECTION_PRIVATE_CTA_ICON_QUERY = defineQuery(groq`*[
   _type == "mediaAsset" &&
   mediaType == "image" &&
