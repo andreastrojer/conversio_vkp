@@ -6,6 +6,7 @@ type AccountMenuProps = {
   userName?: string | null
   userEmail?: string | null
   menuIconUrl?: string | null
+  patternUrl?: string | null
   logoutLabel?: string | null
 }
 
@@ -27,11 +28,13 @@ export function AccountMenu({
   userName,
   userEmail,
   menuIconUrl,
+  patternUrl,
   logoutLabel,
 }: AccountMenuProps) {
   const displayName = getDisplaySource(userName, userEmail)
   const loginIdentity = userEmail || userName || 'Microsoft-Konto'
   const resolvedMenuIcon = menuIconUrl?.trim() || undefined
+  const resolvedPatternUrl = patternUrl?.trim() || undefined
   const resolvedLogoutLabel = logoutLabel?.trim() || fallbackLogoutLabel
 
   return (
@@ -39,6 +42,7 @@ export function AccountMenu({
       displayName={displayName}
       loginIdentity={loginIdentity}
       menuIconUrl={resolvedMenuIcon}
+      patternUrl={resolvedPatternUrl}
       logoutControl={
         <LogoutButton
           label={resolvedLogoutLabel}

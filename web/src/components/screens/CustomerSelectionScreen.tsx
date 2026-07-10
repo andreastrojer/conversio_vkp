@@ -41,7 +41,7 @@ type CustomerInfoValidationResult = {
 }
 
 const cardBaseClass =
-  'relative isolate flex min-h-full overflow-hidden rounded-[22px] p-[clamp(34px,2.8vw,40px)] transition-[outline-color,transform] duration-150 max-[1400px]:rounded-[20px] max-[1400px]:p-[34px] [@media_(min-width:1024px)_and_(max-height:950px)]:p-[30px]'
+  'relative isolate flex min-h-full cursor-pointer overflow-hidden rounded-[22px] p-[clamp(34px,2.8vw,40px)] transition-[outline-color,transform] duration-150 hover:[transform:translateY(-2px)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[5px] focus-visible:outline-[rgba(61,66,72,0.34)] max-[1400px]:rounded-[20px] max-[1400px]:p-[34px] [@media_(min-width:1024px)_and_(max-height:950px)]:p-[30px]'
 const cardActiveClass =
   'is-active outline outline-[3px] outline-offset-[5px] outline-[rgba(61,66,72,0.26)] [transform:translateY(-4px)]'
 const cardContentClass =
@@ -57,7 +57,7 @@ const cardButtonIconClass =
 const selectionLayoutClassName =
   'absolute bottom-[clamp(74px,7.2vh,92px)] left-[clamp(48px,3.9vw,60px)] right-[calc(clamp(52px,4.2vw,60px)+clamp(120px,7vw,170px))] top-[clamp(188px,21vh,215px)] z-10 grid grid-cols-[minmax(0,1fr)_minmax(340px,370px)] items-stretch justify-start gap-x-[clamp(46px,4.8vw,70px)] font-sans [transform:translateX(clamp(120px,7vw,170px))] max-[1400px]:bottom-[72px] max-[1400px]:left-[clamp(46px,3.4vw,56px)] max-[1400px]:right-[calc(clamp(48px,4vw,58px)+clamp(120px,7vw,170px))] max-[1400px]:top-[clamp(166px,20vh,190px)] max-[1400px]:grid-cols-[minmax(0,1fr)_minmax(312px,340px)] max-[1400px]:gap-x-[clamp(42px,4vw,58px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!bottom-[66px] [@media_(min-width:1024px)_and_(max-height:950px)]:!left-[clamp(46px,3.4vw,56px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!right-[calc(clamp(46px,3.8vw,56px)+clamp(120px,7vw,170px))] [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[clamp(154px,18.5vh,178px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!grid-cols-[minmax(0,1fr)_minmax(286px,320px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!gap-x-[clamp(44px,3vw,56px)]'
 const selectionCardsClassName =
-  'grid h-full min-h-0 w-[calc(100%+8px)] grid-cols-2 gap-5 [transform:translateX(-136px)] max-[1400px]:gap-[18px]'
+  'grid h-full min-h-0 w-max grid-cols-[clamp(380px,28vw,428px)_clamp(380px,28vw,428px)] gap-5 [transform:translateX(-136px)] max-[1400px]:grid-cols-[clamp(340px,28vw,392px)_clamp(340px,28vw,392px)] max-[1400px]:gap-5 [@media_(min-width:1024px)_and_(max-height:950px)]:grid-cols-[clamp(318px,28vw,364px)_clamp(318px,28vw,364px)] [@media_(min-width:1024px)_and_(max-height:950px)]:gap-[18px]'
 const cardPatternBaseClassName =
   'pointer-events-none absolute -right-[118px] -top-[70px] z-0 block h-[390px] w-[390px] bg-contain bg-center bg-no-repeat max-[1400px]:-right-[120px] max-[1400px]:-top-[68px] max-[1400px]:h-[350px] max-[1400px]:w-[350px] [@media_(min-width:1024px)_and_(max-height:950px)]:!-right-[116px] [@media_(min-width:1024px)_and_(max-height:950px)]:!-top-[64px] [@media_(min-width:1024px)_and_(max-height:950px)]:!h-[315px] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[315px]'
 const privateCardPatternClassName =
@@ -347,9 +347,20 @@ export function CustomerSelectionScreen({
           return (
             <article
               key={card.customerType}
+              role="button"
+              tabIndex={0}
+              aria-label={`${card.title}: ${card.ctaLabel}`}
+              aria-pressed={isActive}
               className={`${cardBaseClass} ${
                 card.customerType === 'b2c' ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#3d4248] text-white'
               } ${isActive ? cardActiveClass : ''}`}
+              onClick={() => handleCustomerStart(card.customerType)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  handleCustomerStart(card.customerType)
+                }
+              }}
             >
               {cardPatternStyle ? (
                 <span
@@ -366,14 +377,12 @@ export function CustomerSelectionScreen({
               <div className={cardContentClass}>
                 <h2 className={cardTitleClass}>{card.title}</h2>
                 <p className={cardTextClass}>{card.text}</p>
-                <button
-                  type="button"
+                <span
                   data-target={card.ctaTarget}
-                  aria-pressed={isActive}
                   className={`${cardButtonBaseClass} ${
                     card.customerType === 'b2c' ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
                   }`}
-                  onClick={() => handleCustomerStart(card.customerType)}
+                  aria-hidden="true"
                 >
                   <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                     {card.ctaLabel}
@@ -389,7 +398,7 @@ export function CustomerSelectionScreen({
                   ) : (
                     <ArrowUpRight className="h-[15px] w-[15px] shrink-0" strokeWidth={2.4} aria-hidden="true" />
                   )}
-                </button>
+                </span>
               </div>
             </article>
           )

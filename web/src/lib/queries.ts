@@ -530,3 +530,99 @@ export const ACCOUNT_INFORMATION_ICON_QUERY = defineQuery(groq`*[
     "originalFilename": asset->originalFilename
   }
 }`)
+
+export const ACCOUNT_MENU_PATTERN_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive != false &&
+  defined(image.asset) &&
+  (
+    key == "account-menu-pattern" ||
+    key.current == "account-menu-pattern" ||
+    assetKey == "account-menu-pattern" ||
+    slug.current == "account-menu-pattern" ||
+    category == "account-menu-pattern" ||
+    category == "profile-menu-pattern" ||
+    category == "black-pattern" ||
+    category == "dark-pattern" ||
+    category == "schwarzes-muster" ||
+    category == "dunkles-muster" ||
+    category == "konto-muster" ||
+    category == "profil-muster" ||
+    "account-menu-pattern" in tags[] ||
+    "profile-menu-pattern" in tags[] ||
+    "black-pattern" in tags[] ||
+    "dark-pattern" in tags[] ||
+    "schwarzes-muster" in tags[] ||
+    "dunkles-muster" in tags[] ||
+    "konto-muster" in tags[] ||
+    "profil-muster" in tags[] ||
+    (
+      (
+        title match "*Muster*" ||
+        title match "*muster*" ||
+        title match "*Pattern*" ||
+        title match "*pattern*" ||
+        usage match "*Muster*" ||
+        usage match "*muster*" ||
+        usage match "*Pattern*" ||
+        usage match "*pattern*" ||
+        category match "*muster*" ||
+        category match "*pattern*" ||
+        "muster" in tags[] ||
+        "pattern" in tags[]
+      ) &&
+      (
+        title match "*Profil*" ||
+        title match "*profil*" ||
+        title match "*Konto*" ||
+        title match "*konto*" ||
+        title match "*Privat*" ||
+        title match "*privat*" ||
+        title match "*Conversio*" ||
+        title match "*conversio*" ||
+        title match "*Schwarz*" ||
+        title match "*schwarz*" ||
+        title match "*Black*" ||
+        title match "*black*" ||
+        title match "*Dunkel*" ||
+        title match "*dunkel*" ||
+        usage match "*Profil*" ||
+        usage match "*profil*" ||
+        usage match "*Konto*" ||
+        usage match "*konto*" ||
+        usage match "*Privat*" ||
+        usage match "*privat*" ||
+        usage match "*Schwarz*" ||
+        usage match "*schwarz*" ||
+        usage match "*Black*" ||
+        usage match "*black*" ||
+        usage match "*Dunkel*" ||
+        usage match "*dunkel*" ||
+        category match "*profil*" ||
+        category match "*konto*" ||
+        category match "*privat*" ||
+        category match "*schwarz*" ||
+        category match "*black*" ||
+        category match "*dunkel*" ||
+        "profil" in tags[] ||
+        "konto" in tags[] ||
+        "privat" in tags[] ||
+        "conversio" in tags[] ||
+        "schwarz" in tags[] ||
+        "black" in tags[] ||
+        "dunkel" in tags[]
+      )
+    )
+  )
+] | order(_updatedAt desc, sortOrder asc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)

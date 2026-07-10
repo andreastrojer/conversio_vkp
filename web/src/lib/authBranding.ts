@@ -1,5 +1,6 @@
 import {
   ACCOUNT_INFORMATION_ICON_QUERY,
+  ACCOUNT_MENU_PATTERN_QUERY,
   CUSTOMER_SELECTION_SCREEN_QUERY,
   LOGIN_RIGHT_PATTERN_QUERY,
   LOGIN_SCREEN_QUERY,
@@ -102,6 +103,7 @@ type AuthPageContent = {
   profileChevron: ProfileChevronDocument
   profileFallback: ProfileFallbackDocument
   informationIcon: AccountInformationIconDocument
+  accountMenuPatternUrl?: string
 }
 
 type AuthScreenKey = 'login' | 'welcome' | 'customer-selection'
@@ -167,6 +169,7 @@ export async function getAuthPageContent(screenKey: AuthScreenKey = 'login'): Pr
       profileChevron,
       profileFallback,
       informationIcon,
+      accountMenuPattern,
     ] = await Promise.all([
       authBrandingClient.fetch<LoginScreenDocument>(screenQuery, {}, freshFetchOptions),
       authBrandingClient.fetch<SiteSettingsDocument>(SITE_SETTINGS_QUERY, {}, freshFetchOptions),
@@ -195,6 +198,13 @@ export async function getAuthPageContent(screenKey: AuthScreenKey = 'login'): Pr
             freshFetchOptions,
           )
         : Promise.resolve(null),
+      screenKey !== 'login'
+        ? authBrandingClient.fetch<AccountInformationIconDocument>(
+            ACCOUNT_MENU_PATTERN_QUERY,
+            {},
+            freshFetchOptions,
+          )
+        : Promise.resolve(null),
     ])
     const loginHeroPattern = loginScreen?.heroMedia?.image
       ? {
@@ -205,7 +215,16 @@ export async function getAuthPageContent(screenKey: AuthScreenKey = 'login'): Pr
       : null
     const rightPattern = screenKey === 'login' ? mediaPattern : loginHeroPattern || mediaPattern
 
-    return {screen, siteSettings, rightPattern, profileChevron, profileFallback, informationIcon}
+    return {
+      screen,
+      siteSettings,
+      rightPattern,
+      profileChevron,
+      profileFallback,
+      informationIcon,
+      accountMenuPatternUrl:
+        buildLogoUrl(accountMenuPattern?.image) || buildImageUrl(accountMenuPattern?.image, 360, undefined, 100),
+    }
   } catch {
     return {
       screen: null,
@@ -214,6 +233,7 @@ export async function getAuthPageContent(screenKey: AuthScreenKey = 'login'): Pr
       profileChevron: null,
       profileFallback: null,
       informationIcon: null,
+      accountMenuPatternUrl: undefined,
     }
   }
 }
@@ -240,7 +260,12 @@ export function resolveAuthBrandingProps({screen, siteSettings, rightPattern}: A
   }
 }
 
-export function resolveWelcomeProfileProps({profileChevron, profileFallback, informationIcon}: AuthPageContent) {
+export function resolveWelcomeProfileProps({
+  profileChevron,
+  profileFallback,
+  informationIcon,
+  accountMenuPatternUrl,
+}: AuthPageContent) {
   return {
     profileChevronUrl:
       buildLogoUrl(profileChevron?.image) || buildImageUrl(profileChevron?.image, 360, undefined, 100),
@@ -248,5 +273,6 @@ export function resolveWelcomeProfileProps({profileChevron, profileFallback, inf
       buildLogoUrl(profileFallback?.image) || buildImageUrl(profileFallback?.image, 420, undefined, 100),
     informationIconUrl:
       buildLogoUrl(informationIcon?.image) || buildImageUrl(informationIcon?.image, 160, undefined, 100),
+    accountMenuPatternUrl,
   }
 }

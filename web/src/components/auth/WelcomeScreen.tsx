@@ -18,6 +18,8 @@ type WelcomeScreenProps = {
   rightPatternUrl?: string
   rightPatternAlt?: string
   informationIconUrl?: string
+  profileFallbackUrl?: string
+  accountMenuPatternUrl?: string
   footerAddress?: string | null
   legalLinks?: AuthBrandingLegalLink[] | null
 }
@@ -113,6 +115,8 @@ export function WelcomeScreen({
   rightPatternUrl,
   rightPatternAlt,
   informationIconUrl,
+  profileFallbackUrl,
+  accountMenuPatternUrl,
   footerAddress,
   legalLinks,
 }: WelcomeScreenProps) {
@@ -135,7 +139,8 @@ export function WelcomeScreen({
       <AccountMenu
         userName={userName}
         userEmail={userEmail}
-        menuIconUrl={informationIconUrl}
+        menuIconUrl={profileFallbackUrl || informationIconUrl}
+        patternUrl={accountMenuPatternUrl}
         logoutLabel={resolvedLogoutLabel}
       />
 

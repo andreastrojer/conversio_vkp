@@ -29,7 +29,8 @@ export default async function CustomerSelectionPage() {
       <AccountMenu
         userName={session.user.name}
         userEmail={session.user.email}
-        menuIconUrl={profileProps.informationIconUrl}
+        menuIconUrl={profileProps.profileFallbackUrl || profileProps.informationIconUrl}
+        patternUrl={profileProps.accountMenuPatternUrl}
       />
 
       <CustomerSelectionScreen
