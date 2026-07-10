@@ -1,6 +1,7 @@
 import {getMicrosoftLogoutUrl, signOut} from '@/lib/auth'
 import {headers} from 'next/headers'
 import {redirect} from 'next/navigation'
+import type {ReactNode} from 'react'
 
 async function getPostLogoutRedirectUri() {
   const requestHeaders = await headers()
@@ -18,9 +19,10 @@ async function getPostLogoutRedirectUri() {
 type LogoutButtonProps = {
   label?: string
   className?: string
+  icon?: ReactNode
 }
 
-export function LogoutButton({label = 'Logout', className}: LogoutButtonProps) {
+export function LogoutButton({label = 'Logout', className, icon}: LogoutButtonProps) {
   return (
     <form
       action={async () => {
@@ -40,7 +42,8 @@ export function LogoutButton({label = 'Logout', className}: LogoutButtonProps) {
           'inline-flex h-9 items-center justify-center rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100'
         }
       >
-        {label}
+        <span>{label}</span>
+        {icon}
       </button>
     </form>
   )
