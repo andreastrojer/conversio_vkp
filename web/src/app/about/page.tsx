@@ -37,6 +37,7 @@ export default async function AboutPage({searchParams}: AboutPageProps) {
       logoAlt={content.logoAlt}
       patternUrl={content.patternUrl}
       patternAlt={content.patternAlt}
+      navigationArrowUrl={content.navigationArrowUrl}
     />
   )
 }

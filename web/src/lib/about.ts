@@ -1,5 +1,7 @@
 import {
+  ABOUT_NAVIGATION_ARROW_QUERY,
   ABOUT_SCREEN_QUERY,
+  CUSTOMER_SELECTION_BUSINESS_CTA_ICON_QUERY,
   LOGIN_SCREEN_QUERY,
   LOGIN_RIGHT_PATTERN_QUERY,
   NAVIGATION_STEPS_QUERY,
@@ -61,6 +63,12 @@ type PatternDocument = {
   image?: SanityImage
 } | null
 
+type MediaAssetDocument = {
+  title?: string | null
+  altText?: string | null
+  image?: SanityImage
+} | null
+
 export type ChapterNavigationItem = {
   key: 'about' | 'offer' | 'needs' | 'next-step'
   title: string
@@ -77,6 +85,7 @@ export type AboutPageData = {
   logoAlt: string
   patternUrl?: string
   patternAlt: string
+  navigationArrowUrl?: string
 }
 
 const aboutClient = sanityClient.withConfig({useCdn: false})
@@ -119,17 +128,32 @@ function resolveNavigationItems(
 
 export async function getAboutPageData(customerType: CustomerGroup): Promise<AboutPageData> {
   try {
-    const [screen, navigationSteps, siteSettings, pattern, loginScreen] = await Promise.all([
+    const [
+      screen,
+      navigationSteps,
+      siteSettings,
+      pattern,
+      loginScreen,
+      navigationArrow,
+      businessArrow,
+    ] = await Promise.all([
       aboutClient.fetch<AboutScreenDocument>(ABOUT_SCREEN_QUERY, {}, freshFetchOptions),
       aboutClient.fetch<NavigationStepDocument[]>(NAVIGATION_STEPS_QUERY, {}, freshFetchOptions),
       aboutClient.fetch<SiteSettingsDocument>(SITE_SETTINGS_QUERY, {}, freshFetchOptions),
       aboutClient.fetch<PatternDocument>(LOGIN_RIGHT_PATTERN_QUERY, {}, freshFetchOptions),
       aboutClient.fetch<LoginScreenDocument>(LOGIN_SCREEN_QUERY, {}, freshFetchOptions),
+      aboutClient.fetch<MediaAssetDocument>(ABOUT_NAVIGATION_ARROW_QUERY, {}, freshFetchOptions),
+      aboutClient.fetch<MediaAssetDocument>(
+        CUSTOMER_SELECTION_BUSINESS_CTA_ICON_QUERY,
+        {},
+        freshFetchOptions,
+      ),
     ])
 
     const normalLogoUrl = buildLogoUrl(siteSettings?.logo) || buildLogoUrl(siteSettings?.logoDark)
     const inverseLogoUrl = buildLogoUrl(siteSettings?.logoDark) || normalLogoUrl
     const patternImage = pattern?.image || loginScreen?.heroMedia?.image
+    const arrowImage = navigationArrow?.image || businessArrow?.image
 
     return {
       screen: screen
@@ -157,6 +181,7 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
         loginScreen?.heroMedia?.altText ||
         loginScreen?.heroMedia?.title ||
         '',
+      navigationArrowUrl: buildLogoUrl(arrowImage) || buildImageUrl(arrowImage, 96, undefined, 100),
     }
   } catch {
     return {

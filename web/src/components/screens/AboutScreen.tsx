@@ -12,6 +12,7 @@ type AboutScreenProps = {
   logoAlt: string
   patternUrl?: string
   patternAlt?: string
+  navigationArrowUrl?: string
 }
 
 const fallbackHeadline = 'WER WIR SIND'
@@ -36,6 +37,7 @@ export function AboutScreen({
   logoAlt,
   patternUrl,
   patternAlt,
+  navigationArrowUrl,
 }: AboutScreenProps) {
   const isBusiness = customerType === 'b2b'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
@@ -100,6 +102,7 @@ export function AboutScreen({
         currentKey="about"
         logoUrl={navigationLogoUrl}
         logoAlt={logoAlt}
+        navigationArrowUrl={navigationArrowUrl}
       />
     </main>
   )

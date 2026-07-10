@@ -153,6 +153,60 @@ export const NAVIGATION_STEPS_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const ABOUT_NAVIGATION_ARROW_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive != false &&
+  defined(image.asset) &&
+  (
+    key == "chapter-navigation-arrow" ||
+    key.current == "chapter-navigation-arrow" ||
+    assetKey == "chapter-navigation-arrow" ||
+    slug.current == "chapter-navigation-arrow" ||
+    category == "chapter-navigation-arrow" ||
+    category == "kapitel-pfeil" ||
+    title == "Kapitel Pfeil" ||
+    title == "Kapitelpfeil" ||
+    title == "Chapter Arrow" ||
+    title match "*Kapitel*" ||
+    title match "*kapitel*" ||
+    usage match "*Kapitel*" ||
+    usage match "*kapitel*" ||
+    "chapter-navigation-arrow" in tags[] ||
+    "kapitel-pfeil" in tags[] ||
+    "black-arrow" in tags[]
+  ) &&
+  (
+    title match "*Pfeil*" ||
+    title match "*pfeil*" ||
+    title match "*Arrow*" ||
+    title match "*arrow*" ||
+    usage match "*Pfeil*" ||
+    usage match "*pfeil*" ||
+    usage match "*Arrow*" ||
+    usage match "*arrow*" ||
+    category match "*pfeil*" ||
+    category match "*arrow*" ||
+    "pfeil" in tags[] ||
+    "arrow" in tags[] ||
+    "black-arrow" in tags[] ||
+    image.asset->originalFilename match "*Pfeil*" ||
+    image.asset->originalFilename match "*pfeil*" ||
+    image.asset->originalFilename match "*Arrow*" ||
+    image.asset->originalFilename match "*arrow*"
+  )
+] | order(_updatedAt desc, sortOrder asc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)
+
 export const CUSTOMER_SELECTION_PRIVATE_CTA_ICON_QUERY = defineQuery(groq`*[
   _type == "mediaAsset" &&
   mediaType == "image" &&
