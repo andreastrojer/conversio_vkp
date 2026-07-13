@@ -92,7 +92,7 @@ export function AccountMenuClient({
           <div className="relative overflow-hidden px-[24px] pb-[22px] pt-[24px]">
             {patternUrl ? (
               <span
-                className="pointer-events-none absolute -right-[32px] -top-[34px] h-[124px] w-[124px] bg-contain bg-center bg-no-repeat opacity-[0.34] [filter:brightness(0)_saturate(100%)_invert(21%)_sepia(7%)_saturate(703%)_hue-rotate(169deg)_brightness(72%)_contrast(96%)]"
+                className="pointer-events-none absolute -right-[18px] -top-[20px] h-[88px] w-[88px] bg-contain bg-center bg-no-repeat opacity-[0.30] [filter:brightness(0)_saturate(100%)_invert(21%)_sepia(7%)_saturate(703%)_hue-rotate(169deg)_brightness(72%)_contrast(96%)]"
                 style={{backgroundImage: `url("${patternUrl}")`}}
                 aria-hidden="true"
               />

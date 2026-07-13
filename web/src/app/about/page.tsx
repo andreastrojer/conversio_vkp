@@ -31,6 +31,7 @@ export default async function AboutPage({searchParams}: AboutPageProps) {
     <AboutScreen
       customerType={customerType}
       headline={content.screen?.headline}
+      sections={content.screen?.sections}
       navigationItems={content.navigationItems}
       logoUrl={content.logoUrl}
       inverseLogoUrl={content.inverseLogoUrl}
@@ -38,6 +39,8 @@ export default async function AboutPage({searchParams}: AboutPageProps) {
       patternUrl={content.patternUrl}
       patternAlt={content.patternAlt}
       navigationArrowUrl={content.navigationArrowUrl}
+      businessMapUrl={content.businessMapUrl}
+      businessMapAlt={content.businessMapAlt}
     />
   )
 }

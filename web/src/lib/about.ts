@@ -1,4 +1,5 @@
 import {
+  ABOUT_BUSINESS_MAP_QUERY,
   ABOUT_NAVIGATION_ARROW_QUERY,
   ABOUT_SCREEN_QUERY,
   CUSTOMER_SELECTION_BUSINESS_CTA_ICON_QUERY,
@@ -25,6 +26,24 @@ export type AboutSection = {
   visibleFor?: string | null
   layout?: string | null
   sortOrder?: number | null
+  image?: SanityImage
+  imageUrl?: string
+  media?: {
+    title?: string | null
+    altText?: string | null
+    mediaType?: string | null
+    image?: SanityImage
+  } | null
+  mediaImageUrl?: string
+  mediaTitle?: string | null
+  mediaAltText?: string | null
+  cta?: {
+    label?: string | null
+    target?: string | null
+    style?: string | null
+    image?: SanityImage
+    imageUrl?: string
+  } | null
 }
 
 export type AboutScreenDocument = {
@@ -86,6 +105,8 @@ export type AboutPageData = {
   patternUrl?: string
   patternAlt: string
   navigationArrowUrl?: string
+  businessMapUrl?: string
+  businessMapAlt?: string
 }
 
 const aboutClient = sanityClient.withConfig({useCdn: false})
@@ -136,6 +157,7 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
       loginScreen,
       navigationArrow,
       businessArrow,
+      businessMap,
     ] = await Promise.all([
       aboutClient.fetch<AboutScreenDocument>(ABOUT_SCREEN_QUERY, {}, freshFetchOptions),
       aboutClient.fetch<NavigationStepDocument[]>(NAVIGATION_STEPS_QUERY, {}, freshFetchOptions),
@@ -148,26 +170,41 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
         {},
         freshFetchOptions,
       ),
+      aboutClient.fetch<MediaAssetDocument>(ABOUT_BUSINESS_MAP_QUERY, {}, freshFetchOptions),
     ])
 
     const normalLogoUrl = buildLogoUrl(siteSettings?.logo) || buildLogoUrl(siteSettings?.logoDark)
     const inverseLogoUrl = buildLogoUrl(siteSettings?.logoDark) || normalLogoUrl
     const patternImage = pattern?.image || loginScreen?.heroMedia?.image
     const arrowImage = navigationArrow?.image || businessArrow?.image
+    const filteredSections = (screen?.sections || [])
+      .filter(
+        (section) =>
+          !section.visibleFor || section.visibleFor === 'both' || section.visibleFor === customerType,
+      )
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      .map((section) => ({
+        ...section,
+        imageUrl: buildImageUrl(section.image, 1200, undefined, 100),
+        mediaImageUrl: buildImageUrl(section.media?.image, 1200, undefined, 100),
+        mediaTitle: section.media?.title,
+        mediaAltText: section.media?.altText,
+        cta: section.cta
+          ? {
+              ...section.cta,
+              imageUrl:
+                buildLogoUrl(section.cta.image) ||
+                buildImageUrl(section.cta.image, 96, undefined, 100),
+            }
+          : null,
+      }))
 
     return {
       screen: screen
         ? {
             ...screen,
             headline: screen.headline?.trim() || fallbackHeadline,
-            sections: (screen.sections || [])
-              .filter(
-                (section) =>
-                  !section.visibleFor ||
-                  section.visibleFor === 'both' ||
-                  section.visibleFor === customerType,
-              )
-              .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+            sections: filteredSections,
           }
         : {headline: fallbackHeadline, screenKey: 'about'},
       navigationItems: resolveNavigationItems(navigationSteps, customerType),
@@ -182,6 +219,9 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
         loginScreen?.heroMedia?.title ||
         '',
       navigationArrowUrl: buildLogoUrl(arrowImage) || buildImageUrl(arrowImage, 96, undefined, 100),
+      businessMapUrl:
+        buildLogoUrl(businessMap?.image) || buildImageUrl(businessMap?.image, 1200, undefined, 100),
+      businessMapAlt: businessMap?.altText || businessMap?.title || '',
     }
   } catch {
     return {

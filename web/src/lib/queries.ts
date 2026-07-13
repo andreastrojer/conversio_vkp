@@ -129,7 +129,88 @@ export const ABOUT_SCREEN_QUERY = defineQuery(groq`*[
     text,
     visibleFor,
     layout,
-    sortOrder
+    sortOrder,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    media->{
+      title,
+      altText,
+      mediaType,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    cta{
+      label,
+      target,
+      style,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    }
+  }
+}`)
+
+export const ABOUT_BUSINESS_MAP_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive != false &&
+  defined(image.asset) &&
+  (
+    targetGroup == "b2b" ||
+    targetGroup == "both" ||
+    "b2b" in tags[] ||
+    "gewerbe" in tags[]
+  ) &&
+  (
+    title match "*Österreich*" ||
+    title match "*Oesterreich*" ||
+    title match "*Austria*" ||
+    title match "*Karte*" ||
+    title match "*Map*" ||
+    title match "*Standort*" ||
+    usage match "*Österreich*" ||
+    usage match "*Oesterreich*" ||
+    usage match "*Austria*" ||
+    usage match "*Karte*" ||
+    usage match "*Map*" ||
+    usage match "*Standort*" ||
+    category match "*karte*" ||
+    category match "*map*" ||
+    "österreich" in tags[] ||
+    "oesterreich" in tags[] ||
+    "austria" in tags[] ||
+    "karte" in tags[] ||
+    "map" in tags[] ||
+    "standorte" in tags[] ||
+    image.asset->originalFilename match "*Österreich*" ||
+    image.asset->originalFilename match "*Oesterreich*" ||
+    image.asset->originalFilename match "*Austria*" ||
+    image.asset->originalFilename match "*Karte*" ||
+    image.asset->originalFilename match "*Map*"
+  )
+] | order(_updatedAt desc, sortOrder asc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
   }
 }`)
 

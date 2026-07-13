@@ -106,7 +106,7 @@ export function ChapterNavigation({
 
   const panelWidth = 'w-[min(510px,calc(100vw-24px))]'
   const panelSpacing =
-    'rounded-r-[30px] pb-[24px] pl-[clamp(48px,3.9vw,60px)] pr-[54px] pt-[clamp(46px,3.9vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pl-[clamp(46px,3.2vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pt-[clamp(40px,4.6vh,52px)]'
+    'rounded-r-[18px] pb-[24px] pl-[clamp(48px,3.9vw,60px)] pr-[54px] pt-[clamp(46px,3.9vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pl-[clamp(46px,3.2vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pt-[clamp(40px,4.6vh,52px)]'
   const panelOverflow = 'overflow-hidden'
   const logoWidth =
     'w-[clamp(196px,13.2vw,236px)] max-w-[242px] max-[1400px]:w-[clamp(184px,13.2vw,222px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(176px,11.8vw,210px)]'

@@ -1,4 +1,5 @@
 import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
+import type {AboutSection} from '@/lib/about'
 import type {ChapterNavigationItem} from '@/lib/about'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import Link from 'next/link'
@@ -6,6 +7,7 @@ import Link from 'next/link'
 type AboutScreenProps = {
   customerType: CustomerGroup
   headline?: string | null
+  sections?: AboutSection[] | null
   navigationItems: ChapterNavigationItem[]
   logoUrl?: string
   inverseLogoUrl?: string
@@ -13,6 +15,8 @@ type AboutScreenProps = {
   patternUrl?: string
   patternAlt?: string
   navigationArrowUrl?: string
+  businessMapUrl?: string
+  businessMapAlt?: string
 }
 
 const fallbackHeadline = 'WER WIR SIND'
@@ -22,15 +26,214 @@ const patternFallbackClassName = `${patternPositionClassName} opacity-[0.08] [tr
 const logoPositionClassName =
   'absolute left-[clamp(48px,3.9vw,60px)] top-[clamp(46px,3.9vw,60px)] z-10 [@media_(min-width:1024px)_and_(max-height:950px)]:left-[clamp(46px,3.2vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:top-[clamp(40px,4.6vh,52px)]'
 const logoImageClassName =
-  'block h-auto w-[clamp(196px,13.2vw,236px)] max-w-[242px] object-contain opacity-100 [filter:none] [image-rendering:auto] [transform:none] max-[1400px]:w-[clamp(184px,13.2vw,222px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(176px,11.8vw,210px)]'
+  'block h-auto w-[clamp(220px,16vw,276px)] max-w-[276px] object-contain opacity-100 [filter:none] [image-rendering:auto] [transform:none] max-[1400px]:w-[clamp(210px,16vw,250px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(220px,14vw,260px)]'
 const contentPositionClassName =
   'absolute left-[clamp(48px,3.9vw,60px)] top-[47%] z-10 max-w-[min(600px,calc(100vw-570px))] -translate-y-1/2 max-[1400px]:max-w-[min(560px,calc(100vw-540px))] [@media_(min-width:1024px)_and_(max-height:950px)]:!left-[clamp(46px,3.6vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[47%] [@media_(min-width:1024px)_and_(max-height:950px)]:!max-w-[min(520px,calc(100vw-500px))]'
 const headlineClassName =
   'font-sans text-[clamp(44px,3.6vw,56px)] font-bold uppercase leading-[1.02] tracking-[0.028em] max-[1400px]:text-[50px] [@media_(min-width:1024px)_and_(max-height:950px)]:!text-[clamp(42px,3.5vw,50px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!tracking-[0.024em]'
 
+function splitTextBlocks(text?: string | null) {
+  return (text || '')
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+}
+
+function splitTextLines(text: string) {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
+
+function findTrustBlockIndex(blocks: string[]) {
+  return blocks.findIndex((block) => {
+    const normalizedBlock = block.trim().toLocaleLowerCase('de-AT')
+
+    return (
+      normalizedBlock.startsWith("'") ||
+      normalizedBlock.startsWith('’') ||
+      normalizedBlock.startsWith('‘') ||
+      normalizedBlock.startsWith('"') ||
+      normalizedBlock.startsWith('„') ||
+      normalizedBlock.includes('ansprechpartner')
+    )
+  })
+}
+
+function renderHighlightedLine(line: string) {
+  const separatorMatch = line.match(/^(.+?)(\s[–—-]\s)(.+)$/)
+
+  if (separatorMatch) {
+    return (
+      <>
+        <span className="font-bold text-[#efb804]">
+          {separatorMatch[1].toLocaleUpperCase('de-AT')}
+        </span>
+        <span>{separatorMatch[2]}</span>
+        <span>{separatorMatch[3]}</span>
+      </>
+    )
+  }
+
+  const leadingEmphasisMatch = line.match(/^(\d+\s+\S+)(\s+.+)$/)
+
+  if (leadingEmphasisMatch) {
+    return (
+      <>
+        <span className="font-bold text-[#efb804]">
+          {leadingEmphasisMatch[1].toLocaleUpperCase('de-AT')}
+        </span>
+        <span>{leadingEmphasisMatch[2]}</span>
+      </>
+    )
+  }
+
+  return line
+}
+
+function resolveSectionTarget(target: string | null | undefined, customerType: CustomerGroup) {
+  const trimmedTarget = target?.trim()
+
+  if (!trimmedTarget) {
+    return undefined
+  }
+
+  if (
+    trimmedTarget.startsWith('/') ||
+    trimmedTarget.startsWith('#') ||
+    trimmedTarget.startsWith('http://') ||
+    trimmedTarget.startsWith('https://')
+  ) {
+    return trimmedTarget
+  }
+
+  const normalizedTarget = trimmedTarget.toLocaleLowerCase('de-AT')
+  const screenKey = normalizedTarget.includes(':') ? normalizedTarget.split(':').pop() || '' : normalizedTarget
+
+  if (screenKey === 'offer' || screenKey === 'was-wir-bieten') {
+    return `/about?type=${customerType}&chapter=offer`
+  }
+
+  return `/${screenKey}?type=${customerType}`
+}
+
+function BusinessAboutContent({
+  headline,
+  sections,
+  businessMapUrl,
+  businessMapAlt,
+  customerType,
+}: {
+  headline: string
+  sections?: AboutSection[] | null
+  businessMapUrl?: string
+  businessMapAlt?: string
+  customerType: CustomerGroup
+}) {
+  const businessSection =
+    sections?.find((section) => section.visibleFor === 'b2b') ||
+    sections?.find((section) => section.imageUrl || section.mediaImageUrl || section.media) ||
+    sections?.[0]
+  const sectionHeadline = businessSection?.title?.trim() || headline
+  const textBlocks = splitTextBlocks(businessSection?.text)
+  const trustBlockIndex = findTrustBlockIndex(textBlocks)
+  const trustBlock = trustBlockIndex >= 0 ? textBlocks[trustBlockIndex] : undefined
+  const descriptionBlocks =
+    trustBlockIndex >= 0 ? textBlocks.filter((_, index) => index !== trustBlockIndex) : textBlocks
+  const mapUrl = businessSection?.imageUrl || businessSection?.mediaImageUrl || businessMapUrl
+  const mapAlt =
+    businessSection?.mediaAltText ||
+    businessSection?.mediaTitle ||
+    businessMapAlt ||
+    businessSection?.title ||
+    ''
+  const ctaLabel = businessSection?.cta?.label?.trim()
+  const ctaHref = resolveSectionTarget(businessSection?.cta?.target, customerType)
+  const ctaImageUrl = businessSection?.cta?.imageUrl
+
+  return (
+    <section className="relative z-[2] min-h-screen w-full overflow-hidden max-[900px]:min-h-[120vh] max-[900px]:overflow-visible">
+      <div className="absolute left-0 top-[-120px] z-[1] w-[min(80vw,1440px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!left-0 [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[-160px] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[min(80vw,1360px)] max-[900px]:relative max-[900px]:left-auto max-[900px]:top-auto max-[900px]:mx-auto max-[900px]:mt-[80px] max-[900px]:w-[96vw]">
+        {mapUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={mapUrl}
+            alt={mapAlt}
+            className="h-auto w-full max-w-none object-contain drop-shadow-[0_28px_30px_rgba(0,0,0,0.24)]"
+          />
+        ) : (
+          <div className="h-[min(38vw,430px)] w-full rounded-[28px] border border-white/10" aria-hidden="true" />
+        )}
+      </div>
+
+      <div className="absolute right-[clamp(72px,5vw,96px)] top-[26vh] z-[2] flex w-[min(38vw,540px)] flex-col items-start [@media_(min-width:1024px)_and_(max-height:950px)]:!right-[clamp(72px,5vw,96px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[26vh] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[min(38vw,540px)] max-[900px]:relative max-[900px]:right-auto max-[900px]:top-auto max-[900px]:mx-auto max-[900px]:mt-10 max-[900px]:w-[86vw]">
+        <div className="inline-block -rotate-[1.25deg] bg-[#efb804] px-[32px] py-[9px] shadow-[0_14px_28px_rgba(0,0,0,0.10)]">
+          <h1 className="font-sans text-[42px] font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-[#3d4248] max-[1180px]:text-[34px]">
+            {sectionHeadline}
+          </h1>
+        </div>
+
+        {descriptionBlocks.length > 0 ? (
+          <div className="mt-[100px] w-full translate-x-[8px] space-y-[2px] font-sans text-[24px] font-normal leading-[1.36] tracking-[0.006em] text-white [@media_(min-width:1024px)_and_(max-height:950px)]:!mt-[82px]">
+            {descriptionBlocks.map((block) => (
+              <div key={block}>
+                {splitTextLines(block).map((line) => (
+                  <p key={line}>{renderHighlightedLine(line)}</p>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {trustBlock ? (
+          <div className="relative mt-[82px] w-full max-w-[500px] font-sans text-[18px] font-bold uppercase leading-[1.18] tracking-[0.004em] text-white [@media_(min-width:1024px)_and_(max-height:950px)]:!mt-[66px]">
+            <span className="absolute left-[-5px] top-[-7px] z-0 text-[28px] font-extrabold leading-none text-[#efb804]" aria-hidden="true">
+              &ldquo;
+            </span>
+            <p className="relative z-[1]">{trustBlock.replace(/^[’‘'"„“]+/, '').trim()}</p>
+          </div>
+        ) : null}
+      </div>
+
+      {ctaLabel ? (
+        <div className="absolute bottom-[58px] right-[clamp(58px,4.1vw,72px)] z-[3] w-[228px] max-[900px]:relative max-[900px]:right-auto max-[900px]:bottom-auto max-[900px]:mx-auto max-[900px]:mb-14 max-[900px]:mt-16">
+          {ctaHref ? (
+            <Link
+              href={ctaHref}
+              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+            >
+              <span>{ctaLabel}</span>
+              {ctaImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={ctaImageUrl}
+                  alt=""
+                  className="h-[14px] w-[20px] object-contain transition-transform group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              ) : null}
+            </Link>
+          ) : (
+            <span className="flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
+              <span>{ctaLabel}</span>
+              {ctaImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={ctaImageUrl} alt="" className="h-[14px] w-[20px] object-contain" aria-hidden="true" />
+              ) : null}
+            </span>
+          )}
+          <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
 export function AboutScreen({
   customerType,
   headline,
+  sections,
   navigationItems,
   logoUrl,
   inverseLogoUrl,
@@ -38,6 +241,8 @@ export function AboutScreen({
   patternUrl,
   patternAlt,
   navigationArrowUrl,
+  businessMapUrl,
+  businessMapAlt,
 }: AboutScreenProps) {
   const isBusiness = customerType === 'b2b'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
@@ -90,7 +295,15 @@ export function AboutScreen({
         </Link>
       </div>
 
-      {isBusiness ? null : (
+      {isBusiness ? (
+        <BusinessAboutContent
+          headline={resolvedHeadline}
+          sections={sections}
+          businessMapUrl={businessMapUrl}
+          businessMapAlt={businessMapAlt}
+          customerType={customerType}
+        />
+      ) : (
         <section className={contentPositionClassName}>
           <h1 className={`${headlineClassName} text-[#3d4248]`}>{resolvedHeadline}</h1>
         </section>
