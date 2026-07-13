@@ -4,7 +4,7 @@ import type {ChapterNavigationItem} from '@/lib/about'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {ArrowUpRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
-import {useEffect, useRef, useState} from 'react'
+import {type PointerEvent as ReactPointerEvent, useEffect, useRef, useState} from 'react'
 
 type ChapterNavigationProps = {
   customerType: CustomerGroup
@@ -25,6 +25,8 @@ export function ChapterNavigation({
 }: ChapterNavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
   const navigationRef = useRef<HTMLElement>(null)
+  const dragStartXRef = useRef<number | null>(null)
+  const suppressNextClickRef = useRef(false)
   const isBusiness = customerType === 'b2b'
 
   useEffect(() => {
@@ -49,19 +51,74 @@ export function ChapterNavigation({
     }
   }, [isOpen])
 
-  const panelWidth = isBusiness ? 'w-[min(510px,calc(100vw-24px))]' : 'w-[min(390px,calc(100vw-24px))]'
-  const panelSpacing = isBusiness
-    ? 'rounded-r-[30px] px-[56px] pb-10 pt-[46px]'
-    : 'rounded-r-[28px] px-[40px] pb-8 pt-[40px]'
-  const logoWidth = isBusiness ? 'w-[204px]' : 'w-[190px]'
-  const navigationSpacing = isBusiness ? 'mt-[66px]' : 'mt-[52px]'
-  const itemSpacing = isBusiness ? 'py-[28px]' : 'py-[22px]'
-  const itemGap = isBusiness ? 'gap-[30px]' : 'gap-[22px]'
-  const numberSize = isBusiness ? 'h-[52px] w-[52px]' : 'h-[46px] w-[46px]'
-  const numberTextSize = isBusiness ? 'text-[18px]' : 'text-[17px]'
-  const titleTextSize = isBusiness ? 'text-[25px]' : 'text-[23px]'
-  const ctaOffset = isBusiness ? 'ml-[86px] mt-[16px]' : 'ml-[68px] mt-[12px]'
-  const ctaSize = isBusiness ? 'h-[34px] w-[190px]' : 'h-[32px] w-[158px]'
+  function handleTriggerPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    dragStartXRef.current = event.clientX
+    suppressNextClickRef.current = false
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  function handleTriggerPointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    const startX = dragStartXRef.current
+
+    if (startX === null) {
+      return
+    }
+
+    const deltaX = event.clientX - startX
+
+    if (!isOpen && deltaX > 44) {
+      suppressNextClickRef.current = true
+      setIsOpen(true)
+    }
+
+    if (isOpen && deltaX < -44) {
+      suppressNextClickRef.current = true
+      setIsOpen(false)
+    }
+  }
+
+  function handleTriggerPointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
+    const startX = dragStartXRef.current
+
+    if (startX !== null) {
+      const deltaX = event.clientX - startX
+
+      if (Math.abs(deltaX) > 28) {
+        suppressNextClickRef.current = true
+        setIsOpen(deltaX > 0)
+      }
+    }
+
+    dragStartXRef.current = null
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
+
+  function handleTriggerClick() {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false
+      return
+    }
+
+    setIsOpen((currentValue) => !currentValue)
+  }
+
+  const panelWidth = 'w-[min(510px,calc(100vw-24px))]'
+  const panelSpacing =
+    'rounded-r-[30px] pb-[24px] pl-[clamp(48px,3.9vw,60px)] pr-[54px] pt-[clamp(46px,3.9vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pl-[clamp(46px,3.2vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pt-[clamp(40px,4.6vh,52px)]'
+  const panelOverflow = 'overflow-hidden'
+  const logoWidth =
+    'w-[clamp(196px,13.2vw,236px)] max-w-[242px] max-[1400px]:w-[clamp(184px,13.2vw,222px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(176px,11.8vw,210px)]'
+  const navigationSpacing =
+    'mt-[40px] flex h-[calc(100vh-166px)] origin-top-left scale-[0.9] flex-col [width:111.111111%]'
+  const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
+  const itemGap = 'gap-[24px]'
+  const numberSize = 'h-[42px] w-[42px]'
+  const numberTextSize = 'text-[15px]'
+  const titleTextSize = 'text-[24px]'
+  const ctaOffset = 'ml-[66px] mt-[14px]'
+  const ctaSize = 'h-[34px] w-[190px]'
   const panelTheme = isBusiness
     ? 'bg-white text-[#3d4248] shadow-[18px_0_52px_rgba(0,0,0,0.18)]'
     : 'bg-[#3d4248] text-white shadow-[18px_0_52px_rgba(0,0,0,0.18)]'
@@ -80,7 +137,7 @@ export function ChapterNavigation({
     >
       <div
         id="chapter-navigation-panel"
-        className={`absolute inset-0 overflow-y-auto ${panelSpacing} ${panelTheme}`}
+        className={`absolute inset-0 ${panelOverflow} ${panelSpacing} ${panelTheme}`}
       >
         <div className="h-[72px]">
           {logoUrl ? (
@@ -170,28 +227,30 @@ export function ChapterNavigation({
 
       <button
         type="button"
-        className="absolute right-[-25px] top-1/2 grid h-32 w-10 -translate-y-1/2 place-items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804]"
+        className={`absolute top-1/2 grid -translate-y-1/2 touch-none cursor-ew-resize place-items-center ${isOpen ? 'right-[4px]' : 'right-[-30px]'} h-[110px] w-[24px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804]`}
         aria-controls="chapter-navigation-panel"
         aria-expanded={isOpen}
         aria-label={isOpen ? 'Kapitel-Navigation schließen' : 'Kapitel-Navigation öffnen'}
-        onClick={() => setIsOpen((currentValue) => !currentValue)}
+        onClick={handleTriggerClick}
+        onPointerCancel={() => {
+          dragStartXRef.current = null
+        }}
+        onPointerDown={handleTriggerPointerDown}
+        onPointerMove={handleTriggerPointerMove}
+        onPointerUp={handleTriggerPointerUp}
       >
         <span
-          className={`grid h-[82px] w-[18px] place-items-center rounded-full shadow-[0_10px_28px_rgba(0,0,0,0.16)] ${
+          className={`grid place-items-center rounded-full shadow-[0_10px_28px_rgba(0,0,0,0.16)] ${
             isBusiness
               ? isOpen
-                ? 'bg-[#3d4248]'
-                : 'border border-[#e3e5e7] bg-white'
-              : 'bg-white'
+                ? 'h-[72px] w-[8px] bg-black'
+                : 'h-[72px] w-[8px] bg-white'
+              : isOpen
+                ? 'h-[72px] w-[8px] bg-white'
+                : 'h-[72px] w-[8px] bg-[#3d4248]'
           }`}
           aria-hidden="true"
-        >
-          <span
-            className={`h-[42px] w-[4px] rounded-full ${
-              isBusiness && !isOpen ? 'bg-[#3d4248]' : 'bg-white'
-            }`}
-          />
-        </span>
+        />
       </button>
     </aside>
   )

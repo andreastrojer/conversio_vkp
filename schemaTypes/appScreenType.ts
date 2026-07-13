@@ -47,6 +47,7 @@ export const appScreenType = defineType({
           { title: 'Content / Start', value: 'welcome' },
           { title: 'Kundengruppe auswählen', value: 'customerSelection' },
           { title: 'Wer wir sind', value: 'about' },
+          { title: 'Was wir bieten', value: 'offer' },
           { title: 'Fragebogen / Beratung', value: 'questionnaire' },
           { title: 'Szenario-Matrix', value: 'scenarioMatrix' },
           { title: 'Szenario / Empfehlung', value: 'recommendation' },

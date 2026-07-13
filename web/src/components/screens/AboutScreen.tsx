@@ -90,11 +90,11 @@ export function AboutScreen({
         </Link>
       </div>
 
-      <section className={contentPositionClassName}>
-        <h1 className={`${headlineClassName} ${isBusiness ? 'text-white' : 'text-[#3d4248]'}`}>
-          {resolvedHeadline}
-        </h1>
-      </section>
+      {isBusiness ? null : (
+        <section className={contentPositionClassName}>
+          <h1 className={`${headlineClassName} text-[#3d4248]`}>{resolvedHeadline}</h1>
+        </section>
+      )}
 
       <ChapterNavigation
         customerType={customerType}

@@ -266,10 +266,10 @@ function validateCustomerInfoSchema(
 
 function getErrorSummary(errorCount: number) {
   if (errorCount === 1) {
-    return 'Bitte prüfe die markierte Angabe. Danach kannst du die Kundengruppe starten.'
+    return 'Bitte das markierte Pflichtfeld ausfüllen.'
   }
 
-  return 'Bitte prüfe die markierten Angaben. Danach kannst du die Kundengruppe starten.'
+  return 'Bitte die markierten Pflichtfelder ausfüllen.'
 }
 
 function getFieldId(questionKey: string, index: number) {
@@ -416,17 +416,11 @@ export function CustomerSelectionScreen({
         {formError ? (
           <div
             id="customer-info-error-summary"
-            className={`mt-[22px] flex ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} items-start gap-[10px] rounded-[10px] border border-[#e1e4e6] border-l-4 border-l-[#efb804] bg-white/95 px-[14px] py-3 text-[#3d4248] shadow-[0_14px_34px_rgba(61,66,72,0.09)]`}
+            className={`mt-[18px] flex ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} items-center gap-[10px] border-l-[3px] border-l-[#efb804] pl-[12px] text-[13px] font-semibold leading-[1.3] text-[#6f757b]`}
             role="alert"
             aria-live="polite"
           >
-            <span className="mt-[5px] h-[9px] w-[9px] shrink-0 rounded-full bg-[#efb804] shadow-[0_0_0_5px_rgba(239,184,4,0.16)]" aria-hidden="true" />
-            <div>
-              <strong className="block text-[13px] font-bold uppercase leading-[1.1] tracking-[0.035em]">
-                Angaben prüfen
-              </strong>
-              <p className="mt-1 text-[12px] font-medium leading-[1.3] text-[#6f757b]">{formError}</p>
-            </div>
+            {formError}
           </div>
         ) : null}
 
