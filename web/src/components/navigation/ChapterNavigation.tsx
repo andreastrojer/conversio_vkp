@@ -1,6 +1,7 @@
 'use client'
 
 import type {ChapterNavigationItem} from '@/lib/about'
+import {brandLogoImageClassName, brandLogoPanelInsetClassName} from '@/lib/brandingLayout'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {ArrowUpRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
@@ -16,7 +17,6 @@ type ChapterNavigationProps = {
 }
 
 export function ChapterNavigation({
-  customerType,
   items,
   currentKey,
   logoUrl,
@@ -27,7 +27,6 @@ export function ChapterNavigation({
   const navigationRef = useRef<HTMLElement>(null)
   const dragStartXRef = useRef<number | null>(null)
   const suppressNextClickRef = useRef(false)
-  const isBusiness = customerType === 'b2b'
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -106,10 +105,8 @@ export function ChapterNavigation({
 
   const panelWidth = 'w-[min(510px,calc(100vw-24px))]'
   const panelSpacing =
-    'rounded-r-[18px] pb-[24px] pl-[clamp(48px,3.9vw,60px)] pr-[54px] pt-[clamp(46px,3.9vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pl-[clamp(46px,3.2vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:pt-[clamp(40px,4.6vh,52px)]'
+    `rounded-r-[18px] pb-[24px] pr-[54px] ${brandLogoPanelInsetClassName}`
   const panelOverflow = 'overflow-hidden'
-  const logoWidth =
-    'w-[clamp(196px,13.2vw,236px)] max-w-[242px] max-[1400px]:w-[clamp(184px,13.2vw,222px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(176px,11.8vw,210px)]'
   const navigationSpacing =
     'mt-[40px] flex h-[calc(100vh-166px)] origin-top-left scale-[0.9] flex-col [width:111.111111%]'
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
@@ -119,30 +116,28 @@ export function ChapterNavigation({
   const titleTextSize = 'text-[24px]'
   const ctaOffset = 'ml-[66px] mt-[14px]'
   const ctaSize = 'h-[34px] w-[190px]'
-  const panelTheme = isBusiness
-    ? 'bg-white text-[#3d4248] shadow-[18px_0_52px_rgba(0,0,0,0.18)]'
-    : 'bg-[#3d4248] text-white shadow-[18px_0_52px_rgba(0,0,0,0.18)]'
-  const dividerColor = isBusiness ? 'border-[#3d4248]' : 'border-white'
-  const inactiveButtonTheme = isBusiness
-    ? 'bg-[#3d4248] text-white'
-    : 'bg-white text-[#3d4248]'
+  const panelTheme = 'bg-white text-[#3d4248]'
+  const dividerColor = 'border-[#3d4248]'
+  const inactiveButtonTheme = 'bg-[#3d4248] text-white'
 
   return (
     <aside
       ref={navigationRef}
       className={`fixed inset-y-0 left-0 z-50 ${panelWidth} transition-transform duration-300 ease-out ${
-        isOpen ? '[transform:translateX(0)]' : '[transform:translateX(-100%)]'
+        isOpen ? '[transform:translateX(0)]' : '[transform:translateX(calc(-100%_-_2px))]'
       }`}
       aria-label="Kapitel-Navigation"
     >
       <div
         id="chapter-navigation-panel"
-        className={`absolute inset-0 ${panelOverflow} ${panelSpacing} ${panelTheme}`}
+        className={`absolute inset-0 ${panelOverflow} ${panelSpacing} ${panelTheme} ${
+          isOpen ? 'shadow-[18px_0_52px_rgba(0,0,0,0.18)]' : 'shadow-none'
+        }`}
       >
         <div className="h-[72px]">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={logoAlt} className={`h-auto ${logoWidth} object-contain`} />
+            <img src={logoUrl} alt={logoAlt} className={brandLogoImageClassName} />
           ) : (
             <span className="font-sans text-[21px] font-bold uppercase tracking-[0.08em]">
               Conversio Energie
@@ -155,7 +150,7 @@ export function ChapterNavigation({
             const isActive = item.key === currentKey
             const titleColor = isActive ? 'text-[#efb804]' : ''
             const buttonTheme = isActive ? 'bg-[#efb804] text-[#3d4248]' : inactiveButtonTheme
-            const arrowNeedsInvert = Boolean(navigationArrowUrl && isBusiness && !isActive)
+            const arrowNeedsInvert = Boolean(navigationArrowUrl && !isActive)
 
             return (
               <div
@@ -240,15 +235,7 @@ export function ChapterNavigation({
         onPointerUp={handleTriggerPointerUp}
       >
         <span
-          className={`grid place-items-center rounded-full shadow-[0_10px_28px_rgba(0,0,0,0.16)] ${
-            isBusiness
-              ? isOpen
-                ? 'h-[72px] w-[8px] bg-black'
-                : 'h-[72px] w-[8px] bg-white'
-              : isOpen
-                ? 'h-[72px] w-[8px] bg-white'
-                : 'h-[72px] w-[8px] bg-[#3d4248]'
-          }`}
+          className="grid h-[58px] w-[7px] place-items-center rounded-full bg-[#2f3439] shadow-[0_8px_20px_rgba(0,0,0,0.14)]"
           aria-hidden="true"
         />
       </button>

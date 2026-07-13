@@ -142,7 +142,12 @@ function resolveNavigationItems(
       ),
       ctaLabel:
         matchingStep?.screen?.primaryCta?.label?.toLocaleUpperCase('de-AT') || fallback.ctaLabel,
-      href: fallback.key === 'about' ? `/about?type=${customerType}` : undefined,
+      href:
+        fallback.key === 'about'
+          ? `/about?type=${customerType}`
+          : fallback.key === 'offer' && customerType === 'b2c'
+            ? `/offer?type=${customerType}`
+            : undefined,
     }
   })
 }
@@ -185,8 +190,8 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
       .map((section) => ({
         ...section,
-        imageUrl: buildImageUrl(section.image, 1200, undefined, 100),
-        mediaImageUrl: buildImageUrl(section.media?.image, 1200, undefined, 100),
+        imageUrl: buildImageUrl(section.image, 3000, undefined, 100),
+        mediaImageUrl: buildImageUrl(section.media?.image, 3000, undefined, 100),
         mediaTitle: section.media?.title,
         mediaAltText: section.media?.altText,
         cta: section.cta

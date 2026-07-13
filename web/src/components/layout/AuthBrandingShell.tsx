@@ -1,4 +1,5 @@
 import type {ReactNode} from 'react'
+import {brandLogoImageClassName, brandLogoPositionClassName} from '@/lib/brandingLayout'
 import Link from 'next/link'
 
 export type AuthBrandingLegalLink = {
@@ -25,10 +26,6 @@ const patternFrameClassName =
 const patternImageClassName =
   `${patternFrameClassName} bg-contain bg-center bg-no-repeat opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]`
 const patternFallbackClassName = `${patternFrameClassName} opacity-[0.08] [transform:rotate(30deg)]`
-const logoPositionClassName =
-  'absolute left-[clamp(48px,3.9vw,60px)] top-[clamp(46px,3.9vw,60px)] z-10 [@media_(min-width:1024px)_and_(max-height:950px)]:left-[clamp(46px,3.2vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:top-[clamp(40px,4.6vh,52px)]'
-const logoImageClassName =
-  'block h-auto w-[clamp(196px,13.2vw,236px)] max-w-[242px] object-contain opacity-100 [filter:none] [image-rendering:auto] [transform:none] max-[1400px]:w-[clamp(184px,13.2vw,222px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(176px,11.8vw,210px)]'
 const footerClassName =
   'absolute bottom-9 left-[clamp(48px,3.9vw,60px)] z-10 flex items-center gap-[clamp(22px,1.8vw,28px)] font-sans text-[16px] font-normal uppercase tracking-[0.02em] text-[#3d4248] [@media_(min-width:1024px)_and_(max-height:950px)]:bottom-[30px] [@media_(min-width:1024px)_and_(max-height:950px)]:gap-[22px] [@media_(min-width:1024px)_and_(max-height:950px)]:text-[14px]'
 
@@ -112,14 +109,14 @@ export function AuthBrandingShell({
         </span>
       )}
 
-      <div className={logoPositionClassName}>
+      <div className={brandLogoPositionClassName}>
         <Link href="/" className="block w-max cursor-pointer" aria-label="Zur Welcome-Seite">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
               alt={logoAlt}
-              className={logoImageClassName}
+              className={brandLogoImageClassName}
             />
           ) : (
             <ConversioLogo />
