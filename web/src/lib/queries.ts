@@ -230,6 +230,76 @@ export const OFFER_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const PROCESS_SCREEN_QUERY = defineQuery(groq`*[
+  _type == "appScreen" &&
+  screenKey.current == "process" &&
+  screenType == "process" &&
+  isActive == true
+][0]{
+  title,
+  "screenKey": screenKey.current,
+  screenType,
+  "purpose": contentPurpose,
+  targetAudience,
+  headline,
+  subline,
+  isActive,
+  primaryCta,
+  secondaryCta,
+  heroImage{
+    ...,
+    "assetUrl": asset->url
+  },
+  heroImage2{
+    ...,
+    "assetUrl": asset->url
+  },
+  heroMedia->{
+    title,
+    altText,
+    mediaType,
+    externalUrl,
+    "fileUrl": file.asset->url,
+    image{
+      ...,
+      "assetUrl": asset->url
+    }
+  },
+  "sections": sections[] | order(coalesce(sortOrder, 999999) asc){
+    _key,
+    title,
+    eyebrow,
+    text,
+    visibleFor,
+    layout,
+    sortOrder,
+    image{
+      ...,
+      "assetUrl": asset->url
+    },
+    media->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url
+      }
+    },
+    cta{
+      label,
+      target,
+      style,
+      image{
+        ...,
+        "assetUrl": asset->url
+      }
+    }
+  }
+}`)
+
 export const ABOUT_BUSINESS_MAP_QUERY = defineQuery(groq`*[
   _type == "mediaAsset" &&
   mediaType == "image" &&

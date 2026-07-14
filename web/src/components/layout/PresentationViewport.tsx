@@ -5,7 +5,6 @@ import {useLayoutEffect, useState} from 'react'
 
 const REFERENCE_HEIGHT = 940
 const MIN_REFERENCE_WIDTH = 1440
-const MAX_REFERENCE_WIDTH = 1920
 
 type ViewportGeometry = {
   scale: number
@@ -29,10 +28,7 @@ export function PresentationViewport({
         window.innerWidth / MIN_REFERENCE_WIDTH,
         window.innerHeight / REFERENCE_HEIGHT,
       )
-      const width = Math.min(
-        MAX_REFERENCE_WIDTH,
-        Math.max(MIN_REFERENCE_WIDTH, window.innerWidth / scale),
-      )
+      const width = Math.max(MIN_REFERENCE_WIDTH, window.innerWidth / scale)
 
       setGeometry({scale, width})
     }
@@ -56,7 +52,7 @@ export function PresentationViewport({
           opacity: geometry === null ? 0 : 1,
           transform: `translate(-50%, -50%) scale(${geometry?.scale ?? 1})`,
           transformOrigin: 'center',
-          width: `${geometry?.width ?? MAX_REFERENCE_WIDTH}px`,
+          width: `${geometry?.width ?? MIN_REFERENCE_WIDTH}px`,
         }}
       >
         {children}

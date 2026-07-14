@@ -44,11 +44,64 @@ type ResolvedMedia = {
   alt: string
 }
 
+type OfferTextBlock =
+  | {type: 'paragraph'; text: string}
+  | {type: 'list'; items: string[]}
+
 const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065] [filter:brightness(0)_invert(1)]'
 
 function sectionKey(section: OfferSection, index: number) {
   return section._key || `offer-section-${index}`
+}
+
+function parseOfferText(text: string): OfferTextBlock[] {
+  const blocks: OfferTextBlock[] = []
+  let paragraphLines: string[] = []
+  let listItems: string[] = []
+
+  function flushParagraph() {
+    if (paragraphLines.length > 0) {
+      blocks.push({type: 'paragraph', text: paragraphLines.join(' ')})
+      paragraphLines = []
+    }
+  }
+
+  function flushList() {
+    if (listItems.length > 0) {
+      blocks.push({type: 'list', items: listItems})
+      listItems = []
+    }
+  }
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim()
+
+    if (!line) {
+      flushParagraph()
+      flushList()
+      continue
+    }
+
+    const bullet = line.match(/^(?:[•●▪◦‣⁃]|-|\*)\s+(.+)$/)
+
+    if (bullet) {
+      flushParagraph()
+      listItems.push(bullet[1])
+      continue
+    }
+
+    if (listItems.length > 0) {
+      listItems[listItems.length - 1] = `${listItems[listItems.length - 1]} ${line}`
+    } else {
+      paragraphLines.push(line)
+    }
+  }
+
+  flushParagraph()
+  flushList()
+
+  return blocks
 }
 
 function isVideoMedia(mediaType?: string | null) {
@@ -98,7 +151,7 @@ function resolveTarget(target: string | null | undefined, customerType: Customer
   const normalizedTarget = target?.trim()
 
   if (!normalizedTarget || normalizedTarget === 'next') {
-    return undefined
+    return `/process?type=${customerType}`
   }
 
   if (normalizedTarget.startsWith('/')) {
@@ -185,7 +238,7 @@ export function OfferScreen({
       </div>
 
       <section className="absolute inset-x-0 bottom-0 top-[150px] z-[2]">
-        <div className="absolute bottom-[18px] left-0 h-[690px] w-[980px]">
+        <div className="absolute bottom-[18px] left-0 h-[740px] w-[1050px]">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeMedia.key}
@@ -219,7 +272,7 @@ export function OfferScreen({
           </AnimatePresence>
         </div>
 
-        <div className="absolute right-[72px] top-[19px] z-[3] w-[440px]">
+        <div className="absolute right-[72px] top-[55px] z-[3] w-[440px]">
           {sections.length > 0 ? (
             <div role="presentation">
               {sections.map((section, index) => {
@@ -263,9 +316,31 @@ export function OfferScreen({
                               </p>
                             ) : null}
                             {section.text ? (
-                              <p className="max-w-[420px] whitespace-pre-line text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95">
-                                {section.text}
-                              </p>
+                              <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95">
+                                {parseOfferText(section.text).map((block, blockIndex) =>
+                                  block.type === 'paragraph' ? (
+                                    <p key={`paragraph-${blockIndex}`}>{block.text}</p>
+                                  ) : (
+                                    <ul
+                                      key={`list-${blockIndex}`}
+                                      className="space-y-[1px] pl-[12px]"
+                                      role="list"
+                                    >
+                                      {block.items.map((item, itemIndex) => (
+                                        <li
+                                          key={`${item}-${itemIndex}`}
+                                          className="grid grid-cols-[8px_minmax(0,1fr)] items-start gap-[10px]"
+                                        >
+                                          <span className="pt-[1px] text-[15px] leading-[1.42]" aria-hidden="true">
+                                            •
+                                          </span>
+                                          <span>{item}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ),
+                                )}
+                              </div>
                             ) : null}
                           </div>
                         </motion.div>
