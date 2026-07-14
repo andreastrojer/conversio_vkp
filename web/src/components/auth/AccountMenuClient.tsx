@@ -53,7 +53,7 @@ export function AccountMenuClient({
   return (
     <div
       ref={menuRef}
-      className="absolute right-[clamp(52px,4vw,72px)] top-[clamp(46px,3.8vw,60px)] z-20 font-sans max-[900px]:right-7 max-[900px]:top-7"
+      className="absolute right-[72px] top-[60px] z-20 font-sans"
     >
       <button
         ref={triggerRef}
@@ -85,7 +85,7 @@ export function AccountMenuClient({
       {isOpen ? (
         <div
           id={popoverId}
-          className="absolute right-0 top-[calc(100%+12px)] w-[min(312px,calc(100vw-40px))] overflow-hidden rounded-[14px] border border-[#e1e4e6] bg-white shadow-[0_20px_46px_rgba(61,66,72,0.13)]"
+          className="absolute right-0 top-[calc(100%+12px)] w-[312px] overflow-hidden rounded-[14px] border border-[#e1e4e6] bg-white shadow-[0_20px_46px_rgba(61,66,72,0.13)]"
           role="dialog"
           aria-label="Microsoft-Kontoinformationen"
         >

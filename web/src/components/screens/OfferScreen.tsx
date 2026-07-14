@@ -1,6 +1,7 @@
 'use client'
 
 import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
+import {PresentationViewport} from '@/components/layout/PresentationViewport'
 import type {ChapterNavigationItem} from '@/lib/about'
 import {
   brandLogoImageClassName,
@@ -44,7 +45,7 @@ type ResolvedMedia = {
 }
 
 const patternClassName =
-  'pointer-events-none fixed bottom-[-280px] right-[-250px] z-0 h-[900px] w-[900px] bg-contain bg-center bg-no-repeat opacity-[0.065] [filter:brightness(0)_invert(1)]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065] [filter:brightness(0)_invert(1)]'
 
 function sectionKey(section: OfferSection, index: number) {
   return section._key || `offer-section-${index}`
@@ -159,7 +160,8 @@ export function OfferScreen({
   const ctaHref = resolveTarget(primaryCta?.target, customerType)
 
   return (
-    <main className="relative isolate min-h-screen w-screen overflow-hidden bg-[#3d4248] font-sans text-white">
+    <PresentationViewport backgroundClassName="bg-[#3d4248]">
+    <main className="relative isolate h-full w-full overflow-hidden bg-[#3d4248] font-sans text-white">
       {patternUrl ? (
         <span
           className={patternClassName}
@@ -182,8 +184,8 @@ export function OfferScreen({
         </Link>
       </div>
 
-      <section className="absolute inset-x-0 bottom-0 top-[150px] z-[2] max-[900px]:relative max-[900px]:top-auto max-[900px]:flex max-[900px]:min-h-screen max-[900px]:flex-col max-[900px]:pt-[150px]">
-        <div className="absolute bottom-[18px] left-0 h-[min(63vw,690px)] w-[min(58vw,980px)] max-[900px]:relative max-[900px]:bottom-auto max-[900px]:h-[52vh] max-[900px]:w-full">
+      <section className="absolute inset-x-0 bottom-0 top-[150px] z-[2]">
+        <div className="absolute bottom-[18px] left-0 h-[690px] w-[980px]">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeMedia.key}
@@ -217,7 +219,7 @@ export function OfferScreen({
           </AnimatePresence>
         </div>
 
-        <div className="absolute right-[clamp(58px,4.1vw,72px)] top-[2vh] z-[3] w-[min(34vw,440px)] max-[1180px]:w-[390px] max-[900px]:relative max-[900px]:right-auto max-[900px]:top-auto max-[900px]:mx-auto max-[900px]:mt-8 max-[900px]:w-[86vw]">
+        <div className="absolute right-[72px] top-[19px] z-[3] w-[440px]">
           {sections.length > 0 ? (
             <div role="presentation">
               {sections.map((section, index) => {
@@ -280,7 +282,7 @@ export function OfferScreen({
       </section>
 
       {primaryCta?.label ? (
-        <div className="absolute bottom-[58px] right-[clamp(58px,4.1vw,72px)] z-[4] w-[208px] max-[900px]:hidden">
+        <div className="absolute bottom-[58px] right-[72px] z-[4] w-[208px]">
           {ctaHref ? (
             <Link
               href={ctaHref}
@@ -308,5 +310,6 @@ export function OfferScreen({
         navigationArrowUrl={navigationArrowUrl}
       />
     </main>
+    </PresentationViewport>
   )
 }

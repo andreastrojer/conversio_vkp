@@ -29,15 +29,15 @@ const fallbackCtaLabel = 'Kundengruppe auswählen'
 const fallbackCtaTarget = '/customer-selection'
 const fallbackLogoutLabel = 'Abmelden'
 const mainContentClassName =
-  'absolute left-[clamp(48px,3.9vw,60px)] top-[47%] z-10 max-w-[min(600px,calc(100vw-570px))] -translate-y-1/2 max-[1400px]:max-w-[min(560px,calc(100vw-540px))] [@media_(min-width:1024px)_and_(max-height:950px)]:!left-[clamp(46px,3.6vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[47%] [@media_(min-width:1024px)_and_(max-height:950px)]:!max-w-[min(520px,calc(100vw-500px))] max-[900px]:!relative max-[900px]:!left-auto max-[900px]:!top-auto max-[900px]:!m-[168px_32px_180px] max-[900px]:!max-w-none max-[900px]:![translate:none] max-[900px]:![transform:none]'
+  'absolute left-[60px] top-[47%] z-10 max-w-[520px] -translate-y-1/2'
 const titleClassName =
-  'font-sans text-[clamp(44px,3.6vw,56px)] font-bold uppercase leading-[1.02] tracking-[0.028em] text-[#3d4248] max-[1400px]:text-[50px] [@media_(min-width:1024px)_and_(max-height:950px)]:!text-[clamp(42px,3.5vw,50px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!tracking-[0.024em] max-[900px]:!text-[42px]'
+  'font-sans text-[50px] font-bold uppercase leading-[1.02] tracking-[0.024em] text-[#3d4248]'
 const actionAreaClassName =
-  'mt-[clamp(26px,3.4vh,38px)] block max-w-[430px] font-sans max-[1400px]:max-w-[400px] [@media_(min-width:1024px)_and_(max-height:950px)]:!mt-[30px] [@media_(min-width:1024px)_and_(max-height:950px)]:!max-w-[380px]'
+  'mt-[30px] block max-w-[380px] font-sans'
 const sublineClassName =
-  'm-0 max-w-[390px] font-sans text-[clamp(20px,1.45vw,24px)] font-normal leading-[1.28] tracking-[0.006em] text-[#3d4248] [@media_(min-width:1024px)_and_(max-height:950px)]:text-[19px]'
+  'm-0 max-w-[390px] font-sans text-[19px] font-normal leading-[1.28] tracking-[0.006em] text-[#3d4248]'
 const nextButtonClassName =
-  'inline-flex h-[42px] min-w-[clamp(280px,22vw,360px)] items-center justify-between gap-[18px] rounded-full bg-[#efb804] px-6 text-[14px] font-bold uppercase tracking-[0.04em] text-[#3d4248] transition-[background-color,box-shadow] duration-[160ms] ease-[ease] hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.22)] [@media_(min-width:1024px)_and_(max-height:950px)]:h-10 [@media_(min-width:1024px)_and_(max-height:950px)]:min-w-[292px] [@media_(min-width:1024px)_and_(max-height:950px)]:text-[13px]'
+  'inline-flex h-10 min-w-[292px] items-center justify-between gap-[18px] rounded-full bg-[#efb804] px-6 text-[13px] font-bold uppercase tracking-[0.04em] text-[#3d4248] transition-[background-color,box-shadow] duration-[160ms] ease-[ease] hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.22)]'
 
 function getDisplaySource(userName?: string | null, userEmail?: string | null) {
   const name = userName?.trim()

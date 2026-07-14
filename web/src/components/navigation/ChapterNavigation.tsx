@@ -103,12 +103,12 @@ export function ChapterNavigation({
     setIsOpen((currentValue) => !currentValue)
   }
 
-  const panelWidth = 'w-[min(510px,calc(100vw-24px))]'
+  const panelWidth = 'w-[510px]'
   const panelSpacing =
     `rounded-r-[18px] pb-[24px] pr-[54px] ${brandLogoPanelInsetClassName}`
   const panelOverflow = 'overflow-hidden'
   const navigationSpacing =
-    'mt-[40px] flex h-[calc(100vh-166px)] origin-top-left scale-[0.9] flex-col [width:111.111111%]'
+    'mt-[40px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%]'
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
   const itemGap = 'gap-[24px]'
   const numberSize = 'h-[42px] w-[42px]'

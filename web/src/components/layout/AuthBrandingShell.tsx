@@ -1,5 +1,6 @@
 import type {ReactNode} from 'react'
 import {brandLogoImageClassName, brandLogoPositionClassName} from '@/lib/brandingLayout'
+import {PresentationViewport} from '@/components/layout/PresentationViewport'
 import Link from 'next/link'
 
 export type AuthBrandingLegalLink = {
@@ -20,14 +21,14 @@ type AuthBrandingShellProps = {
 const fallbackFooterAddress = 'KOSCHATSTRASSE 24, 9800 SPITTAL/DRAU'
 
 const screenClassName =
-  'relative isolate min-h-screen w-screen overflow-hidden bg-white text-[#3d4248] max-[900px]:min-h-[100svh] max-[900px]:overflow-x-hidden max-[900px]:overflow-y-auto'
+  'relative isolate h-full w-full overflow-hidden bg-white text-[#3d4248]'
 const patternFrameClassName =
-  'fixed right-[clamp(-360px,-15vw,-210px)] bottom-[clamp(-360px,-22vh,-220px)] z-0 block h-[clamp(780px,min(62vw,94vh),1120px)] w-[clamp(780px,min(62vw,94vh),1120px)] pointer-events-none max-[1400px]:right-[clamp(-320px,-15vw,-190px)] max-[1400px]:bottom-[clamp(-330px,-21vh,-205px)] max-[1400px]:h-[clamp(720px,min(59vw,90vh),940px)] max-[1400px]:w-[clamp(720px,min(59vw,90vh),940px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!right-[clamp(-340px,-16vw,-200px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!bottom-[clamp(-340px,-22vh,-215px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!h-[clamp(760px,min(58vw,92vh),980px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(760px,min(58vw,92vh),980px)]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 block h-[850px] w-[850px]'
 const patternImageClassName =
   `${patternFrameClassName} bg-contain bg-center bg-no-repeat opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]`
 const patternFallbackClassName = `${patternFrameClassName} opacity-[0.08] [transform:rotate(30deg)]`
 const footerClassName =
-  'absolute bottom-9 left-[clamp(48px,3.9vw,60px)] z-10 flex items-center gap-[clamp(22px,1.8vw,28px)] font-sans text-[16px] font-normal uppercase tracking-[0.02em] text-[#3d4248] [@media_(min-width:1024px)_and_(max-height:950px)]:bottom-[30px] [@media_(min-width:1024px)_and_(max-height:950px)]:gap-[22px] [@media_(min-width:1024px)_and_(max-height:950px)]:text-[14px]'
+  'absolute bottom-[30px] left-[60px] z-10 flex items-center gap-[22px] font-sans text-[14px] font-normal uppercase tracking-[0.02em] text-[#3d4248]'
 
 function ConversioLogo() {
   return (
@@ -91,49 +92,51 @@ export function AuthBrandingShell({
     : undefined
 
   return (
-    <main className={screenClassName}>
-      {rightPatternUrl ? (
-        <span
-          aria-hidden="true"
-          title={rightPatternAlt || undefined}
-          className={patternImageClassName}
-          style={patternStyle}
-        />
-      ) : (
-        <span
-          aria-hidden="true"
-          className={patternFallbackClassName}
-        >
-          <span className="absolute inset-[84px] border-[58px] border-solid border-[#3d4248] [clip-path:polygon(50%_0,92%_25%,92%_75%,50%_100%,8%_75%,8%_25%)]" />
-          <span className="absolute bottom-[18px] left-[30px] right-[30px] h-[58px] bg-[#3d4248] [box-shadow:-84px_-184px_0_#3d4248,122px_-332px_0_#3d4248,-22px_-514px_0_#3d4248] [transform:skewY(-31deg)]" />
-        </span>
-      )}
+    <PresentationViewport backgroundClassName="bg-white">
+      <main className={screenClassName}>
+        {rightPatternUrl ? (
+          <span
+            aria-hidden="true"
+            title={rightPatternAlt || undefined}
+            className={patternImageClassName}
+            style={patternStyle}
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className={patternFallbackClassName}
+          >
+            <span className="absolute inset-[84px] border-[58px] border-solid border-[#3d4248] [clip-path:polygon(50%_0,92%_25%,92%_75%,50%_100%,8%_75%,8%_25%)]" />
+            <span className="absolute bottom-[18px] left-[30px] right-[30px] h-[58px] bg-[#3d4248] [box-shadow:-84px_-184px_0_#3d4248,122px_-332px_0_#3d4248,-22px_-514px_0_#3d4248] [transform:skewY(-31deg)]" />
+          </span>
+        )}
 
-      <div className={brandLogoPositionClassName}>
-        <Link href="/" className="block w-max cursor-pointer" aria-label="Zur Welcome-Seite">
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt={logoAlt}
-              className={brandLogoImageClassName}
-            />
-          ) : (
-            <ConversioLogo />
-          )}
-        </Link>
-      </div>
+        <div className={brandLogoPositionClassName}>
+          <Link href="/" className="block w-max cursor-pointer" aria-label="Zur Welcome-Seite">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt={logoAlt}
+                className={brandLogoImageClassName}
+              />
+            ) : (
+              <ConversioLogo />
+            )}
+          </Link>
+        </div>
 
-      {children}
+        {children}
 
-      <footer className={footerClassName}>
-        <FooterLink label={imprintLink.label.toLocaleUpperCase('de-AT')} url={imprintLink.url} />
-        <FooterLink label={privacyLink.label.toLocaleUpperCase('de-AT')} url={privacyLink.url} />
-        <span aria-hidden="true" className="text-[20px] font-normal leading-none">
-          |
-        </span>
-        <span className="font-bold">{resolvedAddress.toLocaleUpperCase('de-AT')}</span>
-      </footer>
-    </main>
+        <footer className={footerClassName}>
+          <FooterLink label={imprintLink.label.toLocaleUpperCase('de-AT')} url={imprintLink.url} />
+          <FooterLink label={privacyLink.label.toLocaleUpperCase('de-AT')} url={privacyLink.url} />
+          <span aria-hidden="true" className="text-[20px] font-normal leading-none">
+            |
+          </span>
+          <span className="font-bold">{resolvedAddress.toLocaleUpperCase('de-AT')}</span>
+        </footer>
+      </main>
+    </PresentationViewport>
   )
 }

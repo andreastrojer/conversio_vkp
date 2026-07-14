@@ -1,4 +1,5 @@
 import { ChapterNavigation } from '@/components/navigation/ChapterNavigation'
+import { PresentationViewport } from '@/components/layout/PresentationViewport'
 import type { AboutSection } from '@/lib/about'
 import type { ChapterNavigationItem } from '@/lib/about'
 import { brandLogoImageClassName, brandLogoPositionClassName } from '@/lib/brandingLayout'
@@ -22,12 +23,12 @@ type AboutScreenProps = {
 
 const fallbackHeadline = 'WER WIR SIND'
 const patternPositionClassName =
-  'pointer-events-none fixed right-[clamp(-360px,-15vw,-210px)] bottom-[clamp(-360px,-22vh,-220px)] z-0 block h-[clamp(780px,min(62vw,94vh),1120px)] w-[clamp(780px,min(62vw,94vh),1120px)] bg-contain bg-center bg-no-repeat max-[1400px]:right-[clamp(-320px,-15vw,-190px)] max-[1400px]:bottom-[clamp(-330px,-21vh,-205px)] max-[1400px]:h-[clamp(720px,min(59vw,90vh),940px)] max-[1400px]:w-[clamp(720px,min(59vw,90vh),940px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!right-[clamp(-340px,-16vw,-200px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!bottom-[clamp(-340px,-22vh,-215px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!h-[clamp(760px,min(58vw,92vh),980px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[clamp(760px,min(58vw,92vh),980px)]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 block h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
 const patternFallbackClassName = `${patternPositionClassName} opacity-[0.08] [transform:rotate(30deg)]`
 const contentPositionClassName =
-  'absolute left-[clamp(48px,3.9vw,60px)] top-[47%] z-10 max-w-[min(600px,calc(100vw-570px))] -translate-y-1/2 max-[1400px]:max-w-[min(560px,calc(100vw-540px))] [@media_(min-width:1024px)_and_(max-height:950px)]:!left-[clamp(46px,3.6vw,60px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[47%] [@media_(min-width:1024px)_and_(max-height:950px)]:!max-w-[min(520px,calc(100vw-500px))]'
+  'absolute left-[60px] top-[47%] z-10 max-w-[520px] -translate-y-1/2'
 const headlineClassName =
-  'font-sans text-[clamp(44px,3.6vw,56px)] font-bold uppercase leading-[1.02] tracking-[0.028em] max-[1400px]:text-[50px] [@media_(min-width:1024px)_and_(max-height:950px)]:!text-[clamp(42px,3.5vw,50px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!tracking-[0.024em]'
+  'font-sans text-[50px] font-bold uppercase leading-[1.02] tracking-[0.024em]'
 
 function splitTextBlocks(text?: string | null) {
   return (text || '')
@@ -153,8 +154,8 @@ function AboutDetailContent({
   const ctaImageUrl = contentSection?.cta?.imageUrl
 
   return (
-    <section className="relative z-[2] min-h-screen w-full overflow-hidden max-[900px]:min-h-[120vh] max-[900px]:overflow-visible">
-      <div className="absolute left-[-90px] top-[-70px] z-[1] w-[min(87vw,1580px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!left-[-90px] [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[-70px] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[min(87vw,1500px)] max-[900px]:relative max-[900px]:left-auto max-[900px]:top-auto max-[900px]:mx-auto max-[900px]:mt-[80px] max-[900px]:w-[96vw]">
+    <section className="relative z-[2] h-full w-full overflow-hidden">
+      <div className="absolute left-[-90px] top-[clamp(-70px,calc(170px-12.5cqw),-10px)] z-[1] w-[78%]">
         {mapUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -167,15 +168,15 @@ function AboutDetailContent({
         )}
       </div>
 
-      <div className="absolute right-[clamp(32px,2.5vw,48px)] top-[26vh] z-[2] flex w-[min(38vw,540px)] flex-col items-start [@media_(min-width:1024px)_and_(max-height:950px)]:!right-[clamp(32px,2.5vw,48px)] [@media_(min-width:1024px)_and_(max-height:950px)]:!top-[26vh] [@media_(min-width:1024px)_and_(max-height:950px)]:!w-[min(38vw,540px)] max-[900px]:relative max-[900px]:right-auto max-[900px]:top-auto max-[900px]:mx-auto max-[900px]:mt-10 max-[900px]:w-[86vw]">
+      <div className="absolute right-[48px] top-[244px] z-[2] flex w-[540px] flex-col items-start">
         <div className="inline-block -rotate-[1.25deg] bg-[#efb804] px-[32px] py-[9px] shadow-[0_14px_28px_rgba(0,0,0,0.10)]">
-          <h1 className="font-sans text-[42px] font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-[#3d4248] max-[1180px]:text-[34px]">
+          <h1 className="font-sans text-[42px] font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-[#3d4248]">
             {sectionHeadline}
           </h1>
         </div>
 
         {descriptionBlocks.length > 0 ? (
-          <div className="mt-[100px] w-full translate-x-[8px] space-y-[2px] font-sans text-[20px] font-normal leading-[1.36] tracking-[0.006em] text-white [@media_(min-width:1024px)_and_(max-height:950px)]:!mt-[82px]">
+          <div className="mt-[82px] w-full translate-x-[8px] space-y-[2px] font-sans text-[20px] font-normal leading-[1.36] tracking-[0.006em] text-white">
             {descriptionBlocks.map((block) => (
               <div key={block}>
                 {splitTextLines(block).map((line) => (
@@ -187,7 +188,7 @@ function AboutDetailContent({
         ) : null}
 
         {trustBlock ? (
-          <div className="relative mt-[82px] w-full max-w-[500px] font-sans text-[18px] font-semibold uppercase leading-[1.18] tracking-[0.004em] text-white [@media_(min-width:1024px)_and_(max-height:950px)]:!mt-[66px]">
+          <div className="relative mt-[66px] w-full max-w-[500px] font-sans text-[18px] font-semibold uppercase leading-[1.18] tracking-[0.004em] text-white">
             <span className="absolute left-0 top-[2px] z-0 flex gap-[2px]" aria-hidden="true">
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
@@ -198,7 +199,7 @@ function AboutDetailContent({
       </div>
 
       {ctaLabel ? (
-        <div className="absolute bottom-[58px] right-[clamp(58px,4.1vw,72px)] z-[3] w-[208px] max-[900px]:relative max-[900px]:right-auto max-[900px]:bottom-auto max-[900px]:mx-auto max-[900px]:mb-14 max-[900px]:mt-16">
+        <div className="absolute bottom-[58px] right-[72px] z-[3] w-[208px]">
           {ctaHref ? (
             <Link
               href={ctaHref}
@@ -251,7 +252,8 @@ export function AboutScreen({
   const resolvedHeadline = (headline?.trim() || fallbackHeadline).toLocaleUpperCase('de-AT')
 
   return (
-    <main className="relative isolate min-h-screen w-screen overflow-hidden bg-[#3d4248] font-sans text-white">
+    <PresentationViewport backgroundClassName="bg-[#3d4248]">
+    <main className="relative isolate h-full w-full overflow-hidden bg-[#3d4248] font-sans text-white">
       {patternUrl ? (
         <span
           className={`${patternPositionClassName} opacity-[0.10] [filter:brightness(0)_invert(1)]`}
@@ -307,5 +309,6 @@ export function AboutScreen({
         navigationArrowUrl={navigationArrowUrl}
       />
     </main>
+    </PresentationViewport>
   )
 }
