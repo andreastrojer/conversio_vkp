@@ -300,6 +300,197 @@ export const PROCESS_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
+  "screen": *[
+    _type == "appScreen" &&
+    screenType == "whatfits" &&
+    isActive == true &&
+    (!defined(targetAudience) || targetAudience in [$customerType, "both"])
+  ] | order(coalesce(sortOrder, 999999) asc)[0]{
+    title,
+    "screenKey": screenKey.current,
+    screenType,
+    "purpose": contentPurpose,
+    targetAudience,
+    headline,
+    subline,
+    isActive,
+    primaryCta,
+    secondaryCta,
+    heroImage{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    heroMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    productBottomNavigation[]{
+      ...,
+      "slug": slug.current,
+      "screenKey": screenKey.current,
+      product->{
+        _id,
+        title,
+        "slug": slug.current,
+        navigationLabel,
+        isActive
+      }
+    }
+  },
+  "products": *[
+    _type == "productCategory" &&
+    isActive == true &&
+    targetGroup in [$customerType, "both"]
+  ] | order(coalesce(sortOrder, 999999) asc){
+    _id,
+    title,
+    "slug": slug.current,
+    categoryType,
+    targetGroup,
+    catalogLabel,
+    catalogCtaLabel,
+    sortOrder,
+    isActive,
+    catalogImage{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    catalogMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    detailTitle,
+    navigationLabel,
+    detailImage{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    detailMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    detailTabs[]{
+      _key,
+      title,
+      key,
+      isActive,
+      sections[]{
+        _key,
+        title,
+        text,
+        specificationRows[]{
+          _key,
+          label,
+          value
+        },
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        },
+        media->{
+          title,
+          altText,
+          mediaType,
+          externalUrl,
+          "fileUrl": file.asset->url,
+          image{
+            ...,
+            "assetUrl": asset->url,
+            "mimeType": asset->mimeType,
+            "extension": asset->extension,
+            "originalFilename": asset->originalFilename
+          }
+        },
+        isActive
+      }
+    }
+  },
+  "bottomNavigation": *[
+    _type == "productBottomNavigation" &&
+    isActive != false
+  ] | order(coalesce(sortOrder, order, 999999) asc){
+    ...,
+    "slug": slug.current,
+    "screenKey": screenKey.current,
+    items[]{
+      ...,
+      "slug": slug.current,
+      "screenKey": screenKey.current,
+      product->{
+        _id,
+        title,
+        "slug": slug.current,
+        navigationLabel,
+        isActive
+      }
+    },
+    product->{
+      _id,
+      title,
+      "slug": slug.current,
+      navigationLabel,
+      isActive
+    }
+  },
+  "matrixStep": *[
+    _type == "navigationStep" &&
+    isActive == true &&
+    chapter == "matrix" &&
+    (!defined(visibleFor) || visibleFor in [$customerType, "both"])
+  ] | order(coalesce(order, 999999) asc)[0]{
+    title,
+    "stepKey": stepKey.current,
+    order,
+    screen->{
+      title,
+      "screenKey": screenKey.current
+    }
+  }
+}`)
+
 export const ABOUT_BUSINESS_MAP_QUERY = defineQuery(groq`*[
   _type == "mediaAsset" &&
   mediaType == "image" &&

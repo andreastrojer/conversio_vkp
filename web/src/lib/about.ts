@@ -147,6 +147,8 @@ function resolveNavigationItems(
           ? `/about?type=${customerType}`
           : fallback.key === 'offer' && customerType === 'b2c'
             ? `/offer?type=${customerType}`
+            : fallback.key === 'needs' && customerType === 'b2c'
+              ? `/needs?type=${customerType}`
             : undefined,
     }
   })

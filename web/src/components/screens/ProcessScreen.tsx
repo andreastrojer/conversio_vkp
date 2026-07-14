@@ -46,7 +46,7 @@ function ProcessRing({url, isActive}: {url: string; isActive: boolean}) {
     <img
       src={url}
       alt=""
-      className={`pointer-events-none absolute left-0 top-1/2 h-auto w-[288px] -translate-y-1/2 object-contain transition-opacity duration-300 ${
+      className={`pointer-events-none absolute left-0 top-1/2 h-auto w-[340px] -translate-y-1/2 object-contain transition-opacity duration-300 [@media(min-height:940px)]:w-[288px] ${
         isActive ? 'opacity-100' : 'opacity-[0.82]'
       }`}
       aria-hidden="true"
@@ -129,11 +129,11 @@ export function ProcessScreen({
           </Link>
         </div>
 
-        <p className="absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[14px] font-medium uppercase tracking-[0.32em] text-white/90">
+        <p className="absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] text-white/90 [@media(min-height:940px)]:text-[14px]">
           {subline?.trim() || 'DER ABLAUF'}
         </p>
 
-        <section className="absolute left-[175px] top-[290px] z-[3] h-[475px] w-[550px]" aria-label="Prozessschritte als Ringstapel">
+        <section className="absolute left-[175px] top-[290px] z-[3] h-[475px] w-[550px] [--process-step-gap:68px] [@media(min-height:940px)]:[--process-step-gap:63px]" aria-label="Prozessschritte als Ringstapel">
           {sections.map((section, index) => {
             const isActive = index === safeActiveIndex
             const currentRingUrl = isActive ? activeRingImageUrl : inactiveRingImageUrl
@@ -143,7 +143,7 @@ export function ProcessScreen({
                 key={sectionKey(section, index)}
                 type="button"
                 className="absolute left-0 h-[80px] w-[350px] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
-                style={{top: `${index * 63}px`, zIndex: isActive ? 20 : sections.length - index}}
+                style={{top: `calc(${index} * var(--process-step-gap))`, zIndex: sections.length - index}}
                 animate={{x: isActive ? 75 : 30, y: isActive ? -9 : 0}}
                 transition={{duration: 0.42, ease: [0.22, 1, 0.36, 1]}}
                 onClick={() => selectStep(index)}
@@ -167,14 +167,13 @@ export function ProcessScreen({
 
           {activeSection ? (
             <motion.div
-              className="absolute left-[355px] flex w-[265px] items-center gap-[10px]"
-              animate={{top: safeActiveIndex * 63 - 7}}
-              transition={{duration: 0.42, ease: [0.22, 1, 0.36, 1]}}
+              className="absolute left-[405px] flex w-[265px] items-center gap-[10px] transition-[top] duration-[420ms] ease-out [@media(min-height:940px)]:left-[355px]"
+              style={{top: `calc(${safeActiveIndex} * var(--process-step-gap) - 7px)`}}
             >
               <span className="h-px w-[46px] shrink-0 bg-[#efb804]" aria-hidden="true" />
               <button
                 type="button"
-                className="inline-flex items-center whitespace-nowrap text-[14px] font-medium uppercase tracking-[0.035em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-default"
+                className="inline-flex items-center whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.035em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-default [@media(min-height:940px)]:text-[14px]"
                 onClick={selectNextStep}
                 disabled={safeActiveIndex >= sections.length - 1}
                 aria-label="Nächsten Prozessschritt anzeigen"
@@ -210,11 +209,11 @@ export function ProcessScreen({
                     }`}
                     aria-hidden="true"
                   />
-                  <span className="relative ml-[48px] grid h-[48px] w-[48px] shrink-0 place-items-center">
+                  <span className="relative ml-[48px] grid h-[52px] w-[52px] shrink-0 place-items-center [@media(min-height:940px)]:h-[48px] [@media(min-height:940px)]:w-[48px]">
                     <Hexagon className="absolute inset-0 h-full w-full" strokeWidth={2.8} aria-hidden="true" />
-                    <span className="relative text-[16px] font-medium">{index + 1}</span>
+                    <span className="relative text-[17px] font-medium [@media(min-height:940px)]:text-[16px]">{index + 1}</span>
                   </span>
-                  <span className="ml-[22px] max-w-[410px] text-[19px] font-bold uppercase leading-[1.12] tracking-[0.012em] transition-colors duration-300">
+                  <span className="ml-[22px] max-w-[410px] text-[22px] font-bold uppercase leading-[1.12] tracking-[0.012em] transition-colors duration-300 [@media(min-height:940px)]:text-[19px]">
                     {section.title || `Schritt ${index + 1}`}
                   </span>
                 </button>
@@ -227,7 +226,7 @@ export function ProcessScreen({
           <div className="absolute bottom-[58px] right-[72px] z-[4] w-[276px]">
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              className="group flex items-center justify-between pb-[10px] text-[20px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] [@media(min-height:940px)]:text-[18px]"
             >
               <span>{primaryCta.label}</span>
               <ArrowRight
