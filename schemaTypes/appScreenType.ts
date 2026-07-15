@@ -242,6 +242,108 @@ export const appScreenType = defineType({
       ],
     }),
     defineField({
+      name: 'productBottomNavigation',
+      title: 'Untere Produktnavigation',
+      type: 'array',
+      group: 'content',
+      description:
+        'Navigation am unteren Rand der Produktdetailseite.',
+      hidden: ({ document }) => document?.screenType !== 'whatfits',
+
+      of: [
+        {
+          name: 'productNavigationItem',
+          title: 'Navigationseintrag',
+          type: 'object',
+
+          fields: [
+            defineField({
+              name: 'itemType',
+              title: 'Eintragstyp',
+              type: 'string',
+              options: {
+                list: [
+                  {
+                    title: 'Zurück zum Katalog',
+                    value: 'catalog',
+                  },
+                  {
+                    title: 'Produkt',
+                    value: 'product',
+                  },
+                  {
+                    title: 'Anderer App Screen',
+                    value: 'screen',
+                  },
+                ],
+                layout: 'radio',
+              },
+              validation: (Rule) => Rule.required(),
+            }),
+
+            defineField({
+              name: 'label',
+              title: 'Beschriftung',
+              type: 'string',
+              description:
+                'Zum Beispiel „MATRIX“. Bei Produkten kann der Produktname verwendet werden.',
+            }),
+
+            defineField({
+              name: 'product',
+              title: 'Produkt',
+              type: 'reference',
+              to: [{ type: 'productCategory' }],
+              hidden: ({ parent }) => parent?.itemType !== 'product',
+            }),
+
+            defineField({
+              name: 'screenKey',
+              title: 'Ziel-Screen-Key',
+              type: 'string',
+              description:
+                'Zum Beispiel „scenario-matrix“.',
+              hidden: ({ parent }) => parent?.itemType !== 'screen',
+            }),
+
+            defineField({
+              name: 'iconImage',
+              title: 'Icon-Bild optional',
+              type: 'image',
+              description:
+                'Zum Beispiel das kleine Listen-Symbol für den Katalog-Button.',
+              options: {
+                hotspot: true,
+              },
+              hidden: ({ parent }) => parent?.itemType !== 'catalog',
+            }),
+          ],
+
+          preview: {
+            select: {
+              itemType: 'itemType',
+              label: 'label',
+              productTitle: 'product.title',
+              media: 'iconImage',
+            },
+
+            prepare({ itemType, label, productTitle, media }) {
+              return {
+                title:
+                  label ||
+                  productTitle ||
+                  (itemType === 'catalog'
+                    ? 'Zurück zum Katalog'
+                    : 'Navigationseintrag'),
+                subtitle: itemType,
+                media,
+              }
+            },
+          },
+        },
+      ],
+    }),
+    defineField({
       name: 'primaryCta',
       title: 'Primärer CTA',
       type: 'object',

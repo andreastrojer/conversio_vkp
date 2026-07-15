@@ -66,6 +66,7 @@ export type ProductNavigationItem = {
   kind: 'catalog' | 'product' | 'screen'
   slug?: string
   href?: string
+  iconUrl?: string
 }
 
 type ProductDocument = {
@@ -113,6 +114,8 @@ type RawBottomNavigationItem = {
   sortOrder?: number | null
   order?: number | null
   isActive?: boolean | null
+  itemType?: string | null
+  iconImage?: SanityImage
   product?: {
     _id?: string | null
     title?: string | null
@@ -146,6 +149,10 @@ type WhatFitsQueryResult = {
       screenKey?: string | null
     } | null
   } | null
+  productNavigationAssets?: Array<{
+    title?: string | null
+    image?: SanityImage
+  }> | null
 }
 
 export type WhatFitsPageData = {
@@ -160,6 +167,9 @@ export type WhatFitsPageData = {
   patternUrl?: string
   patternAlt: string
   navigationArrowUrl?: string
+  productNavigationLeftArrowUrl?: string
+  productNavigationRightArrowUrl?: string
+  productNavigationCatalogIconUrl?: string
 }
 
 const whatFitsClient = sanityClient.withConfig({useCdn: false})
@@ -283,12 +293,15 @@ function normalizeBottomNavigation(
   const normalizedItems = rawItems.flatMap<ProductNavigationItem>((item, index) => {
     const slug = item.product?.slug || item.slug || undefined
     const matchingProduct = slug ? products.find((product) => product.slug === slug) : undefined
+    const target = item.target?.trim() || item.screenKey?.trim()
+    const isCatalogItem = item.itemType === 'catalog' || target === screen?.screenKey
     const label =
       item.label?.trim() ||
       item.navigationLabel?.trim() ||
       item.title?.trim() ||
       item.product?.navigationLabel?.trim() ||
-      item.product?.title?.trim()
+      item.product?.title?.trim() ||
+      (isCatalogItem ? screen?.headline?.trim() || 'Katalog' : undefined)
 
     if (!label) {
       return []
@@ -300,28 +313,51 @@ function normalizeBottomNavigation(
         label,
         kind: 'product',
         slug: matchingProduct.slug,
+        iconUrl: resolveImageUrl(item.iconImage, 256),
       }]
     }
 
-    const target = item.target?.trim() || item.screenKey?.trim()
-
-    if (target && target === screen?.screenKey) {
-      return [{key: item._key || item._id || `catalog-${index}`, label, kind: 'catalog'}]
+    if (isCatalogItem) {
+      return [{
+        key: item._key || item._id || `catalog-${index}`,
+        label,
+        kind: 'catalog',
+        iconUrl: resolveImageUrl(item.iconImage, 256),
+      }]
     }
 
     if (target) {
+      const isMatrixTarget = /matrix/i.test(target) || /szenario[-\s]?matrix/i.test(label)
+
       return [{
         key: item._key || item._id || `screen-${target}-${index}`,
-        label,
+        label: isMatrixTarget ? 'Matrix' : label,
         kind: 'screen',
         href: resolveScreenHref(target, customerType),
+        iconUrl: resolveImageUrl(item.iconImage, 256),
       }]
     }
 
     return []
   })
 
+  const matrixLabel = matrixStep?.title?.trim() || matrixStep?.screen?.title?.trim()
+  const matrixTarget = matrixStep?.screen?.screenKey?.trim() || matrixStep?.stepKey?.trim()
+
   if (normalizedItems.length > 0) {
+    const hasMatrixItem = normalizedItems.some((item) =>
+      item.kind === 'screen' && item.href === (matrixTarget ? resolveScreenHref(matrixTarget, customerType) : undefined),
+    )
+
+    if (!hasMatrixItem && matrixLabel && matrixTarget) {
+      normalizedItems.push({
+        key: `screen-${matrixTarget}`,
+        label: 'Matrix',
+        kind: 'screen',
+        href: resolveScreenHref(matrixTarget, customerType),
+      })
+    }
+
     return normalizedItems
   }
 
@@ -340,13 +376,10 @@ function normalizeBottomNavigation(
     })),
   )
 
-  const matrixLabel = matrixStep?.title?.trim() || matrixStep?.screen?.title?.trim()
-  const matrixTarget = matrixStep?.screen?.screenKey?.trim() || matrixStep?.stepKey?.trim()
-
   if (matrixLabel && matrixTarget) {
     fallbackItems.push({
       key: `screen-${matrixTarget}`,
-      label: matrixLabel,
+      label: 'Matrix',
       kind: 'screen',
       href: resolveScreenHref(matrixTarget, customerType),
     })
@@ -368,6 +401,11 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       sharedContentPromise,
     ])
     const products = normalizeProducts(result.products)
+    const navigationAssetUrl = (title: string) =>
+      resolveImageUrl(
+        result.productNavigationAssets?.find((asset) => asset.title?.trim() === title)?.image,
+        256,
+      )
 
     return {
       headline: result.screen?.headline,
@@ -387,6 +425,9 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       patternUrl: sharedContent.patternUrl,
       patternAlt: sharedContent.patternAlt,
       navigationArrowUrl: sharedContent.navigationArrowUrl,
+      productNavigationLeftArrowUrl: navigationAssetUrl('Linker Nav Pfeil'),
+      productNavigationRightArrowUrl: navigationAssetUrl('Rechter Nav Pfeil'),
+      productNavigationCatalogIconUrl: navigationAssetUrl('Linker Navbutton'),
     }
   } catch {
     const sharedContent = await sharedContentPromise

@@ -342,6 +342,13 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
       ...,
       "slug": slug.current,
       "screenKey": screenKey.current,
+      iconImage{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
       product->{
         _id,
         title,
@@ -487,6 +494,21 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
     screen->{
       title,
       "screenKey": screenKey.current
+    }
+  },
+  "productNavigationAssets": *[
+    _type == "mediaAsset" &&
+    mediaType == "image" &&
+    isActive != false &&
+    title in ["Linker Nav Pfeil", "Rechter Nav Pfeil", "Linker Navbutton"]
+  ]{
+    title,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
     }
   }
 }`)

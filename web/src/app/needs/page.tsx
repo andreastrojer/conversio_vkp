@@ -41,6 +41,9 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
       patternUrl={content.patternUrl}
       patternAlt={content.patternAlt}
       navigationArrowUrl={content.navigationArrowUrl}
+      productNavigationLeftArrowUrl={content.productNavigationLeftArrowUrl}
+      productNavigationRightArrowUrl={content.productNavigationRightArrowUrl}
+      productNavigationCatalogIconUrl={content.productNavigationCatalogIconUrl}
     />
   )
 }

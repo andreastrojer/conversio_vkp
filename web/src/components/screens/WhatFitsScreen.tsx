@@ -31,6 +31,9 @@ type WhatFitsScreenProps = {
   patternUrl?: string
   patternAlt: string
   navigationArrowUrl?: string
+  productNavigationLeftArrowUrl?: string
+  productNavigationRightArrowUrl?: string
+  productNavigationCatalogIconUrl?: string
 }
 
 type ProductView = 'catalog' | 'detail'
@@ -210,6 +213,9 @@ export function WhatFitsScreen({
   patternUrl,
   patternAlt,
   navigationArrowUrl,
+  productNavigationLeftArrowUrl,
+  productNavigationRightArrowUrl,
+  productNavigationCatalogIconUrl,
 }: WhatFitsScreenProps) {
   const [view, setView] = useState<ProductView>('catalog')
   const [selectedSlug, setSelectedSlug] = useState(products[0]?.slug || '')
@@ -400,7 +406,7 @@ export function WhatFitsScreen({
                   {selectedProduct.detailTitle}
                 </h1>
 
-                <div className="mt-[42px] flex items-start gap-[22px]" role="tablist" aria-label={selectedProduct.detailTitle}>
+                <div className="mt-[42px] flex items-start gap-[10px]" role="tablist" aria-label={selectedProduct.detailTitle}>
                   {selectedProduct.detailTabs.map((tab) => {
                     const isActive = tab.key === activeTab?.key
 
@@ -410,23 +416,14 @@ export function WhatFitsScreen({
                         type="button"
                         role="tab"
                         aria-selected={isActive}
-                        className={`relative px-[12px] pb-[13px] text-[15px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                        className={`relative px-[12px] pb-[9px] text-[15px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
                           isActive ? 'text-[#efb804]' : 'text-white'
                         }`}
                         onClick={() => selectTab(tab.key)}
                       >
                         {tab.title}
                         {isActive ? (
-                          <>
-                            <span className="absolute inset-x-0 bottom-0 h-px bg-[#efb804]" aria-hidden="true" />
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src="/vector.svg"
-                              alt=""
-                              className="absolute bottom-[-13px] left-1/2 h-[11px] w-[9px] -translate-x-1/2 object-fill"
-                              aria-hidden="true"
-                            />
-                          </>
+                          <span className="absolute inset-x-0 bottom-0 h-px bg-[#efb804] opacity-100 shadow-none" aria-hidden="true" />
                         ) : null}
                       </button>
                     )
@@ -436,11 +433,11 @@ export function WhatFitsScreen({
 
               <MediaLayer
                 media={detailMedia}
-                className="absolute bottom-[10px] left-0 h-[510px] w-[805px]"
-                imageClassName="h-full w-full object-contain object-left-bottom"
+                className="absolute bottom-0 left-0 h-[650px] w-[62cqw]"
+                imageClassName="h-full w-full object-cover object-left-top"
               />
 
-              <div className="absolute left-[842px] top-[540px] z-[3] w-[510px]">
+              <div className="absolute left-[58.5cqw] right-[60px] top-[500px] z-[3]">
                 {activeTab?.key === 'technical' ? (
                   <div className="w-full">
                     {activeTab.sections.map((section) => {
@@ -512,29 +509,54 @@ export function WhatFitsScreen({
 
               {bottomNavigation.length > 0 ? (
                 <nav
-                  className="absolute bottom-[18px] left-[34px] right-[34px] z-[5] flex h-[48px] items-center bg-[#464b50]/95 px-[34px]"
+                  className="absolute bottom-[36px] left-[60px] z-[5] flex h-[48px] w-max items-center bg-[#464b50]"
                   aria-label="Produktnavigation"
                 >
+                  <span
+                    className="pointer-events-none absolute -left-[25px] top-0 h-full w-[26px] bg-[#464b50] [clip-path:polygon(100%_0,100%_100%,0_50%)]"
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="pointer-events-none absolute -right-[25px] top-0 h-full w-[26px] bg-[#464b50] [clip-path:polygon(0_0,0_100%,100%_50%)]"
+                    aria-hidden="true"
+                  />
                   <button
                     type="button"
-                    className="absolute -left-[12px] grid h-[68px] w-[38px] place-items-center text-[#efb804] disabled:opacity-25"
+                    className="absolute -left-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
                     onClick={() => previousBottomItem && handleBottomNavigation(previousBottomItem)}
                     disabled={!previousBottomItem || previousBottomItem.kind === 'screen'}
                     aria-label={previousBottomItem?.label || undefined}
                   >
-                    <ArrowLeft className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                    {productNavigationLeftArrowUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={productNavigationLeftArrowUrl} alt="" className="h-[92px] w-[26px] object-contain" aria-hidden="true" />
+                    ) : (
+                      <ArrowLeft className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                    )}
                   </button>
 
-                  <div className="flex w-full items-center justify-between gap-[18px] pl-[12px] pr-[12px]">
+                  <div className="flex w-auto items-center justify-start gap-[44px] pl-[10px] pr-[12px]">
                     {bottomNavigation.map((item) => {
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug
-                      const commonClassName = `inline-flex h-[34px] items-center justify-center whitespace-nowrap px-[12px] text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+                      const catalogIconUrl = item.iconUrl || productNavigationCatalogIconUrl
+                      const commonClassName = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
                         isActive ? 'text-[#efb804]' : 'text-white'
-                      } ${isCatalog ? 'min-w-[66px] rounded-full bg-[#efb804] text-[#3d4248]' : ''}`
+                      } ${
+                        isCatalog
+                          ? catalogIconUrl
+                            ? 'h-[26px] w-[66px] p-0 text-[#3d4248]'
+                            : 'h-[26px] min-w-[66px] rounded-full bg-[#efb804] px-[12px] text-[#3d4248]'
+                          : 'h-[34px] px-[12px]'
+                      }`
                       const content = isCatalog ? (
                         <>
-                          <ListFilter className="h-[17px] w-[17px]" strokeWidth={2.2} aria-hidden="true" />
+                          {catalogIconUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={catalogIconUrl} alt="" className="h-[26px] w-[66px] object-contain" aria-hidden="true" />
+                          ) : (
+                            <ListFilter className="h-[17px] w-[17px]" strokeWidth={2.2} aria-hidden="true" />
+                          )}
                           <span className="sr-only">{item.label}</span>
                         </>
                       ) : item.label
@@ -560,20 +582,30 @@ export function WhatFitsScreen({
                   {nextBottomItem?.kind === 'screen' && nextBottomItem.href ? (
                     <Link
                       href={nextBottomItem.href}
-                      className="absolute -right-[12px] grid h-[68px] w-[38px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
+                      className="absolute -right-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
                       aria-label={nextBottomItem.label}
                     >
-                      <ArrowRight className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                      {productNavigationRightArrowUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={productNavigationRightArrowUrl} alt="" className="h-[92px] w-[26px] object-contain" aria-hidden="true" />
+                      ) : (
+                        <ArrowRight className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                      )}
                     </Link>
                   ) : (
                     <button
                       type="button"
-                      className="absolute -right-[12px] grid h-[68px] w-[38px] place-items-center text-[#efb804] disabled:opacity-25"
+                      className="absolute -right-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
                       onClick={() => nextBottomItem && handleBottomNavigation(nextBottomItem)}
                       disabled={!nextBottomItem}
                       aria-label={nextBottomItem?.label || undefined}
                     >
-                      <ArrowRight className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                      {productNavigationRightArrowUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={productNavigationRightArrowUrl} alt="" className="h-[92px] w-[26px] object-contain" aria-hidden="true" />
+                      ) : (
+                        <ArrowRight className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                      )}
                     </button>
                   )}
                 </nav>
