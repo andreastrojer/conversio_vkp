@@ -16,7 +16,7 @@ import type {
 } from '@/lib/scenarioMatrix'
 import type {ProductNavigationItem} from '@/lib/whatFits'
 import {AnimatePresence, motion} from 'framer-motion'
-import {ArrowLeft, ArrowRight, ListFilter} from 'lucide-react'
+import {ArrowLeft, ArrowRight, ArrowUp, ListFilter} from 'lucide-react'
 import Link from 'next/link'
 import {useMemo, useState} from 'react'
 
@@ -50,88 +50,105 @@ function findSliderValue(
   return slider ? values[slider.key] : undefined
 }
 
-function parameterMap(parameters: ScenarioMatrixParameter[]) {
-  return new Map(parameters.map((parameter) => [normalizeKey(parameter.key), parameter.value]))
-}
-
-function findParameter(parameters: Map<string, number>, terms: string[]) {
-  for (const [key, value] of parameters) {
-    if (terms.some((term) => key.includes(term))) {
-      return value
-    }
-  }
-
-  return undefined
-}
-
-function calculateMetric(
-  metric: ScenarioMatrixMetric,
-  sliders: ScenarioMatrixSlider[],
-  values: Record<string, number>,
-  parameters: ScenarioMatrixParameter[],
-) {
-  const metricType = normalizeKey(metric.metricType || metric.key)
-  const annualConsumption = findSliderValue(sliders, values, ['annual', 'jahresverbrauch'])
-  const storage = findSliderValue(sliders, values, ['speicher', 'storage'])
-  const chargingStations = findSliderValue(sliders, values, ['ladestation', 'charging'])
-
-  if (metricType.includes('jahresverbrauch')) return annualConsumption
-  if (metricType.includes('speicher')) return storage
-  if (metricType.includes('ladestation')) return chargingStations
-
-  const mappedParameters = parameterMap(parameters)
-  const pvSize = findParameter(mappedParameters, ['pvleistung', 'pvsize', 'kwp'])
-  const yieldPerKwp = findParameter(mappedParameters, ['ertragprokwp', 'yieldperkwp', 'spezifischertrag'])
-  const annualYield = pvSize !== undefined && yieldPerKwp !== undefined ? pvSize * yieldPerKwp : undefined
-
-  if (metricType.includes('jahresertrag')) return annualYield
-
-  const baseAutarky = findParameter(mappedParameters, ['basisautarkie', 'baseautarky'])
-  const storageAutarky = findParameter(mappedParameters, ['speicherautarkie', 'storageautarky'])
-  const chargerPenalty = findParameter(mappedParameters, ['ladeverlust', 'chargerpenalty'])
-  const autarky =
-    baseAutarky !== undefined && storage !== undefined
-      ? Math.min(100, Math.max(0, baseAutarky + storage * (storageAutarky || 0) - (chargingStations || 0) * (chargerPenalty || 0)))
-      : undefined
-
-  if (metricType.includes('autarkie')) return autarky
-  if (metricType.includes('eigenverbrauch')) {
-    return annualConsumption !== undefined && autarky !== undefined
-      ? annualConsumption * (autarky / 100)
-      : undefined
-  }
-
-  const baseInvestment = findParameter(mappedParameters, ['basisinvestition', 'baseinvestment'])
-  const pvCost = findParameter(mappedParameters, ['kostenprokwp', 'pvcost'])
-  const storageCost = findParameter(mappedParameters, ['speicherkosten', 'storagecost'])
-  const chargerCost = findParameter(mappedParameters, ['ladestationskosten', 'chargercost'])
-
-  if (metricType.includes('investition')) {
-    if (baseInvestment === undefined) return undefined
-
-    return (
-      baseInvestment +
-      (pvSize || 0) * (pvCost || 0) +
-      (storage || 0) * (storageCost || 0) +
-      (chargingStations || 0) * (chargerCost || 0)
-    )
-  }
-
-  const co2Factor = findParameter(mappedParameters, ['co2faktor', 'co2factor'])
-  if (metricType.includes('co2')) {
-    return annualYield !== undefined && co2Factor !== undefined
-      ? annualYield * co2Factor
-      : undefined
-  }
-
-  return undefined
-}
-
 function formatNumber(value: number, unit?: string) {
   const maximumFractionDigits = Number.isInteger(value) ? 0 : 1
   const formatted = new Intl.NumberFormat('de-AT', {maximumFractionDigits}).format(value)
 
   return unit ? `${formatted} ${unit}` : formatted
+}
+
+type CalculatedBundle = {
+  autarky?: number
+  savings?: number
+  autarkyMetric?: ScenarioMatrixMetric
+  savingsMetric?: ScenarioMatrixMetric
+}
+
+function findExactParameter(parameters: ScenarioMatrixParameter[], key: string) {
+  return parameters.find((parameter) => parameter.key === key)?.value
+}
+
+function calculateBundle(
+  bundle: ScenarioMatrixBundle,
+  sliders: ScenarioMatrixSlider[],
+  values: Record<string, number>,
+  parameters: ScenarioMatrixParameter[],
+  metrics: ScenarioMatrixMetric[],
+): CalculatedBundle {
+  const annualConsumption = findSliderValue(sliders, values, ['annual', 'jahresverbrauch'])
+  const storageSize = findSliderValue(sliders, values, ['speicher', 'storage'])
+  const chargingStations = findSliderValue(sliders, values, ['ladestation', 'charging'])
+  const autarkyMetric = metrics.find(
+    (metric) => normalizeKey(metric.metricType) === 'autarkiegrad' || normalizeKey(metric.key) === 'autarkie',
+  )
+  const savingsMetric = metrics.find((metric) => {
+    const identity = normalizeKey(`${metric.key} ${metric.metricType || ''} ${metric.title}`)
+    return identity.includes('ersparnis') || identity.includes('einspar') || identity.includes('savings')
+  })
+  const referenceAnnualConsumption = findExactParameter(parameters, 'referenceAnnualConsumption')
+  const referenceStorageSize = findExactParameter(parameters, 'referenceStorageSize')
+  const referenceChargingStations = findExactParameter(parameters, 'referenceChargingStations')
+  const baseAutarky = findExactParameter(parameters, 'baseAutarky')
+  const storageAutarkyBonusPerKwh = findExactParameter(parameters, 'storageAutarkyBonusPerKwh')
+  const chargingAutarkyBonus = findExactParameter(parameters, 'chargingAutarkyBonus')
+  const baseAnnualSavings = findExactParameter(parameters, 'baseAnnualSavings')
+  const storageSavingsPerKwh = findExactParameter(parameters, 'storageSavingsPerKwh')
+  const chargingAnnualSavings = findExactParameter(parameters, 'chargingAnnualSavings')
+  const requiredValues = [
+    annualConsumption,
+    storageSize,
+    chargingStations,
+    referenceAnnualConsumption,
+    referenceStorageSize,
+    referenceChargingStations,
+    baseAutarky,
+    storageAutarkyBonusPerKwh,
+    chargingAutarkyBonus,
+    baseAnnualSavings,
+    storageSavingsPerKwh,
+    chargingAnnualSavings,
+  ]
+
+  if (
+    requiredValues.some((value) => typeof value !== 'number' || !Number.isFinite(value)) ||
+    !referenceAnnualConsumption ||
+    !referenceStorageSize ||
+    !referenceChargingStations
+  ) {
+    return {autarkyMetric, savingsMetric}
+  }
+
+  const scenarioType = normalizeKey(bundle.scenarioType)
+  const includesStorage = scenarioType === 'b2cpvspeicher' || scenarioType === 'b2ckomplett'
+  const includesCharging = scenarioType === 'b2ckomplett'
+  const storageRatio = storageSize! / referenceStorageSize
+  const chargingRatio = chargingStations! / referenceChargingStations
+  const autarkyAtReference =
+    baseAutarky! +
+    (includesStorage ? referenceStorageSize * storageAutarkyBonusPerKwh! * storageRatio : 0) +
+    (includesCharging ? chargingAutarkyBonus! * chargingRatio : 0)
+  const autarky = Math.min(
+    100,
+    Math.max(0, autarkyAtReference * (referenceAnnualConsumption / annualConsumption!)),
+  )
+  const savingsAtReference =
+    baseAnnualSavings! +
+    (includesStorage ? referenceStorageSize * storageSavingsPerKwh! * storageRatio : 0) +
+    (includesCharging ? chargingAnnualSavings! * chargingRatio : 0)
+  const savings = Math.max(0, savingsAtReference * (annualConsumption! / referenceAnnualConsumption))
+
+  return {
+    autarky,
+    savings,
+    autarkyMetric,
+    savingsMetric,
+  }
+}
+
+function formatMetricValue(value: number, metric: ScenarioMatrixMetric) {
+  const formatted = new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))
+
+  return metric.unit ? `${formatted}${metric.unit}` : formatted
 }
 
 function SliderControl({
@@ -192,52 +209,105 @@ function SliderControl({
 
 function BundleCard({
   bundle,
+  imageUrl,
+  imageAlt,
+  result,
+  previousResult,
   active,
   onSelect,
 }: {
   bundle: ScenarioMatrixBundle
+  imageUrl?: string
+  imageAlt: string
+  result: CalculatedBundle
+  previousResult?: CalculatedBundle
   active: boolean
   onSelect: () => void
 }) {
+  const autarkyDelta =
+    result.autarky !== undefined && previousResult?.autarky !== undefined
+      ? Math.round(result.autarky - previousResult.autarky)
+      : undefined
+  const savingsDelta =
+    result.savings !== undefined && previousResult?.savings !== undefined
+      ? Math.round(result.savings - previousResult.savings)
+      : undefined
+
   return (
     <button
       type="button"
-      className={`relative h-[490px] w-[350px] overflow-hidden rounded-[22px] border-2 p-[28px] text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
-        active
-          ? 'border-[#efb804] bg-[#efb804] text-[#3d4248]'
-          : 'border-white/35 bg-[#454a4f] text-white'
-      }`}
+      className="group relative h-[452px] w-[315px] text-left text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804]"
       aria-pressed={active}
       onClick={onSelect}
     >
-      {bundle.imageUrl ? (
+      <span
+        className={`inline-flex h-[38px] min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 ${
+          active ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#4a4f54] text-white'
+        }`}
+      >
+        {bundle.title}
+      </span>
+
+      {imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={bundle.imageUrl}
-          alt=""
-          className="absolute inset-x-0 top-0 h-[185px] w-full object-cover"
-          aria-hidden="true"
+          src={imageUrl}
+          alt={imageAlt}
+          className="mt-[34px] h-[190px] w-[315px] object-contain object-center transition-transform duration-300 group-hover:scale-[1.015]"
         />
       ) : null}
-      <div className={bundle.imageUrl ? 'pt-[178px]' : ''}>
-        <h2 className="text-[22px] font-bold uppercase leading-[1.05]">{bundle.title}</h2>
-        {bundle.shortDescription ? (
-          <p className="mt-[18px] text-[18px] leading-[1.42]">{bundle.shortDescription}</p>
+
+      {(autarkyDelta !== undefined || savingsDelta !== undefined) ? (
+        <span className="absolute left-[-188px] top-[194px] z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[5px] bg-[#4a4f54] text-[15px] font-semibold uppercase leading-none text-[#efb804]">
+          {autarkyDelta !== undefined && result.autarkyMetric ? (
+            <span className="flex items-center gap-[7px]">
+              <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
+              <span>
+                {autarkyDelta >= 0 ? '+' : ''}{formatMetricValue(autarkyDelta, result.autarkyMetric)}{' '}
+                {result.autarkyMetric.title}
+              </span>
+            </span>
+          ) : null}
+          {savingsDelta !== undefined && result.savingsMetric ? (
+            <span className="flex items-center gap-[7px]">
+              <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
+              <span>{savingsDelta >= 0 ? '+' : ''}{formatMetricValue(savingsDelta, result.savingsMetric)}</span>
+            </span>
+          ) : null}
+        </span>
+      ) : null}
+
+      <div className="mt-[30px] text-[#efb804]">
+        {result.autarky !== undefined && result.autarkyMetric ? (
+          <p className="flex items-baseline gap-[14px] uppercase">
+            <strong className="text-[30px] font-bold leading-none">
+              {formatMetricValue(result.autarky, result.autarkyMetric)}
+            </strong>
+            <span className="text-[20px] font-medium tracking-[0.025em]">{result.autarkyMetric.title}</span>
+          </p>
         ) : null}
-        {bundle.features.length > 0 ? (
-          <ul className="mt-[22px] space-y-[8px] text-[18px] font-semibold uppercase leading-[1.35]" role="list">
-            {bundle.features.map((feature) => <li key={feature}>{feature}</li>)}
-          </ul>
+        {result.savings !== undefined && result.savingsMetric ? (
+          <p className="mt-[8px] flex items-baseline gap-[14px] uppercase">
+            <strong className="text-[30px] font-bold leading-none">
+              {formatMetricValue(result.savings, result.savingsMetric)}
+            </strong>
+            <span className="text-[20px] font-medium tracking-[0.025em]">{result.savingsMetric.title}</span>
+          </p>
         ) : null}
-        {bundle.values.length > 0 ? (
-          <dl className="mt-[24px] space-y-[9px] text-[16px]">
-            {bundle.values.map((item) => (
-              <div key={item.key} className="flex items-baseline justify-between gap-[18px] border-b border-current/25 pb-[6px]">
-                <dt>{item.title}</dt>
-                <dd className="font-bold">{item.value}{item.unit ? ` ${item.unit}` : ''}</dd>
-              </div>
+      </div>
+
+      <div className="mt-[28px] flex min-h-[72px] items-start gap-[8px] border-t-2 border-white pt-[20px] text-[16px] leading-[1.35]">
+        <span className="shrink-0 uppercase">Enthalten:</span>
+        {bundle.includedItems.length > 0 ? (
+          <ul className="font-semibold" aria-label="Enthaltene Leistungen">
+            {bundle.includedItems.map((item) => (
+              <li key={item.id}>
+                <strong>
+                  {item.amount ? `${item.amount} ` : ''}{item.label}
+                </strong>
+              </li>
             ))}
-          </dl>
+          </ul>
         ) : null}
       </div>
     </button>
@@ -268,6 +338,8 @@ export function ScenarioMatrixScreen({
   bundles,
   heroImageUrl,
   heroImageAlt,
+  offerImageUrl,
+  offerImageAlt,
   bottomNavigation,
   navigationItems,
   logoUrl,
@@ -285,14 +357,15 @@ export function ScenarioMatrixScreen({
   const [values, setValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(sliders.map((slider) => [slider.key, slider.defaultValue])),
   )
+  const [submittedValues, setSubmittedValues] = useState<Record<string, number>>(() =>
+    Object.fromEntries(sliders.map((slider) => [slider.key, slider.defaultValue])),
+  )
   const pageLogoUrl = inverseLogoUrl || logoUrl
   const navigationLogoUrl = logoUrl || inverseLogoUrl
-  const calculatedMetrics = useMemo(
-    () => metrics.flatMap((metric) => {
-      const value = calculateMetric(metric, sliders, values, parameters)
-      return value === undefined ? [] : [{metric, value}]
-    }),
-    [metrics, parameters, sliders, values],
+  const visibleBundles = useMemo(() => bundles.slice(0, 3), [bundles])
+  const calculatedBundles = useMemo(
+    () => visibleBundles.map((bundle) => calculateBundle(bundle, sliders, submittedValues, parameters, metrics)),
+    [metrics, parameters, sliders, submittedValues, visibleBundles],
   )
 
   return (
@@ -383,7 +456,10 @@ export function ScenarioMatrixScreen({
                   <button
                     type="button"
                     className="group inline-flex h-[46px] min-w-[258px] items-center justify-between rounded-full bg-[#efb804] px-[28px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
-                    onClick={() => setActiveTab('calculation')}
+                    onClick={() => {
+                      setSubmittedValues({...values})
+                      setActiveTab('calculation')
+                    }}
                   >
                     <span>{calculateButtonLabel}</span>
                     {navigationArrowUrl ? (
@@ -396,33 +472,27 @@ export function ScenarioMatrixScreen({
                 ) : null}
               </div>
 
-              {calculatedMetrics.length > 0 ? (
-                <dl className="absolute right-[72px] top-[370px] z-[4] w-[310px] space-y-[18px]">
-                  {calculatedMetrics.map(({metric, value}) => (
-                    <div key={metric.key} className="border-b border-white/70 pb-[12px]">
-                      <dt className="text-[14px] font-semibold uppercase tracking-[0.04em] text-white/80">{metric.title}</dt>
-                      <dd className="mt-[4px] text-[24px] font-bold text-[#efb804]">{formatNumber(value, metric.unit)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
             </motion.section>
           ) : (
             <motion.section
               key="calculation"
-              className="absolute left-[60px] right-[60px] top-[390px] z-[3]"
+              className="absolute left-[60px] top-[350px] z-[3] h-[500px] w-[1320px]"
               initial={{opacity: 0, x: 10}}
               animate={{opacity: 1, x: 0}}
               exit={{opacity: 0, x: 10}}
               transition={{duration: 0.34, ease: [0.22, 1, 0.36, 1]}}
               aria-label={bundleTabLabel}
             >
-              {bundles.length > 0 ? (
-                <div className="flex items-start justify-center gap-[34px]">
-                  {bundles.slice(0, 3).map((bundle) => (
+              {visibleBundles.length > 0 ? (
+                <div className="grid h-full grid-cols-[315px_315px_315px] gap-x-[188px]">
+                  {visibleBundles.map((bundle, index) => (
                     <BundleCard
                       key={bundle.id}
                       bundle={bundle}
+                      imageUrl={offerImageUrl}
+                      imageAlt={offerImageAlt}
+                      result={calculatedBundles[index]}
+                      previousResult={index > 0 ? calculatedBundles[index - 1] : undefined}
                       active={bundle.id === activeBundleId}
                       onSelect={() => setActiveBundleId(bundle.id)}
                     />

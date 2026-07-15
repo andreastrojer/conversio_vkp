@@ -65,12 +65,16 @@ type RawBundleScenario = {
   nextStepText?: string | null
   sortOrder?: number | null
   isActive?: boolean | null
+  includedItems?: Array<{
+    _key?: string | null
+    amount?: string | null
+    label?: string | null
+  }> | null
   recommendedCategories?: Array<{
     _id?: string | null
     title?: string | null
     slug?: string | null
     navigationLabel?: string | null
-    catalogImage?: SanityImage
   }> | null
   comparisonValues?: Array<{
     _key?: string | null
@@ -78,6 +82,16 @@ type RawBundleScenario = {
     note?: string | null
     metric?: RawMetric | null
   }> | null
+}
+
+type RawOfferSection = {
+  _key?: string | null
+  title?: string | null
+  eyebrow?: string | null
+  visibleFor?: string | null
+  sortOrder?: number | null
+  image?: SanityImage
+  media?: CmsMedia
 }
 
 type ScenarioMatrixDocument = {
@@ -95,6 +109,7 @@ type ScenarioMatrixDocument = {
     calculationParameters?: RawParameter[] | null
     bundleScenarios?: RawBundleScenario[] | null
   } | null
+  offerSections?: RawOfferSection[] | null
 } | null
 
 export type ScenarioMatrixSlider = {
@@ -129,17 +144,23 @@ export type ScenarioMatrixBundle = {
   id: string
   title: string
   slug?: string
+  scenarioType?: string
   shortDescription?: string
   description?: string
   resultText?: string
   nextStepText?: string
   sortOrder?: number
-  imageUrl?: string
   features: string[]
+  includedItems: Array<{
+    id: string
+    amount?: string
+    label: string
+  }>
   values: Array<{
     key: string
     title: string
     value: string
+    metricType?: string
     unit?: string
     note?: string
   }>
@@ -157,6 +178,8 @@ export type ScenarioMatrixPageData = {
   bundles: ScenarioMatrixBundle[]
   heroImageUrl?: string
   heroImageAlt: string
+  offerImageUrl?: string
+  offerImageAlt: string
   bottomNavigation: ProductNavigationItem[]
   navigationItems: ChapterNavigationItem[]
   logoUrl?: string
@@ -173,38 +196,6 @@ export type ScenarioMatrixPageData = {
 const scenarioMatrixClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
 
-const sliderRules = {
-  annualConsumption: {min: 2000, max: 6000, step: 100, defaultValue: 5900},
-  storage: {min: 0, max: 12, step: 1, defaultValue: 7},
-  chargingStations: {min: 0, max: 2, step: 1, defaultValue: 1},
-} as const
-
-function normalizeKey(value?: string | null) {
-  return (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toLowerCase()
-}
-
-function ruleForSlider(key: string) {
-  const normalized = normalizeKey(key)
-
-  if (normalized.includes('annual') || normalized.includes('jahresverbrauch')) {
-    return sliderRules.annualConsumption
-  }
-
-  if (normalized.includes('speicher') || normalized.includes('storage')) {
-    return sliderRules.storage
-  }
-
-  if (normalized.includes('ladestation') || normalized.includes('charging')) {
-    return sliderRules.chargingStations
-  }
-
-  return undefined
-}
-
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
@@ -218,11 +209,10 @@ function normalizeSliders(sliders: RawSlider[] | null | undefined): ScenarioMatr
       return []
     }
 
-    const rule = ruleForSlider(key)
-    const min = rule?.min ?? slider.min
-    const max = rule?.max ?? slider.max
-    const step = rule?.step ?? slider.step
-    const defaultValue = rule?.defaultValue ?? slider.defaultValue
+    const min = slider.min
+    const max = slider.max
+    const step = slider.step
+    const defaultValue = slider.defaultValue
 
     if (
       typeof min !== 'number' ||
@@ -320,15 +310,28 @@ function normalizeBundles(
         id: bundle._id?.trim() || `bundle-${index}`,
         title,
         slug: bundle.slug?.trim() || undefined,
+        scenarioType: bundle.scenarioType?.trim() || undefined,
         shortDescription: bundle.shortDescription?.trim() || undefined,
         description: bundle.description?.trim() || undefined,
         resultText: bundle.resultText?.trim() || undefined,
         nextStepText: bundle.nextStepText?.trim() || undefined,
         sortOrder: bundle.sortOrder ?? undefined,
-        imageUrl: resolveImageUrl(categories[0]?.catalogImage),
         features: categories.map(
           (category) => category.navigationLabel?.trim() || category.title?.trim() || '',
         ).filter(Boolean),
+        includedItems: (bundle.includedItems || []).flatMap((item, itemIndex) => {
+          const label = item.label?.trim()
+
+          if (!label) {
+            return []
+          }
+
+          return [{
+            id: item._key?.trim() || `${bundle._id || index}-included-${itemIndex}`,
+            amount: item.amount?.trim() || undefined,
+            label,
+          }]
+        }),
         values: (bundle.comparisonValues || []).flatMap((comparison, comparisonIndex) => {
           const metricTitle = comparison.metric?.title?.trim()
           const value = comparison.value?.trim()
@@ -345,18 +348,13 @@ function normalizeBundles(
               `value-${comparisonIndex}`,
             title: metricTitle,
             value,
+            metricType: comparison.metric?.metricType?.trim() || undefined,
             unit: comparison.metric?.unit?.trim() || undefined,
             note: comparison.note?.trim() || undefined,
           }]
         }),
       }]
     })
-}
-
-function resolveTabLabel(label: string | null | undefined, headline: string | null | undefined, fallback: string) {
-  const trimmed = label?.trim()
-
-  return !trimmed || normalizeKey(trimmed) === normalizeKey(headline) ? fallback : trimmed
 }
 
 export async function getScenarioMatrixPageData(
@@ -374,20 +372,33 @@ export async function getScenarioMatrixPageData(
       sharedContentPromise,
     ])
     const heroImage = screen?.heroImage || screen?.heroMedia?.image || screen?.heroImage2
+    const offerSection = (screen?.offerSections || [])
+      .filter(
+        (section) =>
+          !section.visibleFor ||
+          section.visibleFor === 'both' ||
+          section.visibleFor === customerType,
+      )
+      .sort(
+        (a, b) =>
+          (a.sortOrder ?? Number.POSITIVE_INFINITY) -
+          (b.sortOrder ?? Number.POSITIVE_INFINITY),
+      )
+      .find((section) => {
+        const identity = `${section.title || ''} ${section.eyebrow || ''}`
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+
+        return identity.includes('photovoltaik') || /\bpv\b/.test(identity)
+      })
+    const offerImage = offerSection?.image || offerSection?.media?.image
 
     return {
       headline: screen?.headline?.trim() || undefined,
       subline: screen?.subline?.trim() || undefined,
-      calculatorTabLabel: resolveTabLabel(
-        screen?.calculatorConfig?.calculatorTabLabel,
-        screen?.headline,
-        'BEDARF',
-      ),
-      bundleTabLabel: resolveTabLabel(
-        screen?.calculatorConfig?.bundleTabLabel,
-        screen?.headline,
-        'KALKULATION',
-      ),
+      calculatorTabLabel: screen?.calculatorConfig?.calculatorTabLabel?.trim() || '',
+      bundleTabLabel: screen?.calculatorConfig?.bundleTabLabel?.trim() || '',
       calculateButtonLabel: screen?.calculatorConfig?.calculateButtonLabel?.trim() || undefined,
       sliders: normalizeSliders(screen?.calculatorConfig?.sliders),
       metrics: normalizeMetrics(screen?.calculatorConfig?.resultMetrics, customerType),
@@ -395,6 +406,12 @@ export async function getScenarioMatrixPageData(
       bundles: normalizeBundles(screen?.calculatorConfig?.bundleScenarios, customerType),
       heroImageUrl: resolveImageUrl(heroImage, 3200),
       heroImageAlt: screen?.heroMedia?.altText?.trim() || screen?.heroMedia?.title?.trim() || '',
+      offerImageUrl: resolveImageUrl(offerImage, 3200),
+      offerImageAlt:
+        offerSection?.media?.altText?.trim() ||
+        offerSection?.media?.title?.trim() ||
+        offerSection?.title?.trim() ||
+        '',
       bottomNavigation: shared.bottomNavigation,
       navigationItems: shared.navigationItems,
       logoUrl: shared.logoUrl,
@@ -411,13 +428,14 @@ export async function getScenarioMatrixPageData(
     const shared = await sharedContentPromise
 
     return {
-      calculatorTabLabel: 'BEDARF',
-      bundleTabLabel: 'KALKULATION',
+      calculatorTabLabel: '',
+      bundleTabLabel: '',
       sliders: [],
       metrics: [],
       parameters: [],
       bundles: [],
       heroImageAlt: '',
+      offerImageAlt: '',
       bottomNavigation: shared.bottomNavigation,
       navigationItems: shared.navigationItems,
       logoUrl: shared.logoUrl,

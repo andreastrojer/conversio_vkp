@@ -390,18 +390,16 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
       nextStepText,
       sortOrder,
       isActive,
+      includedItems[]{
+        _key,
+        amount,
+        label
+      },
       recommendedCategories[]->{
         _id,
         title,
         "slug": slug.current,
-        navigationLabel,
-        catalogImage{
-          ...,
-          "assetUrl": asset->url,
-          "mimeType": asset->mimeType,
-          "extension": asset->extension,
-          "originalFilename": asset->originalFilename
-        }
+        navigationLabel
       },
       comparisonValues[]{
         _key,
@@ -417,6 +415,37 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
           sortOrder,
           isActive
         }
+      }
+    }
+  },
+  "offerSections": *[
+    _type == "appScreen" &&
+    screenKey.current == "offer" &&
+    screenType == "offer" &&
+    isActive == true
+  ][0].sections[]{
+    _key,
+    title,
+    eyebrow,
+    visibleFor,
+    sortOrder,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    media->{
+      title,
+      altText,
+      mediaType,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
       }
     }
   }
