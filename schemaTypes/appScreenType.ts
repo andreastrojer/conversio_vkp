@@ -344,6 +344,189 @@ export const appScreenType = defineType({
       ],
     }),
     defineField({
+      name: 'calculatorConfig',
+      title: 'Was-rechnet-sich-Konfiguration',
+      type: 'object',
+      group: 'content',
+      hidden: ({ document }) => document?.screenType !== 'scenarioMatrix',
+
+      fields: [
+        defineField({
+          name: 'calculatorTabLabel',
+          title: 'Name Rechner-Tab',
+          type: 'string',
+          initialValue: 'WAS RECHNET SICH',
+        }),
+
+        defineField({
+          name: 'bundleTabLabel',
+          title: 'Name Kalkulations-Tab',
+          type: 'string',
+          initialValue: 'KALKULATION',
+        }),
+
+        defineField({
+          name: 'calculateButtonLabel',
+          title: 'Button zum Kalkulations-Tab',
+          type: 'string',
+          initialValue: 'BERECHNEN',
+        }),
+
+        defineField({
+          name: 'sliders',
+          title: 'Eingabe-Regler',
+          type: 'array',
+          validation: (Rule) => Rule.max(3),
+          of: [
+            {
+              name: 'calculatorSlider',
+              title: 'Regler',
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'label',
+                  title: 'Bezeichnung',
+                  type: 'string',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'key',
+                  title: 'Technischer Key',
+                  type: 'string',
+                  description:
+                    'Muss mit der Berechnungslogik übereinstimmen.',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'min',
+                  title: 'Minimalwert',
+                  type: 'number',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'max',
+                  title: 'Maximalwert',
+                  type: 'number',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'step',
+                  title: 'Schrittweite',
+                  type: 'number',
+                  initialValue: 1,
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'defaultValue',
+                  title: 'Startwert',
+                  type: 'number',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'unit',
+                  title: 'Einheit',
+                  type: 'string',
+                  description: 'Zum Beispiel kWh, m², € oder %.',
+                }),
+              ],
+              preview: {
+                select: {
+                  title: 'label',
+                  min: 'min',
+                  max: 'max',
+                  unit: 'unit',
+                },
+                prepare({ title, min, max, unit }) {
+                  return {
+                    title: title || 'Regler',
+                    subtitle: `${min ?? '?'}–${max ?? '?'} ${unit ?? ''}`,
+                  }
+                },
+              },
+            },
+          ],
+        }),
+
+        defineField({
+          name: 'resultMetrics',
+          title: 'Ergebnisse rechts',
+          type: 'array',
+          of: [
+            {
+              type: 'reference',
+              to: [{ type: 'comparisonMetric' }],
+            },
+          ],
+        }),
+
+        defineField({
+          name: 'calculationParameters',
+          title: 'Berechnungsparameter',
+          type: 'array',
+          description:
+            'Fachliche Annahmen für die Berechnung. Die Formel selbst bleibt im Code.',
+          of: [
+            {
+              name: 'calculationParameter',
+              title: 'Berechnungsparameter',
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'key',
+                  title: 'Technischer Key',
+                  type: 'string',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'label',
+                  title: 'Bezeichnung',
+                  type: 'string',
+                }),
+                defineField({
+                  name: 'value',
+                  title: 'Wert',
+                  type: 'number',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'unit',
+                  title: 'Einheit',
+                  type: 'string',
+                }),
+              ],
+              preview: {
+                select: {
+                  title: 'label',
+                  key: 'key',
+                  value: 'value',
+                  unit: 'unit',
+                },
+                prepare({ title, key, value, unit }) {
+                  return {
+                    title: title || key,
+                    subtitle: `${value ?? '?'} ${unit ?? ''}`,
+                  }
+                },
+              },
+            },
+          ],
+        }),
+
+        defineField({
+          name: 'bundleScenarios',
+          title: 'Bundles im Kalkulations-Tab',
+          type: 'array',
+          validation: (Rule) => Rule.max(3),
+          of: [
+            {
+              type: 'reference',
+              to: [{ type: 'scenario' }],
+            },
+          ],
+        }),
+      ],
+    }),
+    defineField({
       name: 'primaryCta',
       title: 'Primärer CTA',
       type: 'object',

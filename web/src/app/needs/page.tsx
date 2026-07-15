@@ -7,6 +7,7 @@ import {redirect} from 'next/navigation'
 type WhatFitsPageProps = {
   searchParams: Promise<{
     type?: string | string[]
+    product?: string | string[]
   }>
 }
 
@@ -23,13 +24,15 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
     redirect('/login')
   }
 
-  const {type} = await searchParams
+  const {type, product} = await searchParams
   const customerType = resolveCustomerType(type)
+  const initialProductSlug = Array.isArray(product) ? product[0] : product
   const content = await getWhatFitsPageData(customerType)
 
   return (
     <WhatFitsScreen
       customerType={customerType}
+      initialProductSlug={initialProductSlug}
       headline={content.headline}
       subline={content.subline}
       products={content.products}

@@ -300,6 +300,128 @@ export const PROCESS_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
+  _type == "appScreen" &&
+  screenKey.current == "scenario-matrix" &&
+  screenType == "scenarioMatrix" &&
+  isActive == true &&
+  (!defined(targetAudience) || targetAudience in [$customerType, "both"])
+][0]{
+  title,
+  "screenKey": screenKey.current,
+  screenType,
+  "purpose": contentPurpose,
+  targetAudience,
+  headline,
+  subline,
+  isActive,
+  primaryCta,
+  secondaryCta,
+  heroImage{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  },
+  heroImage2{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  },
+  heroMedia->{
+    title,
+    altText,
+    mediaType,
+    externalUrl,
+    "fileUrl": file.asset->url,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    }
+  },
+  calculatorConfig{
+    calculatorTabLabel,
+    bundleTabLabel,
+    calculateButtonLabel,
+    sliders[]{
+      _key,
+      label,
+      key,
+      min,
+      max,
+      step,
+      defaultValue,
+      unit
+    },
+    resultMetrics[]->{
+      _id,
+      title,
+      "metricKey": metricKey.current,
+      targetGroup,
+      metricType,
+      unit,
+      displayType,
+      description,
+      sortOrder,
+      isActive
+    },
+    calculationParameters[]{
+      _key,
+      key,
+      label,
+      value,
+      unit
+    },
+    bundleScenarios[]->{
+      _id,
+      title,
+      "slug": slug.current,
+      targetGroup,
+      scenarioType,
+      shortDescription,
+      description,
+      resultText,
+      nextStepText,
+      sortOrder,
+      isActive,
+      recommendedCategories[]->{
+        _id,
+        title,
+        "slug": slug.current,
+        navigationLabel,
+        catalogImage{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      },
+      comparisonValues[]{
+        _key,
+        value,
+        note,
+        metric->{
+          _id,
+          title,
+          "metricKey": metricKey.current,
+          metricType,
+          unit,
+          displayType,
+          sortOrder,
+          isActive
+        }
+      }
+    }
+  }
+}`)
+
 export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
   "screen": *[
     _type == "appScreen" &&

@@ -10,6 +10,7 @@ import {
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {
   ProductDetailSection,
+  ProductDetailTab,
   ProductNavigationItem,
   WhatFitsProduct,
 } from '@/lib/whatFits'
@@ -20,6 +21,7 @@ import {useMemo, useState} from 'react'
 
 type WhatFitsScreenProps = {
   customerType: CustomerGroup
+  initialProductSlug?: string
   headline?: string | null
   subline?: string | null
   products: WhatFitsProduct[]
@@ -200,8 +202,28 @@ function splitParagraphs(text?: string | null) {
     .filter(Boolean)
 }
 
+function normalizeTabValue(value?: string | null) {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function isTechnicalDetailTab(tab?: ProductDetailTab) {
+  const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
+
+  return value.includes('technical') || value.includes('technisch')
+}
+
+function isOverviewDetailTab(tab: ProductDetailTab) {
+  const value = `${normalizeTabValue(tab.key)} ${normalizeTabValue(tab.title)}`
+
+  return value.includes('overview') || value.includes('uberblick')
+}
+
 export function WhatFitsScreen({
   customerType,
+  initialProductSlug,
   headline,
   subline,
   products,
@@ -217,16 +239,21 @@ export function WhatFitsScreen({
   productNavigationRightArrowUrl,
   productNavigationCatalogIconUrl,
 }: WhatFitsScreenProps) {
-  const [view, setView] = useState<ProductView>('catalog')
-  const [selectedSlug, setSelectedSlug] = useState(products[0]?.slug || '')
+  const initialProduct = products.find((product) => product.slug === initialProductSlug)
+  const [view, setView] = useState<ProductView>(initialProduct ? 'detail' : 'catalog')
+  const [selectedSlug, setSelectedSlug] = useState(initialProduct?.slug || products[0]?.slug || '')
   const selectedProduct = products.find((product) => product.slug === selectedSlug) || products[0]
   const [activeTabKey, setActiveTabKey] = useState(selectedProduct?.detailTabs[0]?.key || '')
   const activeTab =
     selectedProduct?.detailTabs.find((tab) => tab.key === activeTabKey) ||
     selectedProduct?.detailTabs[0]
+  const isTechnicalTab = isTechnicalDetailTab(activeTab)
+  const overviewTab =
+    selectedProduct?.detailTabs.find(isOverviewDetailTab) || selectedProduct?.detailTabs[0]
   const [activeSectionKey, setActiveSectionKey] = useState(activeTab?.sections[0]?._key || '')
   const activeSection =
     activeTab?.sections.find((section) => section._key === activeSectionKey) || activeTab?.sections[0]
+  const detailMediaSection = isTechnicalTab ? overviewTab?.sections[0] : activeSection
   const pageLogoUrl = inverseLogoUrl || logoUrl
   const navigationLogoUrl = logoUrl || inverseLogoUrl
   const catalogMedia = useMemo(
@@ -235,9 +262,9 @@ export function WhatFitsScreen({
   )
   const detailMedia = useMemo(
     () => selectedProduct
-      ? resolveDetailMedia(selectedProduct, activeSection)
+      ? resolveDetailMedia(selectedProduct, detailMediaSection)
       : {key: 'detail-empty', kind: 'empty', alt: ''} as ResolvedMedia,
-    [activeSection, selectedProduct],
+    [detailMediaSection, selectedProduct],
   )
 
   function selectProduct(slug: string, nextView: ProductView = view) {
@@ -329,7 +356,7 @@ export function WhatFitsScreen({
                 {headline ? (
                   <h1
                     id="catalog-heading"
-                    className="text-[48px] font-bold uppercase leading-none tracking-[0.045em]"
+                    className="text-[50px] font-bold uppercase leading-none tracking-[0.045em]"
                   >
                     {headline}
                   </h1>
@@ -401,7 +428,7 @@ export function WhatFitsScreen({
               <div className="absolute left-[60px] top-[225px] z-[3]">
                 <h1
                   id="product-detail-heading"
-                  className="text-[52px] font-bold uppercase leading-none tracking-[0.04em]"
+                  className="text-[50px] font-bold uppercase leading-none tracking-[0.04em]"
                 >
                   {selectedProduct.detailTitle}
                 </h1>
@@ -416,7 +443,7 @@ export function WhatFitsScreen({
                         type="button"
                         role="tab"
                         aria-selected={isActive}
-                        className={`relative px-[12px] pb-[9px] text-[15px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                        className={`relative px-[12px] pb-[9px] text-[16px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
                           isActive ? 'text-[#efb804]' : 'text-white'
                         }`}
                         onClick={() => selectTab(tab.key)}
@@ -437,58 +464,81 @@ export function WhatFitsScreen({
                 imageClassName="h-full w-full object-cover object-left-top"
               />
 
-              <div className="absolute left-[58.5cqw] right-[60px] top-[500px] z-[3]">
-                {activeTab?.key === 'technical' ? (
-                  <div className="w-full">
+              <div
+                className={`absolute left-[58.5cqw] right-[60px] z-[3] ${
+                  isTechnicalTab ? 'top-[365px]' : 'top-[500px]'
+                }`}
+              >
+                {isTechnicalTab && activeTab ? (
+                  <div className="ml-auto w-[440px]">
                     {activeTab.sections.map((section) => {
                       const isActive = section._key === activeSection?._key
+                      const contentId = `${section._key}-technical-content`
 
                       return (
-                        <div key={section._key} className={isActive ? 'pb-[20px]' : 'border-b border-white/80'}>
+                        <div
+                          key={section._key}
+                          className={isActive ? 'pb-[26px]' : 'border-b-2 border-white/90'}
+                        >
                           <button
                             type="button"
-                            className={`flex w-full items-center justify-between gap-5 py-[16px] text-left text-[18px] font-bold uppercase transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+                            className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                               isActive ? 'text-[#efb804]' : 'text-white'
                             }`}
                             aria-expanded={isActive}
+                            aria-controls={contentId}
                             onClick={() => setActiveSectionKey(section._key)}
                           >
                             <span>{section.title}</span>
-                            <Hexagon className="h-[18px] w-[18px] shrink-0" strokeWidth={2.3} aria-hidden="true" />
+                            <Hexagon
+                              className="h-[21px] w-[21px] shrink-0"
+                              strokeWidth={2.4}
+                              aria-hidden="true"
+                            />
                           </button>
 
                           <AnimatePresence initial={false}>
                             {isActive ? (
                               <motion.div
-                                initial={{height: 0, opacity: 0, y: -6}}
+                                id={contentId}
+                                initial={{height: 0, opacity: 0, y: -8}}
                                 animate={{height: 'auto', opacity: 1, y: 0}}
-                                exit={{height: 0, opacity: 0, y: -6}}
-                                transition={{duration: 0.38, ease: [0.22, 1, 0.36, 1]}}
+                                exit={{height: 0, opacity: 0, y: -8}}
+                                transition={{duration: 0.4, ease: [0.22, 1, 0.36, 1]}}
                                 className="overflow-hidden"
                               >
-                                {section.text ? (
-                                  <div className="space-y-[16px] pb-[16px] text-[16px] leading-[1.45] tracking-[0.02em] text-white/95">
-                                    {splitParagraphs(section.text).map((paragraph, index) => (
-                                      <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
-                                        {paragraph}
-                                      </p>
-                                    ))}
-                                  </div>
-                                ) : null}
+                                <div className="pb-[18px] pt-[24px]">
+                                  {section.text ? (
+                                    <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95">
+                                      {splitParagraphs(section.text).map((paragraph, index) => (
+                                        <p
+                                          key={`${section._key}-paragraph-${index}`}
+                                          className="whitespace-pre-line"
+                                        >
+                                          {paragraph}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  ) : null}
 
-                                {section.specificationRows.length > 0 ? (
-                                  <dl className="space-y-[8px] pb-[16px] text-[15px] leading-[1.3]">
-                                    {section.specificationRows.map((row, index) => (
-                                      <div
-                                        key={row._key || `${section._key}-row-${index}`}
-                                        className="grid grid-cols-[minmax(0,1fr)_minmax(130px,0.7fr)] gap-[24px] border-b border-white/25 pb-[7px]"
-                                      >
-                                        <dt>{row.label}</dt>
-                                        <dd className="font-bold">{row.value}</dd>
-                                      </div>
-                                    ))}
-                                  </dl>
-                                ) : null}
+                                  {section.specificationRows.length > 0 ? (
+                                    <dl
+                                      className={`space-y-[8px] text-[16px] leading-[1.35] ${
+                                        section.text ? 'mt-[20px]' : ''
+                                      }`}
+                                    >
+                                      {section.specificationRows.map((row, index) => (
+                                        <div
+                                          key={row._key || `${section._key}-row-${index}`}
+                                          className="grid grid-cols-[minmax(0,1fr)_minmax(130px,0.7fr)] gap-[24px] border-b border-white/25 pb-[7px]"
+                                        >
+                                          <dt>{row.label}</dt>
+                                          <dd className="font-bold">{row.value}</dd>
+                                        </div>
+                                      ))}
+                                    </dl>
+                                  ) : null}
+                                </div>
                               </motion.div>
                             ) : null}
                           </AnimatePresence>
@@ -497,7 +547,7 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : activeSection?.text ? (
-                  <div className="space-y-[24px] text-[17px] font-normal leading-[1.45] tracking-[0.025em] text-white/95">
+                  <div className="space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] text-white/95">
                     {splitParagraphs(activeSection.text).map((paragraph, index) => (
                       <p key={`${activeSection._key}-paragraph-${index}`} className="whitespace-pre-line">
                         {paragraph}

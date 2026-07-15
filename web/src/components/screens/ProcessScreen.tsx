@@ -129,7 +129,7 @@ export function ProcessScreen({
           </Link>
         </div>
 
-        <p className="absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] text-white/90 [@media(min-height:940px)]:text-[14px]">
+        <p className="absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] text-white/90">
           {subline?.trim() || 'DER ABLAUF'}
         </p>
 
@@ -173,7 +173,7 @@ export function ProcessScreen({
               <span className="h-px w-[46px] shrink-0 bg-[#efb804]" aria-hidden="true" />
               <button
                 type="button"
-                className="inline-flex items-center whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.035em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-default [@media(min-height:940px)]:text-[14px]"
+                className="inline-flex items-center whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.035em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-default"
                 onClick={selectNextStep}
                 disabled={safeActiveIndex >= sections.length - 1}
                 aria-label="Nächsten Prozessschritt anzeigen"
@@ -219,9 +219,9 @@ export function ProcessScreen({
                       }`}
                       aria-hidden="true"
                     />
-                    <span className="relative text-[17px] font-medium [@media(min-height:940px)]:text-[16px]">{index + 1}</span>
+                    <span className="relative text-[16px] font-medium">{index + 1}</span>
                   </span>
-                  <span className="ml-[22px] max-w-[410px] text-[22px] font-bold uppercase leading-[1.12] tracking-[0.012em] transition-colors duration-300 [@media(min-height:940px)]:text-[19px]">
+                  <span className="ml-[22px] max-w-[410px] text-[22px] font-bold uppercase leading-[1.12] tracking-[0.012em] transition-colors duration-300">
                     {section.title || `Schritt ${index + 1}`}
                   </span>
                 </button>
@@ -234,7 +234,7 @@ export function ProcessScreen({
           <div className="absolute bottom-[58px] right-[72px] z-[4] w-[276px]">
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] text-[20px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] [@media(min-height:940px)]:text-[18px]"
+              className="group flex items-center justify-between pb-[10px] text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
               <span>{primaryCta.label}</span>
               <ArrowRight
