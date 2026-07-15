@@ -209,8 +209,16 @@ export function ProcessScreen({
                     }`}
                     aria-hidden="true"
                   />
-                  <span className="relative ml-[48px] grid h-[52px] w-[52px] shrink-0 place-items-center [@media(min-height:940px)]:h-[48px] [@media(min-height:940px)]:w-[48px]">
-                    <Hexagon className="absolute inset-0 h-full w-full" strokeWidth={2.8} aria-hidden="true" />
+                  <span className="relative ml-[48px] grid h-[49px] w-[43px] shrink-0 place-items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/Vector%20(1).svg"
+                      alt=""
+                      className={`pointer-events-none absolute inset-0 h-full w-full object-contain ${
+                        isActive ? '' : 'brightness-0 invert'
+                      }`}
+                      aria-hidden="true"
+                    />
                     <span className="relative text-[17px] font-medium [@media(min-height:940px)]:text-[16px]">{index + 1}</span>
                   </span>
                   <span className="ml-[22px] max-w-[410px] text-[22px] font-bold uppercase leading-[1.12] tracking-[0.012em] transition-colors duration-300 [@media(min-height:940px)]:text-[19px]">

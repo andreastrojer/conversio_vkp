@@ -315,11 +315,11 @@ export function WhatFitsScreen({
             >
               <MediaLayer
                 media={catalogMedia}
-                className="absolute bottom-[28px] left-[22px] h-[690px] w-[650px]"
+                className="absolute bottom-[8px] left-[20px] h-[810px] w-[700px]"
                 imageClassName="h-full w-full object-contain object-left-bottom"
               />
 
-              <div className="absolute left-[730px] top-[270px] w-[650px]">
+              <div className="absolute right-[60px] top-[270px] w-[650px]">
                 {headline ? (
                   <h1
                     id="catalog-heading"
@@ -349,8 +349,16 @@ export function WhatFitsScreen({
                         aria-pressed={isSelected}
                         onClick={() => selectProduct(product.slug, 'catalog')}
                       >
-                        <span className="relative grid h-[44px] w-[44px] shrink-0 place-items-center">
-                          <Hexagon className="absolute inset-0 h-full w-full" strokeWidth={2.4} aria-hidden="true" />
+                        <span className="relative grid h-[49px] w-[43px] shrink-0 place-items-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src="/Vector%20(1).svg"
+                            alt=""
+                            className={`pointer-events-none absolute inset-0 h-full w-full object-contain ${
+                              isSelected ? '' : 'brightness-0 invert'
+                            }`}
+                            aria-hidden="true"
+                          />
                           <span className="relative text-[16px] font-medium">{index + 1}</span>
                         </span>
                         <span>{product.catalogLabel}</span>
