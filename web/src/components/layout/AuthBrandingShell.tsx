@@ -16,6 +16,7 @@ type AuthBrandingShellProps = {
   rightPatternAlt?: string
   footerAddress?: string | null
   legalLinks?: AuthBrandingLegalLink[] | null
+  footerClassName?: string
 }
 
 const fallbackFooterAddress = 'KOSCHATSTRASSE 24, 9800 SPITTAL/DRAU'
@@ -27,7 +28,7 @@ const patternFrameClassName =
 const patternImageClassName =
   `${patternFrameClassName} bg-contain bg-center bg-no-repeat opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]`
 const patternFallbackClassName = `${patternFrameClassName} opacity-[0.08] [transform:rotate(30deg)]`
-const footerClassName =
+const baseFooterClassName =
   'absolute bottom-[30px] left-[60px] z-10 flex items-center gap-[22px] font-sans text-[14px] font-normal uppercase tracking-[0.02em] text-[#3d4248]'
 
 function ConversioLogo() {
@@ -82,6 +83,7 @@ export function AuthBrandingShell({
   rightPatternAlt = '',
   footerAddress,
   legalLinks,
+  footerClassName,
 }: AuthBrandingShellProps) {
   const resolvedAddress =
     footerAddress?.trim().replace(/\s*\r?\n\s*/g, ', ') || fallbackFooterAddress
@@ -128,7 +130,7 @@ export function AuthBrandingShell({
 
         {children}
 
-        <footer className={footerClassName}>
+        <footer className={`${baseFooterClassName} ${footerClassName ?? ''}`}>
           <FooterLink label={imprintLink.label.toLocaleUpperCase('de-AT')} url={imprintLink.url} />
           <FooterLink label={privacyLink.label.toLocaleUpperCase('de-AT')} url={privacyLink.url} />
           <span aria-hidden="true" className="text-[20px] font-normal leading-none">

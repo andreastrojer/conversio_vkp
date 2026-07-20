@@ -47,11 +47,11 @@ const cardActiveClass =
 const cardContentClass =
   'relative z-[1] flex max-w-[350px] flex-col justify-end self-end'
 const cardTitleClass =
-  'text-[38px] font-bold leading-none tracking-[0.02em]'
+  'text-[38px] font-bold leading-none tracking-[0.02em] max-[1600px]:text-[42px] [@media(max-height:920px)]:text-[42px]'
 const cardTextClass =
-  'mt-[22px] max-w-[340px] text-[16px] font-normal leading-[1.42] tracking-[0.012em]'
+  'mt-[22px] max-w-[340px] text-[16px] font-normal leading-[1.42] tracking-[0.012em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
 const cardButtonBaseClass =
-  'mt-7 inline-flex h-[31px] w-[186px] items-center justify-between gap-[14px] overflow-hidden rounded-full px-[19px] pl-[23px] text-[14px] font-semibold uppercase leading-none tracking-[0.045em] transition-[background-color,color,transform] duration-150 hover:-translate-y-px'
+  'mt-7 inline-flex h-[31px] w-[186px] items-center justify-between gap-[14px] overflow-hidden rounded-full px-[19px] pl-[23px] text-[14px] font-semibold uppercase leading-none tracking-[0.045em] transition-[background-color,color,transform] duration-150 hover:-translate-y-px max-[1600px]:h-[38px] max-[1600px]:w-[210px] max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[210px] [@media(max-height:920px)]:text-[16px]'
 const cardButtonIconClass =
   'block !h-[14px] !max-h-[14px] !min-h-[14px] !w-[14px] !max-w-[14px] !min-w-[14px] shrink-0 object-contain object-center'
 const selectionLayoutClassName =
@@ -409,14 +409,14 @@ export function CustomerSelectionScreen({
         className="relative z-[1] w-[min(370px,100%)] justify-self-end pt-[14px] text-[#3d4248]"
         aria-label="Kundeninfos"
       >
-        <h2 className={`${customerInfoTranslateClassName} text-[34px] font-bold leading-none tracking-[0.018em]`}>
+        <h2 className={`${customerInfoTranslateClassName} text-[34px] font-bold leading-none tracking-[0.018em] max-[1600px]:text-[38px] [@media(max-height:920px)]:text-[38px]`}>
           KUNDENINFOS
         </h2>
 
         {formError ? (
           <div
             id="customer-info-error-summary"
-            className={`mt-[18px] flex ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} items-center gap-[10px] border-l-[3px] border-l-[#efb804] pl-[12px] text-[13px] font-semibold leading-[1.3] text-[#6f757b]`}
+            className={`mt-[18px] flex ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} items-center gap-[10px] border-l-[3px] border-l-[#efb804] pl-[12px] text-[13px] font-semibold leading-[1.3] text-[#6f757b] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px]`}
             role="alert"
             aria-live="polite"
           >
@@ -438,7 +438,7 @@ export function CustomerSelectionScreen({
                 className="mb-6 block"
                 htmlFor={fieldId}
               >
-                <span className={`block ${customerInfoTranslateClassName} text-[17px] font-bold leading-[1.2] tracking-[0.02em]`}>
+                <span className={`block ${customerInfoTranslateClassName} text-[17px] font-bold leading-[1.2] tracking-[0.02em] max-[1600px]:text-[19px] [@media(max-height:920px)]:text-[19px]`}>
                   {questionLabel.toLocaleUpperCase('de-AT')}
                   {required ? ' *' : ''}
                 </span>
@@ -450,7 +450,7 @@ export function CustomerSelectionScreen({
                   required={required}
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? `${fieldId}-error` : undefined}
-                  className={`block h-[38px] ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} border-0 border-b-2 bg-transparent font-sans text-[18px] text-[#3d4248] outline-none placeholder:text-[#aeb3b7] focus:border-b-[#efb804] ${
+                  className={`block h-[38px] ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} border-0 border-b-2 bg-transparent font-sans text-[18px] text-[#3d4248] outline-none placeholder:text-[#aeb3b7] focus:border-b-[#efb804] max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${
                     error
                       ? 'border-b-[#efb804] shadow-[0_2px_0_rgba(239,184,4,0.26)]'
                       : 'border-b-[#3d4248]'
@@ -479,7 +479,7 @@ export function CustomerSelectionScreen({
                 {error ? (
                   <p
                     id={`${fieldId}-error`}
-                    className={`mt-2 flex ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} items-center gap-2 text-[12px] font-semibold leading-[1.25] text-[#6f757b] before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#efb804] before:shadow-[0_0_0_4px_rgba(239,184,4,0.14)]`}
+                    className={`mt-2 flex ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} items-center gap-2 text-[12px] font-semibold leading-[1.25] text-[#6f757b] before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#efb804] before:shadow-[0_0_0_4px_rgba(239,184,4,0.14)] max-[1600px]:text-[14px] [@media(max-height:920px)]:text-[14px]`}
                   >
                     {error.message}
                   </p>

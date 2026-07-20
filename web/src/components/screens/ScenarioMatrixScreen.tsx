@@ -167,13 +167,13 @@ function SliderControl({
       <div className="mb-[18px] flex items-center justify-between gap-[24px]">
         <label
           htmlFor={`scenario-slider-${slider.id}`}
-          className="text-[20px] font-semibold uppercase leading-none tracking-[0.025em] text-white"
+          className="text-[20px] font-semibold uppercase leading-none tracking-[0.025em] text-white max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]"
         >
           {slider.label}
         </label>
         <output
           htmlFor={`scenario-slider-${slider.id}`}
-          className="inline-flex h-[26px] min-w-[38px] items-center justify-center rounded-full bg-[#efb804] px-[12px] text-[14px] font-semibold uppercase leading-none text-[#3d4248]"
+          className="inline-flex h-[26px] min-w-[38px] items-center justify-center rounded-full bg-[#efb804] px-[12px] text-[14px] font-semibold uppercase leading-none text-[#3d4248] max-[1600px]:h-[30px] max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[30px] [@media(max-height:920px)]:text-[16px]"
         >
           {formatNumber(value, slider.unit)}
         </output>
@@ -241,7 +241,7 @@ function BundleCard({
       onClick={onSelect}
     >
       <span
-        className={`inline-flex h-[38px] min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 ${
+        className={`inline-flex h-[38px] min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${
           active ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#4a4f54] text-white'
         }`}
       >
@@ -280,23 +280,23 @@ function BundleCard({
       <div className="mt-[30px] text-[#efb804]">
         {result.autarky !== undefined && result.autarkyMetric ? (
           <p className="flex items-baseline gap-[14px] uppercase">
-            <strong className="text-[30px] font-bold leading-none">
+            <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
               {formatMetricValue(result.autarky, result.autarkyMetric)}
             </strong>
-            <span className="text-[20px] font-medium tracking-[0.025em]">{result.autarkyMetric.title}</span>
+            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">{result.autarkyMetric.title}</span>
           </p>
         ) : null}
         {result.savings !== undefined && result.savingsMetric ? (
           <p className="mt-[8px] flex items-baseline gap-[14px] uppercase">
-            <strong className="text-[30px] font-bold leading-none">
+            <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
               {formatMetricValue(result.savings, result.savingsMetric)}
             </strong>
-            <span className="text-[20px] font-medium tracking-[0.025em]">{result.savingsMetric.title}</span>
+            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">{result.savingsMetric.title}</span>
           </p>
         ) : null}
       </div>
 
-      <div className="mt-[28px] flex min-h-[72px] items-start gap-[8px] border-t-2 border-white pt-[20px] text-[16px] leading-[1.35]">
+      <div className="mt-[28px] flex min-h-[72px] items-start gap-[8px] border-t-2 border-white pt-[20px] text-[16px] leading-[1.35] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]">
         <span className="shrink-0 uppercase">Enthalten:</span>
         {bundle.includedItems.length > 0 ? (
           <ul className="font-semibold" aria-label="Enthaltene Leistungen">
@@ -392,7 +392,7 @@ export function ScenarioMatrixScreen({
         </div>
 
         {headline ? (
-          <h1 className="absolute left-[60px] top-[220px] z-[3] text-[50px] font-bold uppercase leading-none tracking-[0.035em]">
+          <h1 className="absolute left-[60px] top-[220px] z-[3] text-[50px] font-bold uppercase leading-none tracking-[0.035em] max-[1600px]:text-[56px] [@media(max-height:920px)]:text-[56px]">
             {headline}
           </h1>
         ) : null}
@@ -410,7 +410,7 @@ export function ScenarioMatrixScreen({
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                className={`relative px-[12px] pb-[10px] text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                className={`relative px-[12px] pb-[10px] text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
                   isActive ? 'text-[#efb804]' : 'text-white'
                 }`}
                 onClick={() => setActiveTab(tab.key)}
@@ -455,7 +455,7 @@ export function ScenarioMatrixScreen({
                 {calculateButtonLabel ? (
                   <button
                     type="button"
-                    className="group inline-flex h-[46px] min-w-[258px] items-center justify-between rounded-full bg-[#efb804] px-[28px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
+                    className="group inline-flex h-[46px] min-w-[258px] items-center justify-between rounded-full bg-[#efb804] px-[28px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:text-[18px]"
                     onClick={() => {
                       setSubmittedValues({...values})
                       setActiveTab('calculation')
@@ -530,7 +530,7 @@ export function ScenarioMatrixScreen({
                 const isMatrix = item.kind === 'screen' && Boolean(item.href?.includes('scenario-matrix'))
                 const isCatalog = item.kind === 'catalog'
                 const catalogIconUrl = item.iconUrl || productNavigationCatalogIconUrl
-                const className = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+                const className = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
                   isMatrix ? 'text-[#efb804]' : 'text-white'
                 } ${
                   isCatalog

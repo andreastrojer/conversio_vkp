@@ -284,7 +284,7 @@ export function OfferScreen({
                   <div key={key} className={isActive ? 'pb-[26px]' : 'border-b-2 border-white/90'}>
                     <button
                       type="button"
-                      className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                      className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[24px] [@media(max-height:920px)]:text-[24px] ${
                         isActive ? 'text-[#efb804]' : 'text-white'
                       }`}
                       aria-expanded={isActive}
@@ -299,24 +299,21 @@ export function OfferScreen({
                       />
                     </button>
 
-                    <AnimatePresence initial={false}>
-                      {isActive ? (
-                        <motion.div
-                          id={contentId}
-                          initial={{height: 0, opacity: 0, y: -8}}
-                          animate={{height: 'auto', opacity: 1, y: 0}}
-                          exit={{height: 0, opacity: 0, y: -8}}
-                          transition={{duration: 0.4, ease: [0.22, 1, 0.36, 1]}}
-                          className="overflow-hidden"
-                        >
-                          <div className="pb-[18px] pt-[24px]">
-                            {section.eyebrow && section.eyebrow !== section.title ? (
-                              <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#efb804]">
+                    {isActive ? (
+                      <motion.div
+                        id={contentId}
+                        initial={{opacity: 0, y: -6}}
+                        animate={{opacity: 1, y: 0}}
+                        transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
+                      >
+                        <div className="pb-[18px] pt-[24px]">
+                          {section.eyebrow && section.eyebrow !== section.title ? (
+                              <p className="mb-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px]">
                                 {section.eyebrow}
                               </p>
-                            ) : null}
-                            {section.text ? (
-                              <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95">
+                          ) : null}
+                          {section.text ? (
+                              <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
                                 {parseOfferText(section.text).map((block, blockIndex) =>
                                   block.type === 'paragraph' ? (
                                     <p key={`paragraph-${blockIndex}`}>{block.text}</p>
@@ -341,11 +338,10 @@ export function OfferScreen({
                                   ),
                                 )}
                               </div>
-                            ) : null}
-                          </div>
-                        </motion.div>
-                      ) : null}
-                    </AnimatePresence>
+                          ) : null}
+                        </div>
+                      </motion.div>
+                    ) : null}
                   </div>
                 )
               })}
@@ -361,13 +357,13 @@ export function OfferScreen({
           {ctaHref ? (
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
             >
               <span>{primaryCta.label}</span>
               <ArrowRight className="h-[14px] w-[20px] transition-transform group-hover:translate-x-1" strokeWidth={2.2} aria-hidden="true" />
             </Link>
           ) : (
-            <div className="flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
+            <div className="flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
               <span>{primaryCta.label}</span>
               <ArrowRight className="h-[14px] w-[20px]" strokeWidth={2.2} aria-hidden="true" />
             </div>

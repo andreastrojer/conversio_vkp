@@ -356,14 +356,14 @@ export function WhatFitsScreen({
                 {headline ? (
                   <h1
                     id="catalog-heading"
-                    className="text-[50px] font-bold uppercase leading-none tracking-[0.045em]"
+                    className="text-[50px] font-bold uppercase leading-none tracking-[0.045em] max-[1600px]:text-[56px] [@media(max-height:920px)]:text-[56px]"
                   >
                     {headline}
                   </h1>
                 ) : null}
 
                 {subline ? (
-                  <p className="mt-[76px] border-b border-white/80 pb-[22px] text-[20px] font-bold uppercase tracking-[0.02em]">
+                  <p className="mt-[76px] border-b border-white/80 pb-[22px] text-[20px] font-bold uppercase tracking-[0.02em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">
                     {subline}
                   </p>
                 ) : null}
@@ -376,7 +376,7 @@ export function WhatFitsScreen({
                       <button
                         key={product._id}
                         type="button"
-                        className={`group flex items-center gap-[28px] text-left text-[20px] font-bold uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                        className={`group flex items-center gap-[28px] text-left text-[20px] font-bold uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
                           isSelected ? 'text-[#efb804]' : 'text-white'
                         }`}
                         aria-pressed={isSelected}
@@ -404,7 +404,7 @@ export function WhatFitsScreen({
               {selectedProduct?.catalogCtaLabel ? (
                 <button
                   type="button"
-                  className="group absolute bottom-[58px] right-[72px] z-[4] w-[246px] text-left font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+                  className="group absolute bottom-[58px] right-[72px] z-[4] w-[246px] text-left font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
                   onClick={() => openProduct(selectedProduct.slug)}
                 >
                   <span className="flex items-center justify-between pb-[10px]">
@@ -428,7 +428,7 @@ export function WhatFitsScreen({
               <div className="absolute left-[60px] top-[225px] z-[3]">
                 <h1
                   id="product-detail-heading"
-                  className="text-[50px] font-bold uppercase leading-none tracking-[0.04em]"
+                  className="text-[50px] font-bold uppercase leading-none tracking-[0.04em] max-[1600px]:text-[56px] [@media(max-height:920px)]:text-[56px]"
                 >
                   {selectedProduct.detailTitle}
                 </h1>
@@ -443,7 +443,7 @@ export function WhatFitsScreen({
                         type="button"
                         role="tab"
                         aria-selected={isActive}
-                        className={`relative px-[12px] pb-[9px] text-[16px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                        className={`relative px-[12px] pb-[9px] text-[16px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
                           isActive ? 'text-[#efb804]' : 'text-white'
                         }`}
                         onClick={() => selectTab(tab.key)}
@@ -482,7 +482,7 @@ export function WhatFitsScreen({
                         >
                           <button
                             type="button"
-                            className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                            className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[24px] [@media(max-height:920px)]:text-[24px] ${
                               isActive ? 'text-[#efb804]' : 'text-white'
                             }`}
                             aria-expanded={isActive}
@@ -509,7 +509,7 @@ export function WhatFitsScreen({
                               >
                                 <div className="pb-[18px] pt-[24px]">
                                   {section.text ? (
-                                    <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95">
+                                    <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
                                       {splitParagraphs(section.text).map((paragraph, index) => (
                                         <p
                                           key={`${section._key}-paragraph-${index}`}
@@ -523,7 +523,7 @@ export function WhatFitsScreen({
 
                                   {section.specificationRows.length > 0 ? (
                                     <dl
-                                      className={`space-y-[8px] text-[16px] leading-[1.35] ${
+                                      className={`space-y-[8px] text-[16px] leading-[1.35] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
                                         section.text ? 'mt-[20px]' : ''
                                       }`}
                                     >
@@ -547,7 +547,7 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : activeSection?.text ? (
-                  <div className="space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] text-white/95">
+                  <div className="space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] text-white/95 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
                     {splitParagraphs(activeSection.text).map((paragraph, index) => (
                       <p key={`${activeSection._key}-paragraph-${index}`} className="whitespace-pre-line">
                         {paragraph}
@@ -590,7 +590,7 @@ export function WhatFitsScreen({
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug
                       const catalogIconUrl = item.iconUrl || productNavigationCatalogIconUrl
-                      const commonClassName = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+                      const commonClassName = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
                         isActive ? 'text-[#efb804]' : 'text-white'
                       } ${
                         isCatalog

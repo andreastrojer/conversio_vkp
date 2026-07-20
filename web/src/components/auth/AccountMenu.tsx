@@ -8,6 +8,7 @@ type AccountMenuProps = {
   menuIconUrl?: string | null
   patternUrl?: string | null
   logoutLabel?: string | null
+  enlargeOnCompactViewport?: boolean
 }
 
 const fallbackLogoutLabel = 'Abmelden'
@@ -30,6 +31,7 @@ export function AccountMenu({
   menuIconUrl,
   patternUrl,
   logoutLabel,
+  enlargeOnCompactViewport = false,
 }: AccountMenuProps) {
   const displayName = getDisplaySource(userName, userEmail)
   const loginIdentity = userEmail || userName || 'Microsoft-Konto'
@@ -43,6 +45,7 @@ export function AccountMenu({
       loginIdentity={loginIdentity}
       menuIconUrl={resolvedMenuIcon}
       patternUrl={resolvedPatternUrl}
+      enlargeOnCompactViewport={enlargeOnCompactViewport}
       logoutControl={
         <LogoutButton
           label={resolvedLogoutLabel}

@@ -9,7 +9,19 @@ type AccountMenuClientProps = {
   menuIconUrl?: string
   patternUrl?: string
   logoutControl: ReactNode
+  enlargeOnCompactViewport?: boolean
 }
+
+const compactWrapperClassName =
+  'max-[1600px]:right-[64px] max-[1600px]:top-[52px] [@media(max-height:920px)]:right-[64px] [@media(max-height:920px)]:top-[52px]'
+const compactTriggerClassName =
+  'max-[1600px]:h-[68px] max-[1600px]:w-[68px] [@media(max-height:920px)]:h-[68px] [@media(max-height:920px)]:w-[68px]'
+const compactIconFrameClassName =
+  'max-[1600px]:h-[46px] max-[1600px]:w-[46px] [@media(max-height:920px)]:h-[46px] [@media(max-height:920px)]:w-[46px]'
+const compactIconImageClassName =
+  'max-[1600px]:h-[37px] max-[1600px]:w-[37px] [@media(max-height:920px)]:h-[37px] [@media(max-height:920px)]:w-[37px]'
+const compactChevronClassName =
+  'max-[1600px]:h-[21px] max-[1600px]:w-[21px] [@media(max-height:920px)]:h-[21px] [@media(max-height:920px)]:w-[21px]'
 
 export function AccountMenuClient({
   displayName,
@@ -17,6 +29,7 @@ export function AccountMenuClient({
   menuIconUrl,
   patternUrl,
   logoutControl,
+  enlargeOnCompactViewport = false,
 }: AccountMenuClientProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -53,29 +66,29 @@ export function AccountMenuClient({
   return (
     <div
       ref={menuRef}
-      className="absolute right-[72px] top-[60px] z-20 font-sans"
+      className={`absolute right-[72px] top-[60px] z-20 font-sans ${enlargeOnCompactViewport ? compactWrapperClassName : ''}`}
     >
       <button
         ref={triggerRef}
         type="button"
-        className="group inline-flex h-[56px] w-[56px] items-center justify-center rounded-full border border-[#d8dcdf] bg-white text-[#3d4248] shadow-[0_12px_28px_rgba(61,66,72,0.10)] transition hover:-translate-y-px hover:border-[#c7ccd0] hover:shadow-[0_14px_32px_rgba(61,66,72,0.13)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3d4248] aria-expanded:border-[#efb804]"
+        className={`group inline-flex h-[56px] w-[56px] items-center justify-center rounded-full border border-[#d8dcdf] bg-white text-[#3d4248] shadow-[0_12px_28px_rgba(61,66,72,0.10)] transition hover:-translate-y-px hover:border-[#c7ccd0] hover:shadow-[0_14px_32px_rgba(61,66,72,0.13)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3d4248] aria-expanded:border-[#efb804] ${enlargeOnCompactViewport ? compactTriggerClassName : ''}`}
         aria-label={isOpen ? 'Profilmenü schließen' : 'Profilmenü öffnen'}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls={popoverId}
         onClick={() => setIsOpen((current) => !current)}
       >
-        <span className="grid h-[36px] w-[36px] place-items-center overflow-hidden rounded-full bg-transparent text-[#111111]" aria-hidden="true">
+        <span className={`grid h-[36px] w-[36px] place-items-center overflow-hidden rounded-full bg-transparent text-[#111111] ${enlargeOnCompactViewport ? compactIconFrameClassName : ''}`} aria-hidden="true">
           {menuIconUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={menuIconUrl} alt="" className="h-[29px] w-[29px] object-contain" />
+            <img src={menuIconUrl} alt="" className={`h-[29px] w-[29px] object-contain ${enlargeOnCompactViewport ? compactIconImageClassName : ''}`} />
           ) : (
             <UserRound size={26} strokeWidth={2.2} />
           )}
         </span>
 
         <ChevronDown
-          className="absolute bottom-[1px] right-[-2px] h-[18px] w-[18px] rounded-full border border-[#d8dcdf] bg-white p-[3px] text-[#6b7075] shadow-[0_2px_8px_rgba(61,66,72,0.12)] transition group-aria-expanded:rotate-180"
+          className={`absolute bottom-[1px] right-[-2px] h-[18px] w-[18px] rounded-full border border-[#d8dcdf] bg-white p-[3px] text-[#6b7075] shadow-[0_2px_8px_rgba(61,66,72,0.12)] transition group-aria-expanded:rotate-180 ${enlargeOnCompactViewport ? compactChevronClassName : ''}`}
           size={14}
           strokeWidth={2}
           aria-hidden="true"

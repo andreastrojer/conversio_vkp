@@ -155,7 +155,7 @@ function AboutDetailContent({
 
   return (
     <section className="relative z-[2] h-full w-full overflow-hidden">
-      <div className="absolute left-[-90px] top-[clamp(-70px,calc(170px-12.5cqw),-10px)] z-[1] w-[78%]">
+      <div className="absolute left-[-90px] top-[-220px] z-[1] w-[86%]">
         {mapUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -168,7 +168,7 @@ function AboutDetailContent({
         )}
       </div>
 
-      <div className="absolute right-[48px] top-[244px] z-[2] flex w-[540px] flex-col items-start">
+      <div className="absolute left-[64%] top-[314px] z-[2] flex w-[min(32%,600px)] flex-col items-start">
         <div className="inline-block -rotate-[1.25deg] bg-[#efb804] px-[32px] py-[9px] shadow-[0_14px_28px_rgba(0,0,0,0.10)]">
           <h1 className="font-sans text-[42px] font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-[#3d4248]">
             {sectionHeadline}
@@ -176,7 +176,7 @@ function AboutDetailContent({
         </div>
 
         {descriptionBlocks.length > 0 ? (
-          <div className="mt-[82px] w-full translate-x-[8px] space-y-[2px] font-sans text-[20px] font-normal leading-[1.36] tracking-[0.006em] text-white">
+          <div className="mt-[76px] w-full translate-x-[8px] space-y-[2px] font-sans text-[24px] font-normal leading-[1.3] tracking-[0.006em] text-white">
             {descriptionBlocks.map((block) => (
               <div key={block}>
                 {splitTextLines(block).map((line) => (
@@ -188,7 +188,7 @@ function AboutDetailContent({
         ) : null}
 
         {trustBlock ? (
-          <div className="relative mt-[66px] w-full max-w-[500px] font-sans text-[18px] font-semibold uppercase leading-[1.18] tracking-[0.004em] text-white">
+          <div className="relative mt-[92px] w-full max-w-[560px] font-sans text-[18px] font-semibold uppercase leading-[1.18] tracking-[0.004em] text-white">
             <span className="absolute left-0 top-[2px] z-0 flex gap-[2px]" aria-hidden="true">
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />

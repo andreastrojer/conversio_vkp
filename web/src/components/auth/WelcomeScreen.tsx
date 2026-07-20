@@ -35,9 +35,11 @@ const titleClassName =
 const actionAreaClassName =
   'mt-[30px] block max-w-[380px] font-sans'
 const sublineClassName =
-  'm-0 max-w-[390px] font-sans text-[19px] font-normal leading-[1.28] tracking-[0.006em] text-[#3d4248]'
+  'm-0 max-w-[390px] font-sans text-[19px] font-normal leading-[1.28] tracking-[0.006em] text-[#3d4248] max-[1600px]:max-w-[440px] max-[1600px]:text-[24px] [@media(max-height:920px)]:max-w-[440px] [@media(max-height:920px)]:text-[24px]'
 const nextButtonClassName =
-  'inline-flex h-10 min-w-[292px] items-center justify-between gap-[18px] rounded-full bg-[#efb804] px-6 text-[13px] font-bold uppercase tracking-[0.04em] text-[#3d4248] transition-[background-color,box-shadow] duration-[160ms] ease-[ease] hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.22)]'
+  'inline-flex h-10 min-w-[292px] items-center justify-between gap-[18px] rounded-full bg-[#efb804] px-6 text-[13px] font-bold uppercase tracking-[0.04em] text-[#3d4248] transition-[background-color,box-shadow] duration-[160ms] ease-[ease] hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.22)] max-[1600px]:h-[48px] max-[1600px]:min-w-[340px] max-[1600px]:px-7 max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[48px] [@media(max-height:920px)]:min-w-[340px] [@media(max-height:920px)]:px-7 [@media(max-height:920px)]:text-[16px]'
+const compactFooterClassName =
+  'max-[1600px]:gap-[26px] max-[1600px]:text-[16px] [@media(max-height:920px)]:gap-[26px] [@media(max-height:920px)]:text-[16px]'
 
 function getDisplaySource(userName?: string | null, userEmail?: string | null) {
   const name = userName?.trim()
@@ -135,6 +137,7 @@ export function WelcomeScreen({
       rightPatternAlt={rightPatternAlt}
       footerAddress={footerAddress}
       legalLinks={legalLinks}
+      footerClassName={compactFooterClassName}
     >
       <AccountMenu
         userName={userName}
@@ -142,6 +145,7 @@ export function WelcomeScreen({
         menuIconUrl={profileFallbackUrl || informationIconUrl}
         patternUrl={accountMenuPatternUrl}
         logoutLabel={resolvedLogoutLabel}
+        enlargeOnCompactViewport
       />
 
       <section className={mainContentClassName}>
@@ -163,7 +167,7 @@ export function WelcomeScreen({
             ) : null}
             <Link href={ctaHref} className={nextButtonClassName}>
               <span>{resolvedCtaLabel}</span>
-              <span className="relative block h-3 w-7 shrink-0" aria-hidden="true">
+              <span className="relative block h-3 w-7 shrink-0 max-[1600px]:w-8 [@media(max-height:920px)]:w-8" aria-hidden="true">
                 <span className="pointer-events-none absolute left-0 top-1/2 h-0.5 w-[27px] bg-current [transform:translateY(-50%)]" />
                 <span className="pointer-events-none absolute right-0 top-1/2 h-2 w-2 border-r-2 border-t-2 border-current [transform:translateY(-50%)_rotate(45deg)]" />
               </span>

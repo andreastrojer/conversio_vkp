@@ -129,11 +129,11 @@ export function ProcessScreen({
           </Link>
         </div>
 
-        <p className="absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] text-white/90">
+        <p className="absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] text-white/90 max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]">
           {subline?.trim() || 'DER ABLAUF'}
         </p>
 
-        <section className="absolute left-[175px] top-[290px] z-[3] h-[475px] w-[550px] [--process-step-gap:68px] [@media(min-height:940px)]:[--process-step-gap:63px]" aria-label="Prozessschritte als Ringstapel">
+        <section className="absolute left-[175px] top-[270px] z-[3] h-[475px] w-[550px] [--process-step-gap:68px] [@media(min-height:940px)]:[--process-step-gap:63px]" aria-label="Prozessschritte als Ringstapel">
           {sections.map((section, index) => {
             const isActive = index === safeActiveIndex
             const currentRingUrl = isActive ? activeRingImageUrl : inactiveRingImageUrl
@@ -173,7 +173,7 @@ export function ProcessScreen({
               <span className="h-px w-[46px] shrink-0 bg-[#efb804]" aria-hidden="true" />
               <button
                 type="button"
-                className="inline-flex items-center whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.035em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-default"
+                className="inline-flex items-center whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.035em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-default max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]"
                 onClick={selectNextStep}
                 disabled={safeActiveIndex >= sections.length - 1}
                 aria-label="Nächsten Prozessschritt anzeigen"
@@ -221,7 +221,7 @@ export function ProcessScreen({
                     />
                     <span className="relative text-[16px] font-medium">{index + 1}</span>
                   </span>
-                  <span className="ml-[22px] max-w-[410px] text-[22px] font-bold uppercase leading-[1.12] tracking-[0.012em] transition-colors duration-300">
+                  <span className="ml-[22px] max-w-[410px] text-[17px] font-semibold uppercase leading-[1.16] tracking-[0.012em] transition-colors duration-300">
                     {section.title || `Schritt ${index + 1}`}
                   </span>
                 </button>

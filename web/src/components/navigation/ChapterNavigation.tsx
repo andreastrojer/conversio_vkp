@@ -112,10 +112,13 @@ export function ChapterNavigation({
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
   const itemGap = 'gap-[24px]'
   const numberSize = 'h-[42px] w-[42px]'
-  const numberTextSize = 'text-[16px]'
-  const titleTextSize = 'text-[22px]'
+  const numberTextSize =
+    'text-[16px] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
+  const titleTextSize =
+    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px]'
   const ctaOffset = 'ml-[66px] mt-[14px]'
-  const ctaSize = 'h-[34px] w-[190px]'
+  const ctaSize =
+    'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px]'
   const panelTheme = 'bg-white text-[#3d4248]'
   const dividerColor = 'border-[#3d4248]'
   const inactiveButtonTheme = 'bg-[#3d4248] text-white'
@@ -176,7 +179,7 @@ export function ChapterNavigation({
                   {item.href ? (
                     <Link
                       href={item.href}
-                      className={`inline-flex ${ctaSize} items-center justify-between rounded-full px-[18px] font-sans text-[14px] font-semibold uppercase tracking-[0.035em] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${buttonTheme}`}
+                      className={`inline-flex ${ctaSize} items-center justify-between rounded-full px-[18px] font-sans text-[14px] font-semibold uppercase tracking-[0.035em] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px] ${buttonTheme}`}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       <span>{item.ctaLabel}</span>
@@ -196,7 +199,7 @@ export function ChapterNavigation({
                     <button
                       type="button"
                       disabled
-                      className={`inline-flex ${ctaSize} cursor-not-allowed items-center justify-between rounded-full px-[18px] font-sans text-[14px] font-semibold uppercase tracking-[0.035em] opacity-100 ${buttonTheme}`}
+                      className={`inline-flex ${ctaSize} cursor-not-allowed items-center justify-between rounded-full px-[18px] font-sans text-[14px] font-semibold uppercase tracking-[0.035em] opacity-100 max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px] ${buttonTheme}`}
                       title="Dieses Kapitel wird später ergänzt"
                     >
                       <span>{item.ctaLabel}</span>

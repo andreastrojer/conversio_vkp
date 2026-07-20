@@ -25,12 +25,16 @@ export default async function CustomerSelectionPage() {
   const profileProps = resolveWelcomeProfileProps(content)
 
   return (
-    <AuthBrandingShell {...brandingProps}>
+    <AuthBrandingShell
+      {...brandingProps}
+      footerClassName="max-[1600px]:gap-[26px] max-[1600px]:text-[16px] [@media(max-height:920px)]:gap-[26px] [@media(max-height:920px)]:text-[16px]"
+    >
       <AccountMenu
         userName={session.user.name}
         userEmail={session.user.email}
         menuIconUrl={profileProps.profileFallbackUrl || profileProps.informationIconUrl}
         patternUrl={profileProps.accountMenuPatternUrl}
+        enlargeOnCompactViewport
       />
 
       <CustomerSelectionScreen
