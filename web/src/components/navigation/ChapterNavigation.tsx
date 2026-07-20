@@ -17,6 +17,7 @@ type ChapterNavigationProps = {
 }
 
 export function ChapterNavigation({
+  customerType,
   items,
   currentKey,
   logoUrl,
@@ -119,9 +120,12 @@ export function ChapterNavigation({
   const ctaOffset = 'ml-[66px] mt-[14px]'
   const ctaSize =
     'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px]'
-  const panelTheme = 'bg-white text-[#3d4248]'
-  const dividerColor = 'border-[#3d4248]'
-  const inactiveButtonTheme = 'bg-[#3d4248] text-white'
+  const isPrivate = customerType === 'b2c'
+  const panelTheme = isPrivate ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+  const dividerColor = isPrivate ? 'border-white/80' : 'border-[#3d4248]'
+  const inactiveButtonTheme = isPrivate
+    ? 'bg-white text-[#3d4248]'
+    : 'bg-[#3d4248] text-white'
 
   return (
     <aside
@@ -153,7 +157,7 @@ export function ChapterNavigation({
             const isActive = item.key === currentKey
             const titleColor = isActive ? 'text-[#efb804]' : ''
             const buttonTheme = isActive ? 'bg-[#efb804] text-[#3d4248]' : inactiveButtonTheme
-            const arrowNeedsInvert = Boolean(navigationArrowUrl && !isActive)
+            const arrowNeedsInvert = Boolean(navigationArrowUrl && !isActive && !isPrivate)
 
             return (
               <div
@@ -238,7 +242,9 @@ export function ChapterNavigation({
         onPointerUp={handleTriggerPointerUp}
       >
         <span
-          className="grid h-[58px] w-[7px] place-items-center rounded-full bg-[#2f3439] shadow-[0_8px_20px_rgba(0,0,0,0.14)]"
+          className={`grid h-[58px] w-[7px] place-items-center rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.14)] ${
+            isOpen && isPrivate ? 'bg-white' : 'bg-[#2f3439]'
+          }`}
           aria-hidden="true"
         />
       </button>

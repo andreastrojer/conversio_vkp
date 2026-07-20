@@ -26,10 +26,6 @@ export default async function OfferPage({searchParams}: OfferPageProps) {
   const {type} = await searchParams
   const customerType = resolveCustomerType(type)
 
-  if (customerType !== 'b2c') {
-    redirect('/offer?type=b2c')
-  }
-
   const content = await getOfferPageData(customerType)
 
   return (

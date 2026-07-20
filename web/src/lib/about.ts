@@ -145,9 +145,9 @@ function resolveNavigationItems(
       href:
         fallback.key === 'about'
           ? `/about?type=${customerType}`
-          : fallback.key === 'offer' && customerType === 'b2c'
+          : fallback.key === 'offer'
             ? `/offer?type=${customerType}`
-            : fallback.key === 'needs' && customerType === 'b2c'
+            : fallback.key === 'needs'
               ? `/needs?type=${customerType}`
             : undefined,
     }
@@ -166,7 +166,11 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
       businessArrow,
       businessMap,
     ] = await Promise.all([
-      aboutClient.fetch<AboutScreenDocument>(ABOUT_SCREEN_QUERY, {}, freshFetchOptions),
+      aboutClient.fetch<AboutScreenDocument>(
+        ABOUT_SCREEN_QUERY,
+        {customerType},
+        freshFetchOptions,
+      ),
       aboutClient.fetch<NavigationStepDocument[]>(NAVIGATION_STEPS_QUERY, {}, freshFetchOptions),
       aboutClient.fetch<SiteSettingsDocument>(SITE_SETTINGS_QUERY, {}, freshFetchOptions),
       aboutClient.fetch<PatternDocument>(LOGIN_RIGHT_PATTERN_QUERY, {}, freshFetchOptions),
@@ -185,10 +189,6 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
     const patternImage = pattern?.image || loginScreen?.heroMedia?.image
     const arrowImage = navigationArrow?.image || businessArrow?.image
     const filteredSections = (screen?.sections || [])
-      .filter(
-        (section) =>
-          !section.visibleFor || section.visibleFor === 'both' || section.visibleFor === customerType,
-      )
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
       .map((section) => ({
         ...section,

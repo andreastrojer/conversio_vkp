@@ -75,10 +75,6 @@ export type ProcessPageData = {
 const processClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
 
-function isVisibleFor(section: ProcessSection, customerType: CustomerGroup) {
-  return !section.visibleFor || section.visibleFor === 'both' || section.visibleFor === customerType
-}
-
 function sortSections(a: ProcessSection, b: ProcessSection) {
   const aOrder = typeof a.sortOrder === 'number' ? a.sortOrder : Number.POSITIVE_INFINITY
   const bOrder = typeof b.sortOrder === 'number' ? b.sortOrder : Number.POSITIVE_INFINITY
@@ -96,7 +92,6 @@ export async function getProcessPageData(customerType: CustomerGroup): Promise<P
     ])
 
     const sections = (screen?.sections || [])
-      .filter((section) => isVisibleFor(section, customerType))
       .sort(sortSections)
       .map((section) => ({
         ...section,

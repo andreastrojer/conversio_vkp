@@ -49,7 +49,7 @@ type OfferTextBlock =
   | {type: 'list'; items: string[]}
 
 const patternClassName =
-  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065] [filter:brightness(0)_invert(1)]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
 
 function sectionKey(section: OfferSection, index: number) {
   return section._key || `offer-section-${index}`
@@ -185,8 +185,11 @@ export function OfferScreen({
   const [activeIndex, setActiveIndex] = useState(0)
   const safeActiveIndex = sections.length > 0 ? Math.min(activeIndex, sections.length - 1) : 0
   const activeSection = sections[safeActiveIndex]
-  const pageLogoUrl = inverseLogoUrl || logoUrl
-  const navigationLogoUrl = logoUrl || inverseLogoUrl
+  const isBusiness = customerType === 'b2b'
+  const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
+  const navigationLogoUrl = isBusiness
+    ? logoUrl || inverseLogoUrl
+    : inverseLogoUrl || logoUrl
   const activeMedia = useMemo(
     () =>
       activeSection
@@ -213,11 +216,19 @@ export function OfferScreen({
   const ctaHref = resolveTarget(primaryCta?.target, customerType)
 
   return (
-    <PresentationViewport backgroundClassName="bg-[#3d4248]">
-    <main className="relative isolate h-full w-full overflow-hidden bg-[#3d4248] font-sans text-white">
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+    <main
+      className={`relative isolate h-full w-full overflow-hidden font-sans ${
+        isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+      }`}
+    >
       {patternUrl ? (
         <span
-          className={patternClassName}
+          className={`${patternClassName} ${
+            isBusiness
+              ? 'opacity-[0.065] [filter:brightness(0)_invert(1)]'
+              : 'opacity-[0.08] [filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+          }`}
           style={{backgroundImage: `url("${patternUrl}")`}}
           title={patternAlt || undefined}
           aria-hidden="true"
@@ -266,7 +277,14 @@ export function OfferScreen({
                   playsInline
                 />
               ) : (
-                <div className="h-[72%] w-[88%] border border-white/5 bg-white/[0.015]" aria-hidden="true" />
+                <div
+                  className={`h-[72%] w-[88%] border ${
+                    isBusiness
+                      ? 'border-white/5 bg-white/[0.015]'
+                      : 'border-[#3d4248]/5 bg-[#3d4248]/[0.015]'
+                  }`}
+                  aria-hidden="true"
+                />
               )}
             </motion.div>
           </AnimatePresence>
@@ -281,11 +299,22 @@ export function OfferScreen({
                 const contentId = `${key}-content`
 
                 return (
-                  <div key={key} className={isActive ? 'pb-[26px]' : 'border-b-2 border-white/90'}>
+                  <div
+                    key={key}
+                    className={
+                      isActive
+                        ? 'pb-[26px]'
+                        : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#3d4248]/80'}`
+                    }
+                  >
                     <button
                       type="button"
                       className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[24px] [@media(max-height:920px)]:text-[24px] ${
-                        isActive ? 'text-[#efb804]' : 'text-white'
+                        isActive
+                          ? 'text-[#efb804]'
+                          : isBusiness
+                            ? 'text-white'
+                            : 'text-[#3d4248]'
                       }`}
                       aria-expanded={isActive}
                       aria-controls={contentId}
@@ -313,7 +342,11 @@ export function OfferScreen({
                               </p>
                           ) : null}
                           {section.text ? (
-                              <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
+                              <div
+                                className={`max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                                  isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                }`}
+                              >
                                 {parseOfferText(section.text).map((block, blockIndex) =>
                                   block.type === 'paragraph' ? (
                                     <p key={`paragraph-${blockIndex}`}>{block.text}</p>
@@ -347,7 +380,12 @@ export function OfferScreen({
               })}
             </div>
           ) : (
-            <div className="min-h-[340px] border-y border-white/20" aria-label="Keine Angebote vorhanden" />
+            <div
+              className={`min-h-[340px] border-y ${
+                isBusiness ? 'border-white/20' : 'border-[#3d4248]/20'
+              }`}
+              aria-label="Keine Angebote vorhanden"
+            />
           )}
         </div>
       </section>

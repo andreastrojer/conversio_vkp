@@ -48,7 +48,7 @@ type ResolvedMedia = {
 }
 
 const patternClassName =
-  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065] [filter:brightness(0)_invert(1)]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065]'
 
 function isVideo(mediaType?: string | null) {
   return mediaType === 'video' || mediaType === 'droneVideo'
@@ -254,8 +254,9 @@ export function WhatFitsScreen({
   const activeSection =
     activeTab?.sections.find((section) => section._key === activeSectionKey) || activeTab?.sections[0]
   const detailMediaSection = isTechnicalTab ? overviewTab?.sections[0] : activeSection
-  const pageLogoUrl = inverseLogoUrl || logoUrl
-  const navigationLogoUrl = logoUrl || inverseLogoUrl
+  const isBusiness = customerType === 'b2b'
+  const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
+  const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const catalogMedia = useMemo(
     () => selectedProduct ? resolveCatalogMedia(selectedProduct) : {key: 'catalog-empty', kind: 'empty', alt: ''} as ResolvedMedia,
     [selectedProduct],
@@ -311,11 +312,19 @@ export function WhatFitsScreen({
       : undefined
 
   return (
-    <PresentationViewport backgroundClassName="bg-[#3d4248]">
-      <main className="relative isolate h-full w-full overflow-hidden bg-[#3d4248] font-sans text-white">
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+      <main
+        className={`relative isolate h-full w-full overflow-hidden font-sans ${
+          isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+        }`}
+      >
         {patternUrl ? (
           <span
-            className={patternClassName}
+            className={`${patternClassName} ${
+              isBusiness
+                ? '[filter:brightness(0)_invert(1)]'
+                : '[filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+            }`}
             style={{backgroundImage: `url("${patternUrl}")`}}
             title={patternAlt || undefined}
             aria-hidden="true"
@@ -363,7 +372,11 @@ export function WhatFitsScreen({
                 ) : null}
 
                 {subline ? (
-                  <p className="mt-[76px] border-b border-white/80 pb-[22px] text-[20px] font-bold uppercase tracking-[0.02em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">
+                  <p
+                    className={`mt-[76px] border-b pb-[22px] text-[20px] font-bold uppercase tracking-[0.02em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
+                      isBusiness ? 'border-white/80' : 'border-[#3d4248]/80'
+                    }`}
+                  >
                     {subline}
                   </p>
                 ) : null}
@@ -376,8 +389,12 @@ export function WhatFitsScreen({
                       <button
                         key={product._id}
                         type="button"
-                        className={`group flex items-center gap-[28px] text-left text-[20px] font-bold uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
-                          isSelected ? 'text-[#efb804]' : 'text-white'
+                        className={`group flex items-center gap-[28px] text-left text-[17px] font-semibold uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                          isSelected
+                            ? 'text-[#efb804]'
+                            : isBusiness
+                              ? 'text-white'
+                              : 'text-[#3d4248]'
                         }`}
                         aria-pressed={isSelected}
                         onClick={() => selectProduct(product.slug, 'catalog')}
@@ -388,7 +405,11 @@ export function WhatFitsScreen({
                             src="/Vector%20(1).svg"
                             alt=""
                             className={`pointer-events-none absolute inset-0 h-full w-full object-contain ${
-                              isSelected ? '' : 'brightness-0 invert'
+                              isSelected
+                                ? ''
+                                : isBusiness
+                                  ? 'brightness-0 invert'
+                                  : 'brightness-0 opacity-80'
                             }`}
                             aria-hidden="true"
                           />
@@ -444,7 +465,11 @@ export function WhatFitsScreen({
                         role="tab"
                         aria-selected={isActive}
                         className={`relative px-[12px] pb-[9px] text-[16px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
-                          isActive ? 'text-[#efb804]' : 'text-white'
+                          isActive
+                            ? 'text-[#efb804]'
+                            : isBusiness
+                              ? 'text-white'
+                              : 'text-[#3d4248]'
                         }`}
                         onClick={() => selectTab(tab.key)}
                       >
@@ -478,12 +503,20 @@ export function WhatFitsScreen({
                       return (
                         <div
                           key={section._key}
-                          className={isActive ? 'pb-[26px]' : 'border-b-2 border-white/90'}
+                          className={
+                            isActive
+                              ? 'pb-[26px]'
+                              : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#3d4248]/80'}`
+                          }
                         >
                           <button
                             type="button"
                             className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[24px] [@media(max-height:920px)]:text-[24px] ${
-                              isActive ? 'text-[#efb804]' : 'text-white'
+                              isActive
+                                ? 'text-[#efb804]'
+                                : isBusiness
+                                  ? 'text-white'
+                                  : 'text-[#3d4248]'
                             }`}
                             aria-expanded={isActive}
                             aria-controls={contentId}
@@ -509,7 +542,11 @@ export function WhatFitsScreen({
                               >
                                 <div className="pb-[18px] pt-[24px]">
                                   {section.text ? (
-                                    <div className="max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] text-white/95 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
+                                    <div
+                                      className={`max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                                        isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                      }`}
+                                    >
                                       {splitParagraphs(section.text).map((paragraph, index) => (
                                         <p
                                           key={`${section._key}-paragraph-${index}`}
@@ -530,7 +567,9 @@ export function WhatFitsScreen({
                                       {section.specificationRows.map((row, index) => (
                                         <div
                                           key={row._key || `${section._key}-row-${index}`}
-                                          className="grid grid-cols-[minmax(0,1fr)_minmax(130px,0.7fr)] gap-[24px] border-b border-white/25 pb-[7px]"
+                                          className={`grid grid-cols-[minmax(0,1fr)_minmax(130px,0.7fr)] gap-[24px] border-b pb-[7px] ${
+                                            isBusiness ? 'border-white/25' : 'border-[#3d4248]/25'
+                                          }`}
                                         >
                                           <dt>{row.label}</dt>
                                           <dd className="font-bold">{row.value}</dd>
@@ -547,7 +586,11 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : activeSection?.text ? (
-                  <div className="space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] text-white/95 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
+                  <div
+                    className={`space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                      isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                    }`}
+                  >
                     {splitParagraphs(activeSection.text).map((paragraph, index) => (
                       <p key={`${activeSection._key}-paragraph-${index}`} className="whitespace-pre-line">
                         {paragraph}

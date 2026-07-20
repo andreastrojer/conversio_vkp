@@ -26,10 +26,6 @@ export default async function ProcessPage({searchParams}: ProcessPageProps) {
   const {type} = await searchParams
   const customerType = resolveCustomerType(type)
 
-  if (customerType !== 'b2c') {
-    redirect('/process?type=b2c')
-  }
-
   const content = await getProcessPageData(customerType)
 
   return (

@@ -34,7 +34,7 @@ type ProcessScreenProps = {
 }
 
 const patternClassName =
-  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065] [filter:brightness(0)_invert(1)]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065]'
 
 function sectionKey(section: ProcessSection, index: number) {
   return section._key || `process-section-${index}`
@@ -90,8 +90,9 @@ export function ProcessScreen({
   const [activeIndex, setActiveIndex] = useState(0)
   const safeActiveIndex = sections.length > 0 ? Math.min(activeIndex, sections.length - 1) : 0
   const activeSection = sections[safeActiveIndex]
-  const pageLogoUrl = inverseLogoUrl || logoUrl
-  const navigationLogoUrl = logoUrl || inverseLogoUrl
+  const isBusiness = customerType === 'b2b'
+  const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
+  const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const ctaHref = resolveTarget(primaryCta?.target, customerType)
 
   function selectStep(index: number) {
@@ -105,11 +106,19 @@ export function ProcessScreen({
   }
 
   return (
-    <PresentationViewport backgroundClassName="bg-[#3d4248]">
-      <main className="relative isolate h-full w-full overflow-hidden bg-[#3d4248] font-sans text-white">
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+      <main
+        className={`relative isolate h-full w-full overflow-hidden font-sans ${
+          isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+        }`}
+      >
         {patternUrl ? (
           <span
-            className={patternClassName}
+            className={`${patternClassName} ${
+              isBusiness
+                ? '[filter:brightness(0)_invert(1)]'
+                : '[filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+            }`}
             style={{backgroundImage: `url("${patternUrl}")`}}
             title={patternAlt || undefined}
             aria-hidden="true"
@@ -129,7 +138,11 @@ export function ProcessScreen({
           </Link>
         </div>
 
-        <p className="absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] text-white/90 max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]">
+        <p
+          className={`absolute bottom-[185px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+            isBusiness ? 'text-white/90' : 'text-[#3d4248]/90'
+          }`}
+        >
           {subline?.trim() || 'DER ABLAUF'}
         </p>
 
@@ -155,7 +168,11 @@ export function ProcessScreen({
                 ) : (
                   <Hexagon
                     className={`pointer-events-none absolute left-[38px] top-1/2 h-[68px] w-[300px] -translate-y-1/2 ${
-                      isActive ? 'text-[#efb804]' : 'text-white/60'
+                      isActive
+                        ? 'text-[#efb804]'
+                        : isBusiness
+                          ? 'text-white/60'
+                          : 'text-[#3d4248]/60'
                     }`}
                     strokeWidth={1.2}
                     aria-hidden="true"
@@ -187,7 +204,12 @@ export function ProcessScreen({
         <section className="absolute right-[72px] top-[235px] z-[3] w-[525px]" aria-label="Prozessschritte">
           <span className="absolute left-[-72px] top-[31px] h-[460px] w-[2px] bg-[#efb804]" aria-hidden="true" />
           <span className="absolute left-[-72px] top-[239px] h-[2px] w-[105px] bg-[#efb804]" aria-hidden="true" />
-          <span className="absolute bottom-[38px] left-[31px] top-[38px] w-[2px] bg-white/90" aria-hidden="true" />
+          <span
+            className={`absolute bottom-[38px] left-[31px] top-[38px] w-[2px] ${
+              isBusiness ? 'bg-white/90' : 'bg-[#3d4248]/80'
+            }`}
+            aria-hidden="true"
+          />
 
           <div className="relative">
             {sections.map((section, index) => {
@@ -198,14 +220,14 @@ export function ProcessScreen({
                   key={sectionKey(section, index)}
                   type="button"
                   className={`group relative flex h-[76px] w-full items-center text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
-                    isActive ? 'text-[#efb804]' : 'text-white'
+                    isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
                   }`}
                   onClick={() => selectStep(index)}
                   aria-pressed={isActive}
                 >
                   <span
                     className={`absolute left-[31px] top-1/2 h-[2px] w-[17px] -translate-y-1/2 transition-colors duration-300 ${
-                      isActive ? 'bg-[#efb804]' : 'bg-white'
+                      isActive ? 'bg-[#efb804]' : isBusiness ? 'bg-white' : 'bg-[#3d4248]'
                     }`}
                     aria-hidden="true"
                   />
@@ -215,7 +237,7 @@ export function ProcessScreen({
                       src="/Vector%20(1).svg"
                       alt=""
                       className={`pointer-events-none absolute inset-0 h-full w-full object-contain ${
-                        isActive ? '' : 'brightness-0 invert'
+                        isActive ? '' : isBusiness ? 'brightness-0 invert' : 'brightness-0 opacity-80'
                       }`}
                       aria-hidden="true"
                     />

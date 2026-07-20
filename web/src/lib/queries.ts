@@ -111,11 +111,11 @@ export const CUSTOMER_SELECTION_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
-export const ABOUT_SCREEN_QUERY = defineQuery(groq`*[
-  _type == "appScreen" &&
-  screenKey.current == "about" &&
-  isActive == true
-][0]{
+export const ABOUT_SCREEN_QUERY = defineQuery(groq`coalesce(
+  *[_type == "appScreen" && screenType == "about" && targetAudience == $customerType && isActive == true][0],
+  *[_type == "appScreen" && screenType == "about" && targetAudience == "both" && isActive == true][0],
+  *[_type == "appScreen" && screenType == "about" && isActive == true][0]
+){
   title,
   "screenKey": screenKey.current,
   headline,
@@ -164,12 +164,11 @@ export const ABOUT_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
-export const OFFER_SCREEN_QUERY = defineQuery(groq`*[
-  _type == "appScreen" &&
-  screenKey.current == "offer" &&
-  screenType == "offer" &&
-  isActive == true
-][0]{
+export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
+  *[_type == "appScreen" && screenType == "offer" && targetAudience == $customerType && isActive == true][0],
+  *[_type == "appScreen" && screenType == "offer" && targetAudience == "both" && isActive == true][0],
+  *[_type == "appScreen" && screenType == "offer" && isActive == true][0]
+){
   title,
   "screenKey": screenKey.current,
   screenType,

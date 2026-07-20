@@ -79,10 +79,6 @@ export type OfferPageData = {
 const offerClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
 
-function isVisibleFor(section: OfferSection, customerType: CustomerGroup) {
-  return !section.visibleFor || section.visibleFor === 'both' || section.visibleFor === customerType
-}
-
 function sortSections(a: OfferSection, b: OfferSection) {
   const aOrder = typeof a.sortOrder === 'number' ? a.sortOrder : Number.POSITIVE_INFINITY
   const bOrder = typeof b.sortOrder === 'number' ? b.sortOrder : Number.POSITIVE_INFINITY
@@ -99,13 +95,15 @@ export async function getOfferPageData(customerType: CustomerGroup): Promise<Off
 
   try {
     const [screen, sharedContent] = await Promise.all([
-      offerClient.fetch<OfferScreenDocument>(OFFER_SCREEN_QUERY, {}, freshFetchOptions),
+      offerClient.fetch<OfferScreenDocument>(
+        OFFER_SCREEN_QUERY,
+        {customerType},
+        freshFetchOptions,
+      ),
       sharedContentPromise,
     ])
 
-    const sections = (screen?.sections || [])
-      .filter((section) => isVisibleFor(section, customerType))
-      .sort(sortSections)
+    const sections = (screen?.sections || []).sort(sortSections)
       .map((section) => ({
         ...section,
         imageUrl: buildImageUrl(section.image, 2400, undefined, 100),
@@ -139,7 +137,7 @@ export async function getOfferPageData(customerType: CustomerGroup): Promise<Off
         href:
           item.key === 'about'
             ? `/about?type=${customerType}`
-            : item.key === 'offer' && customerType === 'b2c'
+            : item.key === 'offer'
               ? `/offer?type=${customerType}`
               : item.href,
       })),
@@ -160,7 +158,7 @@ export async function getOfferPageData(customerType: CustomerGroup): Promise<Off
         href:
           item.key === 'about'
             ? `/about?type=${customerType}`
-            : item.key === 'offer' && customerType === 'b2c'
+            : item.key === 'offer'
               ? `/offer?type=${customerType}`
               : item.href,
       })),
