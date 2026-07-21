@@ -14,7 +14,16 @@ export type SiteSettings = SanityDocumentBase & {
 export type CalculatorSlider = {
   _key: string
   label?: string
-  key: string
+  key:
+    | 'annualConsumption'
+    | 'storageSize'
+    | 'chargingStations'
+    | 'speichergrösse'
+    | 'speichergroesse'
+    | 'ladestationen'
+    | 'ladepunkte'
+    | 'lastspitze'
+    | string
   min: number
   max: number
   step: number
@@ -28,6 +37,40 @@ export type CmsCalculationParameter = {
   label?: string
   value: number
   unit?: string
+}
+
+export type DocumentSelectionConfig = {
+  documentsHeadline?: string
+  emailLabel?: string
+  sendButtonLabel?: string
+  emptyDocumentsText?: string
+  emailTemplate?: EmailTemplate
+}
+
+export type SalesDocument = SanityDocumentBase & {
+  _type: 'salesDocument'
+  title: string
+  description?: string
+  documentType?: 'product' | 'category' | 'reference' | 'funding' | 'followUp' | 'other'
+  targetGroup?: 'b2c' | 'b2b' | 'both'
+  version?: string
+  status?: 'draft' | 'active' | 'archived'
+  sortOrder?: number
+  isActive?: boolean
+}
+
+export type EmailTemplate = SanityDocumentBase & {
+  _type: 'emailTemplate'
+  title: string
+  templateType?: 'customer' | 'internal' | 'followUp' | 'appointment'
+  targetGroup?: 'b2c' | 'b2b' | 'both'
+  subject: string
+  body?: string
+  placeholders?: string[]
+  includeSignature?: boolean
+  signatureHint?: string
+  sortOrder?: number
+  isActive?: boolean
 }
 
 export type MatrixScenario = {

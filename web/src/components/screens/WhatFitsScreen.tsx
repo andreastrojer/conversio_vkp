@@ -690,27 +690,27 @@ export function WhatFitsScreen({
                     )}
                   </button>
 
-                  <div className="flex w-auto items-center justify-start gap-[44px] pl-[10px] pr-[12px]">
+                  <div className="flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[12px]">
                     {bottomNavigation.map((item) => {
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug
                       const catalogIconUrl = item.iconUrl || productNavigationCatalogIconUrl
                       const commonClassName = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
-                        isActive ? 'text-[#efb804]' : 'text-white'
-                      } ${
+                        isActive && !isCatalog ? 'rounded-full bg-[#efb804] text-[#3d4248]' : 'text-white'
+                        } ${
                         isCatalog
                           ? catalogIconUrl
-                            ? 'h-[26px] w-[66px] p-0 text-[#3d4248]'
-                            : 'h-[26px] min-w-[66px] rounded-full bg-[#efb804] px-[12px] text-[#3d4248]'
-                          : 'h-[34px] px-[12px]'
+                            ? 'h-[26px] w-[66px] p-0 leading-none'
+                            : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#3d4248]'
+                          : 'h-[26px] px-[12px]'
                       }`
                       const content = isCatalog ? (
                         <>
                           {catalogIconUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={catalogIconUrl} alt="" className="h-[26px] w-[66px] object-contain" aria-hidden="true" />
+                            <img src={catalogIconUrl} alt="" className="block h-[26px] w-[66px] shrink-0 object-contain" aria-hidden="true" />
                           ) : (
-                            <ListFilter className="h-[17px] w-[17px]" strokeWidth={2.2} aria-hidden="true" />
+                            <ListFilter className="h-[17px] w-[17px] text-[#3d4248]" strokeWidth={2.2} aria-hidden="true" />
                           )}
                           <span className="sr-only">{item.label}</span>
                         </>

@@ -3,7 +3,7 @@
 import type {ChapterNavigationItem} from '@/lib/about'
 import {brandLogoImageClassName, brandLogoPanelInsetClassName} from '@/lib/brandingLayout'
 import type {CustomerGroup} from '@/lib/customerSelection'
-import {ArrowUpRight, Hexagon} from 'lucide-react'
+import {ArrowUpRight} from 'lucide-react'
 import Link from 'next/link'
 import {type PointerEvent as ReactPointerEvent, useEffect, useRef, useState} from 'react'
 
@@ -173,7 +173,15 @@ export function ChapterNavigation({
                     className={`relative grid ${numberSize} shrink-0 place-items-center ${titleColor}`}
                     aria-hidden="true"
                   >
-                    <Hexagon className="absolute inset-0 h-full w-full" strokeWidth={2.8} />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/Vector%20(1).svg"
+                      alt=""
+                      className={`pointer-events-none absolute inset-0 h-full w-full object-contain ${
+                        isActive ? '' : isPrivate ? 'brightness-0 invert' : 'brightness-0 opacity-80'
+                      }`}
+                      aria-hidden="true"
+                    />
                     <span className={`relative ${numberTextSize} font-medium`}>{item.number}</span>
                   </span>
                   <span

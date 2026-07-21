@@ -376,7 +376,7 @@ export const appScreenType = defineType({
           name: 'sliders',
           title: 'Eingabe-Regler',
           type: 'array',
-          validation: (Rule) => Rule.max(3),
+          validation: (Rule) => Rule.max(4),
           of: [
             {
               name: 'calculatorSlider',
@@ -523,6 +523,46 @@ export const appScreenType = defineType({
               to: [{ type: 'scenario' }],
             },
           ],
+        }),
+      ],
+    }),
+    defineField({
+      name: 'documentSelectionConfig',
+      title: 'Dokumentauswahl-Konfiguration',
+      type: 'object',
+      group: 'content',
+      hidden: ({ document }) => document?.screenType !== 'documentSelection',
+
+      fields: [
+        defineField({
+          name: 'documentsHeadline',
+          title: 'Überschrift Produktblätter',
+          type: 'string',
+          initialValue: 'PRODUKTBLÄTTER',
+        }),
+        defineField({
+          name: 'emailLabel',
+          title: 'Beschriftung E-Mail-Feld',
+          type: 'string',
+          initialValue: 'E-MAIL',
+        }),
+        defineField({
+          name: 'sendButtonLabel',
+          title: 'Text des Senden-Buttons',
+          type: 'string',
+          initialValue: 'SENDEN',
+        }),
+        defineField({
+          name: 'emptyDocumentsText',
+          title: 'Text bei fehlenden Unterlagen',
+          type: 'string',
+          initialValue: '',
+        }),
+        defineField({
+          name: 'emailTemplate',
+          title: 'E-Mail-Vorlage',
+          type: 'reference',
+          to: [{ type: 'emailTemplate' }],
         }),
       ],
     }),

@@ -9,6 +9,7 @@ export type CalculatorValues = {
   annualConsumption: number
   storageSize: number
   chargingStations: number
+  peakLoadKw?: number
 }
 
 export type CalculationParameters = {

@@ -480,6 +480,144 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const NEXT_STEP_PAGE_QUERY = defineQuery(groq`{
+  "screen": coalesce(
+    *[_type == "appScreen" && screenKey.current == "next-step" && targetAudience == $customerType && isActive == true][0],
+    *[_type == "appScreen" && screenType == "documentSelection" && targetAudience == $customerType && isActive == true][0],
+    *[_type == "appScreen" && screenKey.current == "next-step" && targetAudience == "both" && isActive == true][0],
+    *[_type == "appScreen" && screenType == "documentSelection" && targetAudience == "both" && isActive == true][0],
+    *[_type == "appScreen" && screenType == "documentSelection" && isActive == true][0]
+  ){
+    title,
+    "screenKey": screenKey.current,
+    screenType,
+    targetAudience,
+    headline,
+    subline,
+    isActive,
+    primaryCta,
+    heroImage{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    heroImage2{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    heroMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    documentSelectionConfig{
+      documentsHeadline,
+      emailLabel,
+      sendButtonLabel,
+      emptyDocumentsText,
+      emailTemplate->{
+        _id,
+        title,
+        subject,
+        body,
+        signatureHint
+      }
+    },
+    "sections": sections[] | order(coalesce(sortOrder, 999999) asc){
+      _key,
+      title,
+      eyebrow,
+      text,
+      visibleFor,
+      layout,
+      sortOrder,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
+      media->{
+        title,
+        altText,
+        mediaType,
+        externalUrl,
+        "fileUrl": file.asset->url,
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      },
+      cta{
+        label,
+        target,
+        style,
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      }
+    }
+  },
+  "documents": *[
+    _type == "salesDocument" &&
+    isActive != false &&
+    status == "active" &&
+    (!defined(targetGroup) || targetGroup in [$customerType, "both"])
+  ] | order(coalesce(sortOrder, 999999) asc){
+    _id,
+    title,
+    description,
+    documentType,
+    targetGroup,
+    "categoryIds": categories[]._ref,
+    "scenarioIds": scenarios[]._ref,
+    version,
+    "pdfUrl": pdfFile.asset->url,
+    sharePointUrl,
+    previewImage{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    }
+  },
+  "defaultEmailTemplate": *[
+    _type == "emailTemplate" &&
+    isActive != false &&
+    templateType == "customer" &&
+    (!defined(targetGroup) || targetGroup in [$customerType, "both"])
+  ] | order(coalesce(sortOrder, 999999) asc)[0]{
+    _id,
+    title,
+    subject,
+    body,
+    signatureHint
+  }
+}`)
+
 export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
   "screen": *[
     _type == "appScreen" &&

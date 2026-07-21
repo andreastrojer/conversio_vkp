@@ -146,7 +146,10 @@ export function ProcessScreen({
           {subline?.trim() || 'DER ABLAUF'}
         </p>
 
-        <section className="absolute left-[175px] top-[270px] z-[3] h-[475px] w-[550px] [--process-step-gap:68px] [@media(min-height:940px)]:[--process-step-gap:63px]" aria-label="Prozessschritte als Ringstapel">
+        <section
+          className="absolute left-[175px] top-[242px] z-[3] h-[560px] w-[550px] [--process-step-gap:76px]"
+          aria-label="Prozessschritte als Ringstapel"
+        >
           {sections.map((section, index) => {
             const isActive = index === safeActiveIndex
             const currentRingUrl = isActive ? activeRingImageUrl : inactiveRingImageUrl
@@ -185,7 +188,7 @@ export function ProcessScreen({
           {activeSection ? (
             <motion.div
               className="absolute left-[405px] flex w-[265px] items-center gap-[10px] transition-[top] duration-[420ms] ease-out [@media(min-height:940px)]:left-[355px]"
-              style={{top: `calc(${safeActiveIndex} * var(--process-step-gap) - 7px)`}}
+              style={{top: `calc(${safeActiveIndex} * var(--process-step-gap) + 18px)`}}
             >
               <span className="h-px w-[46px] shrink-0 bg-[#efb804]" aria-hidden="true" />
               <button
@@ -201,9 +204,18 @@ export function ProcessScreen({
           ) : null}
         </section>
 
-        <section className="absolute right-[72px] top-[235px] z-[3] w-[525px]" aria-label="Prozessschritte">
-          <span className="absolute left-[-72px] top-[31px] h-[460px] w-[2px] bg-[#efb804]" aria-hidden="true" />
-          <span className="absolute left-[-72px] top-[239px] h-[2px] w-[105px] bg-[#efb804]" aria-hidden="true" />
+        <section
+          className="absolute right-[72px] top-[235px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px]"
+          aria-label="Prozessschritte"
+        >
+          <span
+            className="absolute left-[-72px] top-[var(--process-point-center)] h-[456px] w-[2px] bg-[#efb804]"
+            aria-hidden="true"
+          />
+          <span
+            className="absolute left-[-72px] top-[calc(3*var(--process-list-step)+var(--process-point-center))] h-[2px] w-[105px] bg-[#efb804]"
+            aria-hidden="true"
+          />
           <span
             className={`absolute bottom-[38px] left-[31px] top-[38px] w-[2px] ${
               isBusiness ? 'bg-white/90' : 'bg-[#3d4248]/80'
@@ -219,7 +231,7 @@ export function ProcessScreen({
                 <button
                   key={sectionKey(section, index)}
                   type="button"
-                  className={`group relative flex h-[76px] w-full items-center text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                  className={`group relative flex h-[var(--process-list-step)] w-full items-center text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                     isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
                   }`}
                   onClick={() => selectStep(index)}

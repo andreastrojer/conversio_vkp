@@ -50,8 +50,18 @@ const validScenarioTypes = new Set<ScenarioType>(['b2c_pv', 'b2c_pv_speicher', '
 const sliderKeyAliases: Record<keyof CalculatorValues, string[]> = {
   annualConsumption: ['annualConsumption'],
   storageSize: ['storageSize', 'speichergrösse', 'speichergroesse', 'speichergrosse'],
-  chargingStations: ['chargingStations', 'ladestationen'],
+  chargingStations: ['chargingStations', 'ladestationen', 'ladepunkte'],
+  peakLoadKw: ['peakLoadKw', 'lastspitze'],
 }
+const b2cSliderKeys = new Set([
+  'annualconsumption',
+  'storagesize',
+  'speichergrosse',
+  'chargingstations',
+  'ladestationen',
+  'ladepunkte',
+  'lastspitze',
+])
 
 function normalizeCmsKey(value: string) {
   return value
@@ -83,6 +93,7 @@ function buildCalculatorValues(
   const annualConsumption = findExactSliderValue(sliders, values, 'annualConsumption')
   const storageSize = findExactSliderValue(sliders, values, 'storageSize')
   const chargingStations = findExactSliderValue(sliders, values, 'chargingStations')
+  const peakLoadKw = findExactSliderValue(sliders, values, 'peakLoadKw')
 
   if (
     typeof annualConsumption !== 'number' ||
@@ -92,7 +103,15 @@ function buildCalculatorValues(
     return undefined
   }
 
-  return {annualConsumption, storageSize, chargingStations}
+  return {annualConsumption, storageSize, chargingStations, peakLoadKw}
+}
+
+function getVisibleSliders(sliders: ScenarioMatrixSlider[], customerType: CustomerGroup) {
+  if (customerType === 'b2b') {
+    return sliders
+  }
+
+  return sliders.filter((slider) => b2cSliderKeys.has(normalizeCmsKey(slider.key)))
 }
 
 function buildCalculationParameters(
@@ -145,17 +164,19 @@ function SliderControl({
   value,
   onChange,
   isBusiness,
+  compact,
 }: {
   slider: ScenarioMatrixSlider
   value: number
   onChange: (value: number) => void
   isBusiness: boolean
+  compact: boolean
 }) {
   const percentage = ((value - slider.min) / (slider.max - slider.min)) * 100
 
   return (
     <div className="w-[660px]">
-      <div className="mb-[18px] flex items-center justify-between gap-[24px]">
+      <div className={`${compact ? 'mb-[12px]' : 'mb-[18px]'} flex items-center justify-between gap-[24px]`}>
         <label
           htmlFor={`scenario-slider-${slider.id}`}
           className={`text-[20px] font-semibold uppercase leading-none tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
@@ -381,7 +402,7 @@ function resolveTarget(target: string | null | undefined, customerType: Customer
   const normalizedTarget = target?.trim()
 
   if (!normalizedTarget || normalizedTarget === 'next') {
-    return `/offer?type=${customerType}`
+    return `/next-step?type=${customerType}`
   }
 
   if (normalizedTarget.startsWith('/')) {
@@ -393,6 +414,41 @@ function resolveTarget(target: string | null | undefined, customerType: Customer
     : normalizedTarget
 
   return screenKey ? `/${screenKey}?type=${customerType}` : `/offer?type=${customerType}`
+}
+
+function buildNextStepHref(
+  href: string,
+  activeBundleId: string,
+) {
+  const [path, query = ''] = href.split('?')
+  const params = new URLSearchParams(query)
+
+  if (activeBundleId) {
+    params.set('bundle', activeBundleId)
+  }
+
+  const serializedParams = params.toString()
+
+  return serializedParams ? `${path}?${serializedParams}` : path
+}
+
+function storeNextStepState(
+  customerType: CustomerGroup,
+  activeBundleId: string,
+  calculatorValues: CalculatorValues | undefined,
+) {
+  if (typeof window === 'undefined' || !calculatorValues) {
+    return
+  }
+
+  window.sessionStorage.setItem(
+    'scenarioMatrix.nextStep',
+    JSON.stringify({
+      customerType,
+      bundleId: activeBundleId,
+      calculatorValues,
+    }),
+  )
 }
 
 function bottomNavigationHref(item: ProductNavigationItem, customerType: CustomerGroup) {
@@ -446,6 +502,7 @@ export function ScenarioMatrixScreen({
   const isCalculation = activeTab === 'calculation'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
+  const visibleSliders = useMemo(() => getVisibleSliders(sliders, customerType), [customerType, sliders])
   const visibleBundles = useMemo(() => bundles.slice(0, 3), [bundles])
   const calculatorValues = useMemo(() => buildCalculatorValues(sliders, values), [sliders, values])
   const calculationParameters = useMemo(() => buildCalculationParameters(parameters), [parameters])
@@ -455,6 +512,10 @@ export function ScenarioMatrixScreen({
   )
   const calculationCtaLabel = primaryCta?.label || visibleBundles[visibleBundles.length - 1]?.nextStepText
   const calculationCtaHref = resolveTarget(primaryCta?.target, customerType)
+  const calculationCtaHrefWithState = useMemo(
+    () => buildNextStepHref(calculationCtaHref, activeBundleId),
+    [activeBundleId, calculationCtaHref],
+  )
   const bundleImageUrl = b2cBundleImageUrl || offerImageUrl || heroImageUrl
   const bundleImageAlt = b2cBundleImageUrl
     ? b2cBundleImageAlt
@@ -550,14 +611,15 @@ export function ScenarioMatrixScreen({
                 />
               ) : null}
 
-              <div className="absolute left-[72px] top-[396px] z-[4] space-y-[42px]">
-                {sliders.map((slider) => (
+              <div className="absolute left-[72px] top-[374px] z-[4] space-y-[28px]">
+                {visibleSliders.map((slider) => (
                   <SliderControl
                     key={slider.id}
                     slider={slider}
                     value={values[slider.key] ?? slider.defaultValue}
                     onChange={(value) => setValues((current) => ({...current, [slider.key]: value}))}
                     isBusiness={isBusiness}
+                    compact
                   />
                 ))}
 
@@ -621,7 +683,8 @@ export function ScenarioMatrixScreen({
         {isCalculation && calculationCtaLabel ? (
           <div className="absolute bottom-[58px] right-[72px] z-[8] w-[262px] max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-auto [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-auto">
             <Link
-              href={calculationCtaHref}
+              href={calculationCtaHrefWithState}
+              onClick={() => storeNextStepState(customerType, activeBundleId, calculatorValues)}
               className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
             >
               <span>{calculationCtaLabel}</span>
@@ -652,27 +715,27 @@ export function ScenarioMatrixScreen({
               )}
             </Link>
 
-            <div className="flex w-auto items-center justify-start gap-[44px] pl-[10px] pr-[12px]">
+            <div className="flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[12px]">
               {bottomNavigation.map((item) => {
                 const href = bottomNavigationHref(item, customerType)
                 const isMatrix = item.kind === 'screen' && Boolean(item.href?.includes('scenario-matrix'))
                 const isCatalog = item.kind === 'catalog'
                 const catalogIconUrl = item.iconUrl || productNavigationCatalogIconUrl
                 const className = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
-                  isMatrix ? 'text-[#efb804]' : 'text-white'
-                } ${
+                  isMatrix && !isCatalog ? 'rounded-full bg-[#efb804] text-[#3d4248]' : 'text-white'
+                  } ${
                   isCatalog
                     ? catalogIconUrl
-                      ? 'h-[26px] w-[66px] p-0 text-[#3d4248]'
-                      : 'h-[26px] min-w-[66px] rounded-full bg-[#efb804] px-[12px] text-[#3d4248]'
-                    : 'h-[34px] px-[12px]'
+                      ? 'h-[26px] w-[66px] p-0 leading-none'
+                      : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#3d4248]'
+                    : 'h-[26px] px-[12px]'
                 }`
                 const content = isCatalog ? (
                   catalogIconUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={catalogIconUrl} alt={item.label} className="h-[26px] w-[66px] object-contain" />
+                    <img src={catalogIconUrl} alt={item.label} className="block h-[26px] w-[66px] shrink-0 object-contain" />
                   ) : (
-                    <><ListFilter className="h-[17px] w-[17px]" strokeWidth={2.2} aria-hidden="true" /><span className="sr-only">{item.label}</span></>
+                    <><ListFilter className="h-[17px] w-[17px] text-[#3d4248]" strokeWidth={2.2} aria-hidden="true" /><span className="sr-only">{item.label}</span></>
                   )
                 ) : item.label
 
