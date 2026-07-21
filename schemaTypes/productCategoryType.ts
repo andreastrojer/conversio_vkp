@@ -185,6 +185,21 @@ export const productCategoryType = defineType({
         'Optionales Video oder eine Animation für die Produktdetailseite.',
       to: [{ type: 'mediaAsset' }],
     }),
+    defineField({
+      name: 'models',
+      title: 'Verfügbare Modelle',
+      type: 'array',
+      group: 'detail',
+      description:
+        'Modelle, die im Dropdown auf der Produktdetailseite angeboten werden.',
+      of: [
+        {
+          type: 'reference',
+          to: [{ type: 'productModel' }],
+        },
+      ],
+      validation: (Rule) => Rule.unique(),
+    }),
 
     defineField({
       name: 'detailTabs',
@@ -192,7 +207,7 @@ export const productCategoryType = defineType({
       type: 'array',
       group: 'detail',
       description:
-        'Die Tabs „Überblick“, „Technische Daten“ und „Zusammenspiel“.',
+        'Die Tabs „Überblick“, „Technische Daten“, „Zusammenspiel“ und „Referenzen“.',
       validation: (Rule) => Rule.required().min(1),
       of: [
         defineArrayMember({
@@ -219,10 +234,106 @@ export const productCategoryType = defineType({
                   { title: 'Überblick', value: 'overview' },
                   { title: 'Technische Daten', value: 'technical' },
                   { title: 'Zusammenspiel', value: 'interplay' },
+                  { title: 'Referenzen', value: 'reference' },
                 ],
                 layout: 'radio',
               },
               validation: (Rule) => Rule.required(),
+            }),
+
+            defineField({
+              name: 'introText',
+              title: 'Einleitung rechts',
+              type: 'text',
+              rows: 5,
+              description:
+                'Einleitender Absatz oberhalb der Stichpunkte. Wird bei „Zusammenspiel“ und „Referenzen“ angezeigt.',
+              hidden: ({ parent }) =>
+                parent?.key !== 'interplay' && parent?.key !== 'reference',
+              validation: (Rule) =>
+                Rule.custom((value, context) => {
+                  const parent = context.parent as { key?: string }
+
+                  if (
+                    parent?.key === 'interplay' ||
+                    parent?.key === 'reference'
+                  ) {
+                    return value
+                      ? true
+                      : 'Bitte eine Einleitung für diesen Tab eintragen.'
+                  }
+
+                  return true
+                }),
+            }),
+
+            defineField({
+              name: 'contentItems',
+              title: 'Stichpunkte rechts',
+              type: 'array',
+              description:
+                'Die Punkte unterhalb der Einleitung. Der Titel ist optional, damit auch reine Textpunkte möglich sind.',
+              hidden: ({ parent }) =>
+                parent?.key !== 'interplay' && parent?.key !== 'reference',
+              validation: (Rule) =>
+                Rule.custom((value, context) => {
+                  const parent = context.parent as { key?: string }
+
+                  if (
+                    parent?.key === 'interplay' ||
+                    parent?.key === 'reference'
+                  ) {
+                    return Array.isArray(value) && value.length > 0
+                      ? true
+                      : 'Bitte mindestens einen Stichpunkt anlegen.'
+                  }
+
+                  return true
+                }),
+              of: [
+                defineArrayMember({
+                  name: 'productDetailContentItem',
+                  title: 'Stichpunkt',
+                  type: 'object',
+                  fields: [
+                    defineField({
+                      name: 'title',
+                      title: 'Überschrift optional',
+                      type: 'string',
+                      description:
+                        'Zum Beispiel „LADEINFRASTRUKTUR“ oder „PV-ANLAGE“. Für reine Textpunkte leer lassen.',
+                    }),
+
+                    defineField({
+                      name: 'text',
+                      title: 'Beschreibung',
+                      type: 'text',
+                      rows: 3,
+                      validation: (Rule) => Rule.required(),
+                    }),
+
+                    defineField({
+                      name: 'isActive',
+                      title: 'Aktiv',
+                      type: 'boolean',
+                      initialValue: true,
+                    }),
+                  ],
+
+                  preview: {
+                    select: {
+                      title: 'title',
+                      subtitle: 'text',
+                    },
+                    prepare({ title, subtitle }) {
+                      return {
+                        title: title || subtitle || 'Stichpunkt',
+                        subtitle: title ? subtitle : undefined,
+                      }
+                    },
+                  },
+                }),
+              ],
             }),
 
             defineField({
@@ -231,7 +342,23 @@ export const productCategoryType = defineType({
               type: 'array',
               description:
                 'Beim Überblick meist ein Textabschnitt. Bei technischen Daten mehrere aufklappbare Abschnitte.',
-              validation: (Rule) => Rule.required().min(1),
+              hidden: ({ parent }) =>
+                parent?.key === 'interplay' || parent?.key === 'reference',
+              validation: (Rule) =>
+                Rule.custom((value, context) => {
+                  const parent = context.parent as { key?: string }
+
+                  if (
+                    parent?.key === 'overview' ||
+                    parent?.key === 'technical'
+                  ) {
+                    return Array.isArray(value) && value.length > 0
+                      ? true
+                      : 'Bitte mindestens einen Abschnitt anlegen.'
+                  }
+
+                  return true
+                }),
 
               of: [
                 defineArrayMember({

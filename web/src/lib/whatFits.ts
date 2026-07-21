@@ -31,10 +31,18 @@ export type ProductDetailSection = {
   mediaAlt: string
 }
 
+export type ProductDetailContentItem = {
+  _key: string
+  title?: string | null
+  text: string
+}
+
 export type ProductDetailTab = {
   _key: string
   title: string
   key: string
+  introText?: string | null
+  contentItems: ProductDetailContentItem[]
   sections: ProductDetailSection[]
 }
 
@@ -90,6 +98,13 @@ type ProductDocument = {
     title?: string | null
     key?: string | null
     isActive?: boolean | null
+    introText?: string | null
+    contentItems?: Array<{
+      _key?: string | null
+      title?: string | null
+      text?: string | null
+      isActive?: boolean | null
+    }> | null
     sections?: Array<{
       _key?: string | null
       title?: string | null
@@ -129,6 +144,7 @@ type RawBottomNavigationItem = {
 type WhatFitsScreenDocument = {
   title?: string | null
   screenKey?: string | null
+  targetAudience?: string | null
   headline?: string | null
   subline?: string | null
   heroImage?: SanityImage
@@ -241,6 +257,19 @@ function normalizeProducts(products: ProductDocument[] | null | undefined): What
           _key: tab._key,
           title: tab.title.trim(),
           key: tab.key.trim(),
+          introText: tab.introText,
+          contentItems: (tab.contentItems || [])
+            .filter(
+              (item): item is NonNullable<typeof tab.contentItems>[number] & {
+                _key: string
+                text: string
+              } => Boolean(item._key && item.text?.trim() && item.isActive !== false),
+            )
+            .map((item) => ({
+              _key: item._key,
+              title: item.title,
+              text: item.text.trim(),
+            })),
           sections: (tab.sections || [])
             .filter(
               (section): section is NonNullable<typeof tab.sections>[number] & {_key: string} =>
@@ -264,6 +293,39 @@ function normalizeProducts(products: ProductDocument[] | null | undefined): What
     }))
 }
 
+function selectScreenProducts(
+  screen: WhatFitsScreenDocument,
+  products: WhatFitsProduct[],
+): WhatFitsProduct[] {
+  const productItems = (screen?.productBottomNavigation || []).filter(
+    (item) => item.itemType === 'product' && item.product?._id,
+  )
+
+  if (productItems.length === 0) {
+    return products
+  }
+
+  const productsById = new Map(products.map((product) => [product._id, product]))
+
+  return productItems.flatMap((item) => {
+    const productId = item.product?._id
+    const product = productId ? productsById.get(productId) : undefined
+
+    if (!product) {
+      return []
+    }
+
+    const screenLabel = item.label?.trim()
+
+    return [{
+      ...product,
+      catalogLabel: screenLabel || product.catalogLabel,
+      detailTitle: screenLabel || product.detailTitle,
+      navigationLabel: screenLabel || product.navigationLabel,
+    }]
+  })
+}
+
 function resolveScreenHref(target: string, customerType: CustomerGroup) {
   if (target.startsWith('/')) {
     return target
@@ -279,10 +341,10 @@ function normalizeBottomNavigation(
   matrixStep: WhatFitsQueryResult['matrixStep'],
   customerType: CustomerGroup,
 ) {
-  const rawItems = [
-    ...(screen?.productBottomNavigation || []),
-    ...(documents || []).flatMap((document) => document.items?.length ? document.items : [document]),
-  ]
+  const screenItems = screen?.productBottomNavigation || []
+  const rawItems = (screenItems.length > 0
+    ? screenItems
+    : (documents || []).flatMap((document) => document.items?.length ? document.items : [document]))
     .filter((item) => item.isActive !== false)
     .sort((a, b) => {
       const first = a.sortOrder ?? a.order ?? Number.POSITIVE_INFINITY
@@ -400,7 +462,7 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       ),
       sharedContentPromise,
     ])
-    const products = normalizeProducts(result.products)
+    const products = selectScreenProducts(result.screen || null, normalizeProducts(result.products))
     const navigationAssetUrl = (title: string) =>
       resolveImageUrl(
         result.productNavigationAssets?.find((asset) => asset.title?.trim() === title)?.image,

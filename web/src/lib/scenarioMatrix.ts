@@ -239,12 +239,13 @@ function normalizeSliders(sliders: RawSlider[] | null | undefined): ScenarioMatr
 }
 
 function normalizeMetrics(metrics: RawMetric[] | null | undefined, customerType: CustomerGroup) {
-  return (metrics || [])
-    .filter(
-      (metric) =>
-        metric.isActive !== false &&
-        (!metric.targetGroup || metric.targetGroup === 'both' || metric.targetGroup === customerType),
-    )
+  const activeMetrics = (metrics || []).filter((metric) => metric.isActive !== false)
+  const audienceMetrics = activeMetrics.filter(
+    (metric) =>
+      !metric.targetGroup || metric.targetGroup === 'both' || metric.targetGroup === customerType,
+  )
+
+  return (audienceMetrics.length > 0 ? audienceMetrics : activeMetrics)
     .sort((a, b) => (a.sortOrder ?? Number.POSITIVE_INFINITY) - (b.sortOrder ?? Number.POSITIVE_INFINITY))
     .flatMap<ScenarioMatrixMetric>((metric, index) => {
       const title = metric.title?.trim()
@@ -290,12 +291,13 @@ function normalizeBundles(
   bundles: RawBundleScenario[] | null | undefined,
   customerType: CustomerGroup,
 ): ScenarioMatrixBundle[] {
-  return (bundles || [])
-    .filter(
-      (bundle) =>
-        bundle.isActive !== false &&
-        (!bundle.targetGroup || bundle.targetGroup === 'both' || bundle.targetGroup === customerType),
-    )
+  const activeBundles = (bundles || []).filter((bundle) => bundle.isActive !== false)
+  const audienceBundles = activeBundles.filter(
+    (bundle) =>
+      !bundle.targetGroup || bundle.targetGroup === 'both' || bundle.targetGroup === customerType,
+  )
+
+  return (audienceBundles.length > 0 ? audienceBundles : activeBundles)
     .sort((a, b) => (a.sortOrder ?? Number.POSITIVE_INFINITY) - (b.sortOrder ?? Number.POSITIVE_INFINITY))
     .flatMap((bundle, index) => {
       const title = bundle.title?.trim()

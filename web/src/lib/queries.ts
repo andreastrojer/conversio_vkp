@@ -231,7 +231,7 @@ export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
 
 export const PROCESS_SCREEN_QUERY = defineQuery(groq`*[
   _type == "appScreen" &&
-  screenKey.current == "process" &&
+  screenKey.current == $screenKey &&
   screenType == "process" &&
   isActive == true
 ][0]{
@@ -455,7 +455,7 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
     _type == "appScreen" &&
     screenType == "whatfits" &&
     isActive == true &&
-    (!defined(targetAudience) || targetAudience in [$customerType, "both"])
+    targetAudience == $customerType
   ] | order(coalesce(sortOrder, 999999) asc)[0]{
     title,
     "screenKey": screenKey.current,
@@ -511,7 +511,14 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
   "products": *[
     _type == "productCategory" &&
     isActive == true &&
-    targetGroup in [$customerType, "both"]
+    _id in (
+      *[
+        _type == "appScreen" &&
+        screenType == "whatfits" &&
+        isActive == true &&
+        targetAudience == $customerType
+      ] | order(coalesce(sortOrder, 999999) asc)[0].productBottomNavigation[].product._ref
+    )
   ] | order(coalesce(sortOrder, 999999) asc){
     _id,
     title,
@@ -571,6 +578,13 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
       title,
       key,
       isActive,
+      introText,
+      contentItems[]{
+        _key,
+        title,
+        text,
+        isActive
+      },
       sections[]{
         _key,
         title,

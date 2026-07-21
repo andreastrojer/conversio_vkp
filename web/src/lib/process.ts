@@ -84,10 +84,15 @@ function sortSections(a: ProcessSection, b: ProcessSection) {
 
 export async function getProcessPageData(customerType: CustomerGroup): Promise<ProcessPageData> {
   const sharedContentPromise = getAboutPageData(customerType)
+  const screenKey = customerType === 'b2c' ? 'process' : 'process2'
 
   try {
     const [screen, sharedContent] = await Promise.all([
-      processClient.fetch<ProcessScreenDocument>(PROCESS_SCREEN_QUERY, {}, freshFetchOptions),
+      processClient.fetch<ProcessScreenDocument>(
+        PROCESS_SCREEN_QUERY,
+        {screenKey},
+        freshFetchOptions,
+      ),
       sharedContentPromise,
     ])
 

@@ -253,7 +253,9 @@ export function WhatFitsScreen({
   const [activeSectionKey, setActiveSectionKey] = useState(activeTab?.sections[0]?._key || '')
   const activeSection =
     activeTab?.sections.find((section) => section._key === activeSectionKey) || activeTab?.sections[0]
-  const detailMediaSection = isTechnicalTab ? overviewTab?.sections[0] : activeSection
+  const hasStructuredTabContent = Boolean(activeTab?.introText?.trim() || activeTab?.contentItems.length)
+  const detailMediaSection =
+    isTechnicalTab || hasStructuredTabContent ? overviewTab?.sections[0] : activeSection
   const isBusiness = customerType === 'b2b'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
@@ -489,9 +491,23 @@ export function WhatFitsScreen({
                 imageClassName="h-full w-full object-cover object-left-top"
               />
 
+              {!isBusiness ? (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-0 left-0 z-[2] h-[650px] w-[62cqw]"
+                >
+                  <span className="absolute inset-x-0 top-0 h-[2px] bg-white" />
+                  <span className="absolute inset-y-0 right-0 w-[4cqw] bg-white" />
+                </div>
+              ) : null}
+
               <div
                 className={`absolute left-[58.5cqw] right-[60px] z-[3] ${
-                  isTechnicalTab ? 'top-[365px]' : 'top-[500px]'
+                  isTechnicalTab
+                    ? 'top-[365px]'
+                    : hasStructuredTabContent
+                      ? 'top-[420px]'
+                      : 'top-[500px]'
                 }`}
               >
                 {isTechnicalTab && activeTab ? (
@@ -584,6 +600,48 @@ export function WhatFitsScreen({
                         </div>
                       )
                     })}
+                  </div>
+                ) : hasStructuredTabContent && activeTab ? (
+                  <div className="ml-auto w-[540px]">
+                    {activeTab.introText?.trim() ? (
+                      <div
+                        className={`max-w-[520px] whitespace-pre-line text-[21px] font-semibold leading-[1.35] tracking-[0.01em] ${
+                          isBusiness ? 'text-white' : 'text-[#3d4248]'
+                        }`}
+                      >
+                        {activeTab.introText.trim()}
+                      </div>
+                    ) : null}
+
+                    {activeTab.contentItems.length > 0 ? (
+                      <div className={`${activeTab.introText?.trim() ? 'mt-[66px]' : ''} space-y-[28px]`}>
+                        {activeTab.contentItems.map((item) => (
+                          <div key={item._key} className="grid grid-cols-[22px_minmax(0,1fr)] gap-[20px]">
+                            <Hexagon
+                              className={`mt-[2px] h-[18px] w-[18px] shrink-0 ${
+                                isBusiness ? 'text-white' : 'text-[#3d4248]'
+                              }`}
+                              strokeWidth={2.3}
+                              aria-hidden="true"
+                            />
+                            <div
+                              className={`text-[18px] font-normal leading-[1.42] tracking-[0.025em] ${
+                                isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                              }`}
+                            >
+                              {item.title?.trim() ? (
+                                <h2 className="mb-[2px] font-bold uppercase">{item.title.trim()}</h2>
+                              ) : null}
+                              {splitParagraphs(item.text).map((paragraph, index) => (
+                                <p key={`${item._key}-paragraph-${index}`} className="whitespace-pre-line">
+                                  {paragraph}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 ) : activeSection?.text ? (
                   <div

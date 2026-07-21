@@ -1,12 +1,13 @@
 'use client'
 
-import type {ReactNode} from 'react'
+import type {CSSProperties, ReactNode} from 'react'
 import {useLayoutEffect, useState} from 'react'
 
 const REFERENCE_HEIGHT = 940
 const MIN_REFERENCE_WIDTH = 1440
 
 type ViewportGeometry = {
+  bleedY: number
   scale: number
   width: number
 }
@@ -29,8 +30,9 @@ export function PresentationViewport({
         window.innerHeight / REFERENCE_HEIGHT,
       )
       const width = Math.max(MIN_REFERENCE_WIDTH, window.innerWidth / scale)
+      const bleedY = Math.max(0, (window.innerHeight / scale - REFERENCE_HEIGHT) / 2)
 
-      setGeometry({scale, width})
+      setGeometry({bleedY, scale, width})
     }
 
     updateScale()
@@ -46,14 +48,17 @@ export function PresentationViewport({
   return (
     <div className={`fixed inset-0 overflow-hidden ${backgroundClassName}`}>
       <div
-        className="absolute left-1/2 top-1/2 h-[940px] overflow-hidden"
-        style={{
-          containerType: 'size',
-          opacity: geometry === null ? 0 : 1,
-          transform: `translate(-50%, -50%) scale(${geometry?.scale ?? 1})`,
-          transformOrigin: 'center',
-          width: `${geometry?.width ?? MIN_REFERENCE_WIDTH}px`,
-        }}
+        className="absolute left-1/2 top-1/2 h-[940px] overflow-visible"
+        style={
+          {
+            '--presentation-bleed-y': `${geometry?.bleedY ?? 0}px`,
+            containerType: 'size',
+            opacity: geometry === null ? 0 : 1,
+            transform: `translate(-50%, -50%) scale(${geometry?.scale ?? 1})`,
+            transformOrigin: 'center',
+            width: `${geometry?.width ?? MIN_REFERENCE_WIDTH}px`,
+          } as CSSProperties
+        }
       >
         {children}
       </div>

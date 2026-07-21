@@ -27,7 +27,7 @@ type ScenarioMatrixScreenProps = ScenarioMatrixPageData & {
 type CalculatorTab = 'needs' | 'calculation'
 
 const patternClassName =
-  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065] [filter:brightness(0)_invert(1)]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065]'
 
 function normalizeKey(value?: string) {
   return (value || '')
@@ -155,10 +155,12 @@ function SliderControl({
   slider,
   value,
   onChange,
+  isBusiness,
 }: {
   slider: ScenarioMatrixSlider
   value: number
   onChange: (value: number) => void
+  isBusiness: boolean
 }) {
   const percentage = ((value - slider.min) / (slider.max - slider.min)) * 100
 
@@ -167,7 +169,9 @@ function SliderControl({
       <div className="mb-[18px] flex items-center justify-between gap-[24px]">
         <label
           htmlFor={`scenario-slider-${slider.id}`}
-          className="text-[20px] font-semibold uppercase leading-none tracking-[0.025em] text-white max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]"
+          className={`text-[20px] font-semibold uppercase leading-none tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
+            isBusiness ? 'text-white' : 'text-[#3d4248]'
+          }`}
         >
           {slider.label}
         </label>
@@ -180,7 +184,12 @@ function SliderControl({
       </div>
 
       <div className="group relative h-[26px]">
-        <span className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 bg-white/80" aria-hidden="true" />
+        <span
+          className={`absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 ${
+            isBusiness ? 'bg-white/80' : 'bg-[#3d4248]/55'
+          }`}
+          aria-hidden="true"
+        />
         <span
           className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 bg-[#efb804]"
           style={{width: `${percentage}%`}}
@@ -215,6 +224,7 @@ function BundleCard({
   previousResult,
   active,
   onSelect,
+  isBusiness,
 }: {
   bundle: ScenarioMatrixBundle
   imageUrl?: string
@@ -223,6 +233,7 @@ function BundleCard({
   previousResult?: CalculatedBundle
   active: boolean
   onSelect: () => void
+  isBusiness: boolean
 }) {
   const autarkyDelta =
     result.autarky !== undefined && previousResult?.autarky !== undefined
@@ -236,13 +247,19 @@ function BundleCard({
   return (
     <button
       type="button"
-      className="group relative h-[452px] w-[315px] text-left text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804]"
+      className={`group relative h-[420px] w-[315px] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+        isBusiness ? 'text-white' : 'text-[#3d4248]'
+      }`}
       aria-pressed={active}
       onClick={onSelect}
     >
       <span
         className={`inline-flex h-[38px] min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${
-          active ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#4a4f54] text-white'
+          active
+            ? 'bg-[#efb804] text-[#3d4248]'
+            : isBusiness
+              ? 'bg-[#4a4f54] text-white'
+              : 'bg-[#eceeef] text-[#3d4248]'
         }`}
       >
         {bundle.title}
@@ -253,12 +270,16 @@ function BundleCard({
         <img
           src={imageUrl}
           alt={imageAlt}
-          className="mt-[34px] h-[190px] w-[315px] object-contain object-center transition-transform duration-300 group-hover:scale-[1.015]"
+          className="mt-[24px] h-[160px] w-[315px] object-contain object-center transition-transform duration-300 group-hover:scale-[1.015]"
         />
       ) : null}
 
       {(autarkyDelta !== undefined || savingsDelta !== undefined) ? (
-        <span className="absolute left-[-188px] top-[194px] z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[5px] bg-[#4a4f54] text-[15px] font-semibold uppercase leading-none text-[#efb804]">
+        <span
+          className={`absolute left-[-188px] top-[166px] z-[3] flex h-[68px] w-[156px] flex-col items-center justify-center gap-[5px] text-[15px] font-semibold uppercase leading-none text-[#efb804] ${
+            isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'
+          }`}
+        >
           {autarkyDelta !== undefined && result.autarkyMetric ? (
             <span className="flex items-center gap-[7px]">
               <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
@@ -277,7 +298,7 @@ function BundleCard({
         </span>
       ) : null}
 
-      <div className="mt-[30px] text-[#efb804]">
+      <div className="mt-[18px] text-[#efb804]">
         {result.autarky !== undefined && result.autarkyMetric ? (
           <p className="flex items-baseline gap-[14px] uppercase">
             <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
@@ -287,7 +308,7 @@ function BundleCard({
           </p>
         ) : null}
         {result.savings !== undefined && result.savingsMetric ? (
-          <p className="mt-[8px] flex items-baseline gap-[14px] uppercase">
+          <p className="mt-[6px] flex items-baseline gap-[14px] uppercase">
             <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
               {formatMetricValue(result.savings, result.savingsMetric)}
             </strong>
@@ -296,15 +317,17 @@ function BundleCard({
         ) : null}
       </div>
 
-      <div className="mt-[28px] flex min-h-[72px] items-start gap-[8px] border-t-2 border-white pt-[20px] text-[16px] leading-[1.35] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]">
-        <span className="shrink-0 uppercase">Enthalten:</span>
+      <div
+        className={`mt-[18px] flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[14px] font-sans text-[16px] leading-[1.35] tracking-normal ${
+          isBusiness ? 'border-white' : 'border-[#3d4248]'
+        }`}
+      >
+        <span className="shrink-0 font-normal uppercase">Enthalten:</span>
         {bundle.includedItems.length > 0 ? (
-          <ul className="font-semibold" aria-label="Enthaltene Leistungen">
+          <ul className="space-y-px font-semibold" aria-label="Enthaltene Leistungen">
             {bundle.includedItems.map((item) => (
               <li key={item.id}>
-                <strong>
-                  {item.amount ? `${item.amount} ` : ''}{item.label}
-                </strong>
+                {item.amount ? `${item.amount} ` : ''}{item.label}
               </li>
             ))}
           </ul>
@@ -360,8 +383,9 @@ export function ScenarioMatrixScreen({
   const [submittedValues, setSubmittedValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(sliders.map((slider) => [slider.key, slider.defaultValue])),
   )
-  const pageLogoUrl = inverseLogoUrl || logoUrl
-  const navigationLogoUrl = logoUrl || inverseLogoUrl
+  const isBusiness = customerType === 'b2b'
+  const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
+  const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const visibleBundles = useMemo(() => bundles.slice(0, 3), [bundles])
   const calculatedBundles = useMemo(
     () => visibleBundles.map((bundle) => calculateBundle(bundle, sliders, submittedValues, parameters, metrics)),
@@ -369,11 +393,19 @@ export function ScenarioMatrixScreen({
   )
 
   return (
-    <PresentationViewport backgroundClassName="bg-[#3d4248]">
-      <main className="relative isolate h-full w-full overflow-hidden bg-[#3d4248] font-sans text-white">
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+      <main
+        className={`relative isolate h-full w-full overflow-hidden font-sans ${
+          isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+        }`}
+      >
         {patternUrl ? (
           <span
-            className={patternClassName}
+            className={`${patternClassName} ${
+              isBusiness
+                ? '[filter:brightness(0)_invert(1)]'
+                : '[filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+            }`}
             style={{backgroundImage: `url("${patternUrl}")`}}
             title={patternAlt || undefined}
             aria-hidden="true"
@@ -411,7 +443,7 @@ export function ScenarioMatrixScreen({
                 role="tab"
                 aria-selected={isActive}
                 className={`relative px-[12px] pb-[10px] text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
-                  isActive ? 'text-[#efb804]' : 'text-white'
+                  isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
                 }`}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -435,10 +467,12 @@ export function ScenarioMatrixScreen({
             >
               {heroImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={heroImageUrl}
-                  alt={heroImageAlt}
-                  className="pointer-events-none absolute bottom-[-92px] right-[-42px] z-0 h-[840px] w-[1100px] object-contain object-right-bottom"
+                  <img
+                    src={heroImageUrl}
+                    alt={heroImageAlt}
+                    className={`pointer-events-none absolute bottom-[-92px] right-[-42px] z-0 h-[840px] w-[1100px] object-contain object-right-bottom ${
+                      isBusiness ? '' : 'brightness-0 opacity-30'
+                    }`}
                 />
               ) : null}
 
@@ -449,6 +483,7 @@ export function ScenarioMatrixScreen({
                     slider={slider}
                     value={values[slider.key] ?? slider.defaultValue}
                     onChange={(value) => setValues((current) => ({...current, [slider.key]: value}))}
+                    isBusiness={isBusiness}
                   />
                 ))}
 
@@ -476,7 +511,7 @@ export function ScenarioMatrixScreen({
           ) : (
             <motion.section
               key="calculation"
-              className="absolute left-[60px] top-[350px] z-[3] h-[500px] w-[1320px]"
+              className="absolute left-[60px] top-[370px] z-[3] h-[450px] w-[1320px]"
               initial={{opacity: 0, x: 10}}
               animate={{opacity: 1, x: 0}}
               exit={{opacity: 0, x: 10}}
@@ -495,6 +530,7 @@ export function ScenarioMatrixScreen({
                       previousResult={index > 0 ? calculatedBundles[index - 1] : undefined}
                       active={bundle.id === activeBundleId}
                       onSelect={() => setActiveBundleId(bundle.id)}
+                      isBusiness={isBusiness}
                     />
                   ))}
                 </div>

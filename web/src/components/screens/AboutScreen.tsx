@@ -120,32 +120,6 @@ function renderHighlightedLine(line: string) {
   return line
 }
 
-function resolveSectionTarget(target: string | null | undefined, customerType: CustomerGroup) {
-  const trimmedTarget = target?.trim()
-
-  if (!trimmedTarget) {
-    return undefined
-  }
-
-  if (
-    trimmedTarget.startsWith('/') ||
-    trimmedTarget.startsWith('#') ||
-    trimmedTarget.startsWith('http://') ||
-    trimmedTarget.startsWith('https://')
-  ) {
-    return trimmedTarget
-  }
-
-  const normalizedTarget = trimmedTarget.toLocaleLowerCase('de-AT')
-  const screenKey = normalizedTarget.includes(':') ? normalizedTarget.split(':').pop() || '' : normalizedTarget
-
-  if (screenKey === 'offer' || screenKey === 'was-wir-bieten') {
-    return `/offer?type=${customerType}`
-  }
-
-  return `/${screenKey}?type=${customerType}`
-}
-
 function AboutDetailContent({
   headline,
   sections,
@@ -179,9 +153,7 @@ function AboutDetailContent({
     contentSection?.title ||
     ''
   const ctaLabel = contentSection?.cta?.label?.trim()
-  const ctaHref =
-    resolveSectionTarget(contentSection?.cta?.target, customerType) ||
-    `/offer?type=${customerType}`
+  const ctaHref = `/offer?type=${customerType}`
   const ctaImageUrl = contentSection?.cta?.imageUrl
 
   return (

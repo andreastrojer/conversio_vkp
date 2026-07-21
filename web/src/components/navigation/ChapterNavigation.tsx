@@ -130,10 +130,14 @@ export function ChapterNavigation({
   return (
     <aside
       ref={navigationRef}
-      className={`fixed inset-y-0 left-0 z-50 ${panelWidth} transition-transform duration-300 ease-out ${
+      className={`fixed left-0 z-50 ${panelWidth} transition-transform duration-300 ease-out ${
         isOpen ? '[transform:translateX(0)]' : '[transform:translateX(calc(-100%_-_2px))]'
       }`}
       aria-label="Kapitel-Navigation"
+      style={{
+        bottom: 'calc(-1 * var(--presentation-bleed-y, 0px))',
+        top: 'calc(-1 * var(--presentation-bleed-y, 0px))',
+      }}
     >
       <div
         id="chapter-navigation-panel"

@@ -1,20 +1,21 @@
-import {siteSettingsType} from './siteSettingsType'
-import {navigationStepType} from './navigationStepType'
-import {appScreenType} from './appScreenType'
-import {segmentContentType} from './segmentContentType'
-import {questionSetType} from './questionSetType'
-import {formQuestionType} from './formQuestionType'
-import {productCategoryType} from './productCategoryType'
-import {scenarioType} from './scenarioType'
-import {comparisonMetricType} from './comparisonMetricType'
-import {referenceProjectType} from './referenceProjectType'
-import {mediaAssetType} from './mediaAssetType'
-import {salesDocumentType} from './salesDocumentType'
-import {emailTemplateType} from './emailTemplateType'
-import {arTargetType} from './arTargetType'
-import {appointmentTemplateType} from './appointmentTemplateType'
-import {legalTextType} from './legalTextType'
-import {editorRoleInfoType} from './editorRoleInfoType'
+import { siteSettingsType } from './siteSettingsType'
+import { navigationStepType } from './navigationStepType'
+import { appScreenType } from './appScreenType'
+import { segmentContentType } from './segmentContentType'
+import { questionSetType } from './questionSetType'
+import { formQuestionType } from './formQuestionType'
+import { productCategoryType } from './productCategoryType'
+import { scenarioType } from './scenarioType'
+import { comparisonMetricType } from './comparisonMetricType'
+import { referenceProjectType } from './referenceProjectType'
+import { mediaAssetType } from './mediaAssetType'
+import { salesDocumentType } from './salesDocumentType'
+import { emailTemplateType } from './emailTemplateType'
+import { arTargetType } from './arTargetType'
+import { appointmentTemplateType } from './appointmentTemplateType'
+import { legalTextType } from './legalTextType'
+import { editorRoleInfoType } from './editorRoleInfoType'
+import { productModelType } from './productModelType'
 
 export const schemaTypes = [
   // Globale App Struktur
@@ -27,6 +28,7 @@ export const schemaTypes = [
   questionSetType,
   formQuestionType,
   productCategoryType,
+  productModelType,
   scenarioType,
   comparisonMetricType,
 
