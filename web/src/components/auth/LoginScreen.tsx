@@ -19,7 +19,7 @@ const fallbackCtaLabel = 'MIT MICROSOFT ANMELDEN'
 const mainContentClassName =
   'absolute left-[60px] top-[43.5%] z-10 max-w-[820px] -translate-y-1/2'
 const titleClassName =
-  'max-w-[820px] font-sans text-[60px] font-bold uppercase leading-[0.98] tracking-[0.024em] text-[#3d4248]'
+  'max-w-[820px] font-sans text-[54px] font-bold uppercase leading-[0.98] tracking-[0.024em] text-[#3d4248]'
 const subtitleClassName =
   'mt-[22px] max-w-[760px] font-sans text-[24px] font-normal leading-[1.3] tracking-[0.005em] text-[#3d4248]'
 const formClassName =

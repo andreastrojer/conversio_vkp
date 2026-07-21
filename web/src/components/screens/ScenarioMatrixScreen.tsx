@@ -356,7 +356,7 @@ function BundleCard({
         </span>
       ) : null}
 
-      <div className={`${isWireframeLayout ? `mt-[18px] h-[86px] ${isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'}` : 'mt-[18px] text-[#efb804]'}`}>
+      <div className={`${isWireframeLayout ? `mt-[18px] h-[104px] ${isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'}` : 'mt-[18px] text-[#efb804]'}`}>
         {result.autarkyPercent !== undefined ? (
           <p className="flex items-baseline gap-[14px] uppercase">
             <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
@@ -492,6 +492,7 @@ export function ScenarioMatrixScreen({
   productNavigationLeftArrowUrl,
   productNavigationRightArrowUrl,
   productNavigationCatalogIconUrl,
+  calculateButtonArrowUrl,
 }: ScenarioMatrixScreenProps) {
   const [activeTab, setActiveTab] = useState<CalculatorTab>('needs')
   const [activeBundleId, setActiveBundleId] = useState(bundles[0]?.id || '')
@@ -556,8 +557,8 @@ export function ScenarioMatrixScreen({
 
         {headline ? (
           <h1
-            className={`absolute left-[60px] top-[220px] z-[3] font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] ${
-              isBusiness ? 'text-[38px]' : 'text-[42px]'
+            className={`absolute left-[60px] top-[220px] z-[3] font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em] ${
+              isBusiness ? 'text-white' : 'text-[#3d4248]'
             }`}
           >
             {headline}
@@ -611,7 +612,7 @@ export function ScenarioMatrixScreen({
                 />
               ) : null}
 
-              <div className="absolute left-[72px] top-[374px] z-[4] space-y-[28px]">
+              <div className="absolute left-[72px] top-[400px] z-[4] space-y-[28px]">
                 {visibleSliders.map((slider) => (
                   <SliderControl
                     key={slider.id}
@@ -626,15 +627,15 @@ export function ScenarioMatrixScreen({
                 {calculateButtonLabel ? (
                   <button
                     type="button"
-                    className="group inline-flex h-[46px] min-w-[258px] items-center justify-between rounded-full bg-[#efb804] px-[28px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:text-[18px]"
+                    className="group inline-flex h-[46px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px]"
                     onClick={() => {
                       setActiveTab('calculation')
                     }}
                   >
                     <span>{calculateButtonLabel}</span>
-                    {navigationArrowUrl ? (
+                    {calculateButtonArrowUrl || navigationArrowUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={navigationArrowUrl} alt="" className="h-[16px] w-[16px] object-contain" aria-hidden="true" />
+                      <img src={calculateButtonArrowUrl || navigationArrowUrl} alt="" className="h-[16px] w-[16px] object-contain" aria-hidden="true" />
                     ) : (
                       <ArrowRight className="h-[17px] w-[17px] transition-transform group-hover:translate-x-1" strokeWidth={2.3} aria-hidden="true" />
                     )}
@@ -646,7 +647,7 @@ export function ScenarioMatrixScreen({
           ) : (
             <motion.section
               key="calculation"
-              className="absolute left-[60px] top-[400px] z-[3] h-[515px] w-[1320px] max-[1600px]:top-[392px] [@media(max-height:920px)]:top-[392px]"
+              className="absolute left-[60px] top-[380px] z-[3] h-[515px] w-[1320px] max-[1600px]:top-[372px] [@media(max-height:920px)]:top-[372px]"
               initial={{opacity: 0, x: 10}}
               animate={{opacity: 1, x: 0}}
               exit={{opacity: 0, x: 10}}
@@ -720,7 +721,7 @@ export function ScenarioMatrixScreen({
                 const href = bottomNavigationHref(item, customerType)
                 const isMatrix = item.kind === 'screen' && Boolean(item.href?.includes('scenario-matrix'))
                 const isCatalog = item.kind === 'catalog'
-                const catalogIconUrl = item.iconUrl || productNavigationCatalogIconUrl
+                const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
                 const className = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
                   isMatrix && !isCatalog ? 'rounded-full bg-[#efb804] text-[#3d4248]' : 'text-white'
                   } ${

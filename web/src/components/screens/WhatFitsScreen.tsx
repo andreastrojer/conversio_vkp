@@ -367,9 +367,7 @@ export function WhatFitsScreen({
                 {headline ? (
                   <h1
                     id="catalog-heading"
-                    className={`font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] ${
-                      isBusiness ? 'text-[38px]' : 'text-[42px]'
-                    }`}
+                    className="font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em]"
                   >
                     {headline}
                   </h1>
@@ -453,9 +451,7 @@ export function WhatFitsScreen({
               <div className="absolute left-[60px] top-[225px] z-[3]">
                 <h1
                   id="product-detail-heading"
-                  className={`font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] ${
-                    isBusiness ? 'text-[38px]' : 'text-[42px]'
-                  }`}
+                  className="font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em]"
                 >
                   {selectedProduct.detailTitle}
                 </h1>
@@ -694,7 +690,7 @@ export function WhatFitsScreen({
                     {bottomNavigation.map((item) => {
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug
-                      const catalogIconUrl = item.iconUrl || productNavigationCatalogIconUrl
+                      const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
                       const commonClassName = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
                         isActive && !isCatalog ? 'rounded-full bg-[#efb804] text-[#3d4248]' : 'text-white'
                         } ${

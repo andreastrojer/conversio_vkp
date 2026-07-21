@@ -204,6 +204,7 @@ export type ScenarioMatrixPageData = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  calculateButtonArrowUrl?: string
 }
 
 const scenarioMatrixClient = sanityClient.withConfig({useCdn: false})
@@ -474,6 +475,7 @@ export async function getScenarioMatrixPageData(
       productNavigationLeftArrowUrl: shared.productNavigationLeftArrowUrl,
       productNavigationRightArrowUrl: shared.productNavigationRightArrowUrl,
       productNavigationCatalogIconUrl: shared.productNavigationCatalogIconUrl,
+      calculateButtonArrowUrl: shared.calculateButtonArrowUrl,
     }
   } catch {
     const shared = await sharedContentPromise
@@ -500,6 +502,7 @@ export async function getScenarioMatrixPageData(
       productNavigationLeftArrowUrl: shared.productNavigationLeftArrowUrl,
       productNavigationRightArrowUrl: shared.productNavigationRightArrowUrl,
       productNavigationCatalogIconUrl: shared.productNavigationCatalogIconUrl,
+      calculateButtonArrowUrl: shared.calculateButtonArrowUrl,
     }
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import {PresentationViewport} from '@/components/layout/PresentationViewport'
-import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
+import { PresentationViewport } from '@/components/layout/PresentationViewport'
+import { ChapterNavigation } from '@/components/navigation/ChapterNavigation'
 import {
   brandLogoImageClassName,
   brandLogoPositionClassName,
@@ -12,21 +12,21 @@ import {
   type CalculatorValues,
   type ScenarioType,
 } from '@/lib/calculation/scenarioCalculator'
-import type {NextStepPageData, NextStepDocumentCategory} from '@/lib/nextStep'
-import type {ScenarioMatrixParameter} from '@/lib/scenarioMatrix'
-import {ArrowRight, Check, Hexagon} from 'lucide-react'
+import type { NextStepPageData, NextStepDocumentCategory } from '@/lib/nextStep'
+import type { ScenarioMatrixParameter } from '@/lib/scenarioMatrix'
+import { ArrowRight, Check, Hexagon } from 'lucide-react'
 import Link from 'next/link'
-import {useState} from 'react'
+import { useState } from 'react'
 
 const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065]'
 
 function formatPercent(value: number) {
-  return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}%`
+  return `${new Intl.NumberFormat('de-AT', { maximumFractionDigits: 0 }).format(Math.round(value))}%`
 }
 
 function formatEuro(value: number) {
-  return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}€`
+  return `${new Intl.NumberFormat('de-AT', { maximumFractionDigits: 0 }).format(Math.round(value))}€`
 }
 
 const validScenarioTypes = new Set<ScenarioType>(['b2c_pv', 'b2c_pv_speicher', 'b2c_komplett'])
@@ -132,33 +132,38 @@ function DocumentCategory({
   category,
   active,
   onSelect,
+  isBusiness,
 }: {
   category: NextStepDocumentCategory
   active: boolean
   onSelect: () => void
+  isBusiness: boolean
 }) {
   return (
     <div>
       <button
         type="button"
-        className={`flex h-[46px] w-[348px] items-center justify-between rounded-[8px] border px-[30px] text-left text-[18px] font-medium uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
-          active
+        className={`flex h-[46px] w-[348px] items-center justify-between rounded-[8px] border px-[30px] text-left text-[18px] font-medium uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${active
+          ? isBusiness
             ? 'border-[#4a4f54] bg-[#4a4f54] text-white'
-            : 'border-white/10 bg-transparent text-white'
-        }`}
+            : 'border-[#3d4248] bg-[#3d4248] text-white'
+          : isBusiness
+            ? 'border-white/10 bg-transparent text-white'
+            : 'border-[#3d4248]/18 bg-transparent text-[#3d4248]'
+          }`}
         aria-expanded={active}
         onClick={onSelect}
       >
         <span>{category.title}</span>
         <Hexagon
-          className={`h-[21px] w-[21px] shrink-0 ${active ? 'fill-white text-white' : 'text-white'}`}
+          className={`h-[21px] w-[21px] shrink-0 ${active ? 'fill-white text-white' : isBusiness ? 'text-white' : 'text-[#3d4248]'}`}
           strokeWidth={2.4}
           aria-hidden="true"
         />
       </button>
 
       {active ? (
-        <div className="w-[348px] rounded-b-[8px] bg-[#4a4f54] px-[32px] pb-[24px] pt-[20px]">
+        <div className={`w-[348px] rounded-b-[8px] px-[32px] pb-[24px] pt-[20px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}>
           {category.documents.length > 0 ? (
             <ul className="space-y-[22px]">
               {category.documents.map((document) => {
@@ -222,18 +227,26 @@ export function NextStepScreen({
 }: NextStepPageData) {
   const [activeCategoryKey, setActiveCategoryKey] = useState(documentCategories[1]?.key || documentCategories[0]?.key || '')
   const [displayResult] = useState(() =>
-    calculateStoredResult({customerType, selectedBundle, selectedResult, parameters}),
+    calculateStoredResult({ customerType, selectedBundle, selectedResult, parameters }),
   )
-  const pageLogoUrl = inverseLogoUrl || logoUrl
-  const navigationLogoUrl = logoUrl || inverseLogoUrl
+  const isBusiness = customerType === 'b2b'
+  const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
+  const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
+  const foregroundClassName = isBusiness ? 'text-white' : 'text-[#3d4248]'
+  const metricClassName = isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'
+  const lineClassName = isBusiness ? 'bg-white' : 'bg-[#3d4248]'
 
   return (
-    <PresentationViewport backgroundClassName="bg-[#2b3036]">
-      <main className="relative isolate h-full w-full overflow-hidden bg-[#2b3036] font-sans text-white">
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2b3036]' : 'bg-white'}>
+      <main className={`relative isolate h-full w-full overflow-hidden font-sans ${isBusiness ? 'bg-[#2b3036] text-white' : 'bg-white text-[#3d4248]'}`}>
         {patternUrl ? (
           <span
-            className={`${patternClassName} [filter:brightness(0)_invert(1)]`}
-            style={{backgroundImage: `url("${patternUrl}")`}}
+            className={`${patternClassName} ${
+              isBusiness
+                ? '[filter:brightness(0)_invert(1)]'
+                : '[filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+            }`}
+            style={{ backgroundImage: `url("${patternUrl}")` }}
             title={patternAlt || undefined}
             aria-hidden="true"
           />
@@ -250,11 +263,11 @@ export function NextStepScreen({
           </Link>
         </div>
 
-        <h1 className="absolute left-[60px] top-[236px] z-[3] font-sans text-[54px] font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-white">
+        <h1 className={`absolute left-[60px] top-[236px] z-[3] font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em] ${foregroundClassName}`}>
           {headline}
         </h1>
 
-        <section className="absolute left-[60px] top-[433px] z-[4] w-[315px]" aria-label="Ausgewähltes Bundle">
+        <section className="absolute left-[60px] top-[368px] z-[4] w-[315px]" aria-label="Ausgewähltes Bundle">
           {selectedBundle ? (
             <>
               <div className="inline-flex h-[38px] min-w-[238px] items-center justify-center bg-[#efb804] px-[24px] text-[18px] font-bold uppercase leading-none text-[#3d4248]">
@@ -271,7 +284,7 @@ export function NextStepScreen({
               ) : null}
 
               {displayResult ? (
-                <div className="mt-[58px] text-[#efb804]">
+                <div className={`mt-[58px] ${metricClassName}`}>
                   <p className="flex items-baseline gap-[14px] uppercase">
                     <strong className="text-[34px] font-bold leading-none">{formatPercent(displayResult.autarkyPercent)}</strong>
                     <span className="text-[22px] font-medium tracking-[0.025em]">AUTARK</span>
@@ -283,7 +296,7 @@ export function NextStepScreen({
                 </div>
               ) : null}
 
-              <div className="mt-[44px] flex min-h-[60px] items-start gap-[8px] border-t-2 border-white pt-[24px] text-[16px] leading-[1.35]">
+              <div className={`mt-[44px] flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[24px] text-[16px] leading-[1.35] ${isBusiness ? 'border-white' : 'border-[#3d4248]'}`}>
                 <span className="shrink-0 font-normal uppercase">Enthalten:</span>
                 {selectedBundle.includedItems.length > 0 ? (
                   <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
@@ -300,8 +313,8 @@ export function NextStepScreen({
           ) : null}
         </section>
 
-        <section className="absolute left-[507px] top-[418px] z-[4] w-[350px]" aria-labelledby="documents-heading">
-          <h2 id="documents-heading" className="text-[36px] font-extrabold uppercase leading-none tracking-[0.02em] text-white">
+        <section className="absolute left-[507px] top-[353px] z-[4] w-[350px]" aria-labelledby="documents-heading">
+          <h2 id="documents-heading" className={`text-[36px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {documentsHeadline}
           </h2>
 
@@ -312,16 +325,17 @@ export function NextStepScreen({
                 category={category}
                 active={category.key === activeCategoryKey}
                 onSelect={() => setActiveCategoryKey(category.key)}
+                isBusiness={isBusiness}
               />
             ))}
           </div>
         </section>
 
-        <section className="absolute left-[952px] top-[496px] z-[4] w-[410px]" aria-labelledby="email-heading">
-          <h2 id="email-heading" className="text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-white">
+        <section className="absolute left-[952px] top-[431px] z-[4] w-[410px]" aria-labelledby="email-heading">
+          <h2 id="email-heading" className={`text-[18px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {emailLabel}
           </h2>
-          <div className="mt-[38px] h-[2px] w-[342px] bg-white" aria-hidden="true" />
+          <div className={`mt-[38px] h-[2px] w-[342px] ${lineClassName}`} aria-hidden="true" />
           <button
             type="button"
             className="group mt-[22px] inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full bg-[#4a4f54] px-[26px] text-[15px] font-bold uppercase leading-none text-white transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
@@ -343,12 +357,12 @@ export function NextStepScreen({
           </div>
         ) : null}
 
-        <Check className="absolute left-[362px] top-[583px] h-[16px] w-[16px] text-[#4a4f54]" strokeWidth={2.6} aria-hidden="true" />
+        <Check className="absolute left-[362px] top-[518px] h-[16px] w-[16px] text-[#4a4f54]" strokeWidth={2.6} aria-hidden="true" />
 
         <ChapterNavigation
           customerType={customerType}
           items={navigationItems}
-          currentKey="needs"
+          currentKey="next-step"
           logoUrl={navigationLogoUrl}
           logoAlt={logoAlt}
           navigationArrowUrl={navigationArrowUrl}

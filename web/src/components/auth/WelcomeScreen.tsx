@@ -31,7 +31,7 @@ const fallbackLogoutLabel = 'Abmelden'
 const mainContentClassName =
   'absolute left-[60px] top-[47%] z-10 max-w-[520px] -translate-y-1/2'
 const titleClassName =
-  'font-sans text-[50px] font-bold uppercase leading-[1.02] tracking-[0.024em] text-[#3d4248]'
+  'font-sans text-[54px] font-bold uppercase leading-[1.02] tracking-[0.024em] text-[#3d4248]'
 const actionAreaClassName =
   'mt-[30px] block max-w-[380px] font-sans'
 const sublineClassName =

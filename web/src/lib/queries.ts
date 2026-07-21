@@ -832,7 +832,7 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
     _type == "mediaAsset" &&
     mediaType == "image" &&
     isActive != false &&
-    title in ["Linker Nav Pfeil", "Rechter Nav Pfeil", "Linker Navbutton"]
+    title in ["Linker Nav Pfeil", "Rechter Nav Pfeil", "Linker Navbutton", "Buttonpfeil"]
   ]{
     title,
     image{

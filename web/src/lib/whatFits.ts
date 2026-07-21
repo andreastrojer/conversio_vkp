@@ -186,6 +186,7 @@ export type WhatFitsPageData = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  calculateButtonArrowUrl?: string
 }
 
 const whatFitsClient = sanityClient.withConfig({useCdn: false})
@@ -490,6 +491,7 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       productNavigationLeftArrowUrl: navigationAssetUrl('Linker Nav Pfeil'),
       productNavigationRightArrowUrl: navigationAssetUrl('Rechter Nav Pfeil'),
       productNavigationCatalogIconUrl: navigationAssetUrl('Linker Navbutton'),
+      calculateButtonArrowUrl: navigationAssetUrl('Buttonpfeil'),
     }
   } catch {
     const sharedContent = await sharedContentPromise
