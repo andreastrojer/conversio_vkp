@@ -303,8 +303,7 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
   _type == "appScreen" &&
   screenKey.current == "scenario-matrix" &&
   screenType == "scenarioMatrix" &&
-  isActive == true &&
-  (!defined(targetAudience) || targetAudience in [$customerType, "both"])
+  isActive == true
 ][0]{
   title,
   "screenKey": screenKey.current,
@@ -419,10 +418,41 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
   },
   "offerSections": *[
     _type == "appScreen" &&
-    screenKey.current == "offer" &&
     screenType == "offer" &&
-    isActive == true
-  ][0].sections[]{
+    isActive == true &&
+    targetAudience == $customerType
+  ] | order(coalesce(sortOrder, 999999) asc)[0].sections[]{
+    _key,
+    title,
+    eyebrow,
+    visibleFor,
+    sortOrder,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    media->{
+      title,
+      altText,
+      mediaType,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    }
+  },
+  "b2cOfferSections": *[
+    _type == "appScreen" &&
+    screenType == "offer" &&
+    isActive == true &&
+    targetAudience == "b2c"
+  ] | order(coalesce(sortOrder, 999999) asc)[0].sections[]{
     _key,
     title,
     eyebrow,

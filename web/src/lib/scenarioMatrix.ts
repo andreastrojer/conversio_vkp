@@ -97,6 +97,10 @@ type RawOfferSection = {
 type ScenarioMatrixDocument = {
   headline?: string | null
   subline?: string | null
+  primaryCta?: {
+    label?: string | null
+    target?: string | null
+  } | null
   heroImage?: SanityImage
   heroImage2?: SanityImage
   heroMedia?: CmsMedia
@@ -110,6 +114,7 @@ type ScenarioMatrixDocument = {
     bundleScenarios?: RawBundleScenario[] | null
   } | null
   offerSections?: RawOfferSection[] | null
+  b2cOfferSections?: RawOfferSection[] | null
 } | null
 
 export type ScenarioMatrixSlider = {
@@ -178,8 +183,16 @@ export type ScenarioMatrixPageData = {
   bundles: ScenarioMatrixBundle[]
   heroImageUrl?: string
   heroImageAlt: string
+  heroImage2Url?: string
+  heroImage2Alt: string
+  primaryCta?: {
+    label?: string | null
+    target?: string | null
+  } | null
   offerImageUrl?: string
   offerImageAlt: string
+  b2cBundleImageUrl?: string
+  b2cBundleImageAlt: string
   bottomNavigation: ProductNavigationItem[]
   navigationItems: ChapterNavigationItem[]
   logoUrl?: string
@@ -287,6 +300,28 @@ function resolveImageUrl(image: SanityImage | undefined, width = 2800) {
   return buildLogoUrl(image) || buildImageUrl(image, width, undefined, 100)
 }
 
+function resolveRasterImageUrl(image: SanityImage | undefined, width = 2800) {
+  return buildImageUrl(image, width, undefined, 100) || buildLogoUrl(image)
+}
+
+function findPhotovoltaicOfferSection(sections: RawOfferSection[] | null | undefined) {
+  return (sections || [])
+    .filter((section) => section.image || section.media?.image)
+    .sort(
+      (a, b) =>
+        (a.sortOrder ?? Number.POSITIVE_INFINITY) -
+        (b.sortOrder ?? Number.POSITIVE_INFINITY),
+    )
+    .find((section) => {
+      const identity = `${section.title || ''} ${section.eyebrow || ''}`
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+
+      return identity.includes('photovoltaik') || /\bpv\b/.test(identity)
+    })
+}
+
 function normalizeBundles(
   bundles: RawBundleScenario[] | null | undefined,
   customerType: CustomerGroup,
@@ -374,6 +409,7 @@ export async function getScenarioMatrixPageData(
       sharedContentPromise,
     ])
     const heroImage = screen?.heroImage || screen?.heroMedia?.image || screen?.heroImage2
+    const heroImage2 = screen?.heroImage2 || screen?.heroImage || screen?.heroMedia?.image
     const offerSection = (screen?.offerSections || [])
       .filter(
         (section) =>
@@ -395,6 +431,10 @@ export async function getScenarioMatrixPageData(
         return identity.includes('photovoltaik') || /\bpv\b/.test(identity)
       })
     const offerImage = offerSection?.image || offerSection?.media?.image
+    const b2cBundleSection =
+      findPhotovoltaicOfferSection(screen?.b2cOfferSections) ||
+      (screen?.b2cOfferSections || []).find((section) => section.image || section.media?.image)
+    const b2cBundleImage = b2cBundleSection?.image || b2cBundleSection?.media?.image
 
     return {
       headline: screen?.headline?.trim() || undefined,
@@ -408,11 +448,20 @@ export async function getScenarioMatrixPageData(
       bundles: normalizeBundles(screen?.calculatorConfig?.bundleScenarios, customerType),
       heroImageUrl: resolveImageUrl(heroImage, 3200),
       heroImageAlt: screen?.heroMedia?.altText?.trim() || screen?.heroMedia?.title?.trim() || '',
-      offerImageUrl: resolveImageUrl(offerImage, 3200),
+      heroImage2Url: resolveImageUrl(heroImage2, 3200),
+      heroImage2Alt: screen?.heroMedia?.altText?.trim() || screen?.heroMedia?.title?.trim() || '',
+      primaryCta: screen?.primaryCta || null,
+      offerImageUrl: resolveRasterImageUrl(offerImage, 3200),
       offerImageAlt:
         offerSection?.media?.altText?.trim() ||
         offerSection?.media?.title?.trim() ||
         offerSection?.title?.trim() ||
+        '',
+      b2cBundleImageUrl: resolveRasterImageUrl(b2cBundleImage, 3200),
+      b2cBundleImageAlt:
+        b2cBundleSection?.media?.altText?.trim() ||
+        b2cBundleSection?.media?.title?.trim() ||
+        b2cBundleSection?.title?.trim() ||
         '',
       bottomNavigation: shared.bottomNavigation,
       navigationItems: shared.navigationItems,
@@ -437,7 +486,9 @@ export async function getScenarioMatrixPageData(
       parameters: [],
       bundles: [],
       heroImageAlt: '',
+      heroImage2Alt: '',
       offerImageAlt: '',
+      b2cBundleImageAlt: '',
       bottomNavigation: shared.bottomNavigation,
       navigationItems: shared.navigationItems,
       logoUrl: shared.logoUrl,

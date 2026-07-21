@@ -9,11 +9,16 @@ import {
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {
   ScenarioMatrixBundle,
-  ScenarioMatrixMetric,
   ScenarioMatrixPageData,
   ScenarioMatrixParameter,
   ScenarioMatrixSlider,
 } from '@/lib/scenarioMatrix'
+import {
+  calculateScenarioResult,
+  type CalculationParameters,
+  type CalculatorValues,
+  type ScenarioType,
+} from '@/lib/calculation/scenarioCalculator'
 import type {ProductNavigationItem} from '@/lib/whatFits'
 import {AnimatePresence, motion} from 'framer-motion'
 import {ArrowLeft, ArrowRight, ArrowUp, ListFilter} from 'lucide-react'
@@ -29,27 +34,6 @@ type CalculatorTab = 'needs' | 'calculation'
 const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065]'
 
-function normalizeKey(value?: string) {
-  return (value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .toLowerCase()
-}
-
-function findSliderValue(
-  sliders: ScenarioMatrixSlider[],
-  values: Record<string, number>,
-  terms: string[],
-) {
-  const slider = sliders.find((item) => {
-    const key = normalizeKey(item.key)
-    return terms.some((term) => key.includes(term))
-  })
-
-  return slider ? values[slider.key] : undefined
-}
-
 function formatNumber(value: number, unit?: string) {
   const maximumFractionDigits = Number.isInteger(value) ? 0 : 1
   const formatted = new Intl.NumberFormat('de-AT', {maximumFractionDigits}).format(value)
@@ -58,97 +42,102 @@ function formatNumber(value: number, unit?: string) {
 }
 
 type CalculatedBundle = {
-  autarky?: number
-  savings?: number
-  autarkyMetric?: ScenarioMatrixMetric
-  savingsMetric?: ScenarioMatrixMetric
+  autarkyPercent?: number
+  annualSavingsEur?: number
 }
 
-function findExactParameter(parameters: ScenarioMatrixParameter[], key: string) {
+const validScenarioTypes = new Set<ScenarioType>(['b2c_pv', 'b2c_pv_speicher', 'b2c_komplett'])
+const sliderKeyAliases: Record<keyof CalculatorValues, string[]> = {
+  annualConsumption: ['annualConsumption'],
+  storageSize: ['storageSize', 'speichergrösse', 'speichergroesse', 'speichergrosse'],
+  chargingStations: ['chargingStations', 'ladestationen'],
+}
+
+function normalizeCmsKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .toLowerCase()
+}
+
+function findExactParameter(parameters: ScenarioMatrixParameter[], key: keyof CalculationParameters) {
   return parameters.find((parameter) => parameter.key === key)?.value
+}
+
+function findExactSliderValue(
+  sliders: ScenarioMatrixSlider[],
+  values: Record<string, number>,
+  key: keyof CalculatorValues,
+) {
+  const aliases = sliderKeyAliases[key].map(normalizeCmsKey)
+  const slider = sliders.find((item) => aliases.includes(normalizeCmsKey(item.key)))
+
+  return slider ? values[slider.key] : undefined
+}
+
+function buildCalculatorValues(
+  sliders: ScenarioMatrixSlider[],
+  values: Record<string, number>,
+): CalculatorValues | undefined {
+  const annualConsumption = findExactSliderValue(sliders, values, 'annualConsumption')
+  const storageSize = findExactSliderValue(sliders, values, 'storageSize')
+  const chargingStations = findExactSliderValue(sliders, values, 'chargingStations')
+
+  if (
+    typeof annualConsumption !== 'number' ||
+    typeof storageSize !== 'number' ||
+    typeof chargingStations !== 'number'
+  ) {
+    return undefined
+  }
+
+  return {annualConsumption, storageSize, chargingStations}
+}
+
+function buildCalculationParameters(
+  parameters: ScenarioMatrixParameter[],
+): CalculationParameters | undefined {
+  const keys: Array<keyof CalculationParameters> = [
+    'pvSizeKwp',
+    'specificYieldKwhPerKwp',
+    'electricityPriceEurPerKwh',
+    'feedInTariffEurPerKwh',
+    'evDemandPerChargingStationKwh',
+    'smartChargingShiftShare',
+  ]
+  const entries = keys.map((key) => [key, findExactParameter(parameters, key)] as const)
+
+  if (entries.some(([, value]) => typeof value !== 'number' || !Number.isFinite(value))) {
+    return undefined
+  }
+
+  return Object.fromEntries(entries) as CalculationParameters
 }
 
 function calculateBundle(
   bundle: ScenarioMatrixBundle,
-  sliders: ScenarioMatrixSlider[],
-  values: Record<string, number>,
-  parameters: ScenarioMatrixParameter[],
-  metrics: ScenarioMatrixMetric[],
+  values: CalculatorValues | undefined,
+  parameters: CalculationParameters | undefined,
 ): CalculatedBundle {
-  const annualConsumption = findSliderValue(sliders, values, ['annual', 'jahresverbrauch'])
-  const storageSize = findSliderValue(sliders, values, ['speicher', 'storage'])
-  const chargingStations = findSliderValue(sliders, values, ['ladestation', 'charging'])
-  const autarkyMetric = metrics.find(
-    (metric) => normalizeKey(metric.metricType) === 'autarkiegrad' || normalizeKey(metric.key) === 'autarkie',
-  )
-  const savingsMetric = metrics.find((metric) => {
-    const identity = normalizeKey(`${metric.key} ${metric.metricType || ''} ${metric.title}`)
-    return identity.includes('ersparnis') || identity.includes('einspar') || identity.includes('savings')
-  })
-  const referenceAnnualConsumption = findExactParameter(parameters, 'referenceAnnualConsumption')
-  const referenceStorageSize = findExactParameter(parameters, 'referenceStorageSize')
-  const referenceChargingStations = findExactParameter(parameters, 'referenceChargingStations')
-  const baseAutarky = findExactParameter(parameters, 'baseAutarky')
-  const storageAutarkyBonusPerKwh = findExactParameter(parameters, 'storageAutarkyBonusPerKwh')
-  const chargingAutarkyBonus = findExactParameter(parameters, 'chargingAutarkyBonus')
-  const baseAnnualSavings = findExactParameter(parameters, 'baseAnnualSavings')
-  const storageSavingsPerKwh = findExactParameter(parameters, 'storageSavingsPerKwh')
-  const chargingAnnualSavings = findExactParameter(parameters, 'chargingAnnualSavings')
-  const requiredValues = [
-    annualConsumption,
-    storageSize,
-    chargingStations,
-    referenceAnnualConsumption,
-    referenceStorageSize,
-    referenceChargingStations,
-    baseAutarky,
-    storageAutarkyBonusPerKwh,
-    chargingAutarkyBonus,
-    baseAnnualSavings,
-    storageSavingsPerKwh,
-    chargingAnnualSavings,
-  ]
-
-  if (
-    requiredValues.some((value) => typeof value !== 'number' || !Number.isFinite(value)) ||
-    !referenceAnnualConsumption ||
-    !referenceStorageSize ||
-    !referenceChargingStations
-  ) {
-    return {autarkyMetric, savingsMetric}
+  if (!values || !parameters || !bundle.scenarioType || !validScenarioTypes.has(bundle.scenarioType as ScenarioType)) {
+    return {}
   }
 
-  const scenarioType = normalizeKey(bundle.scenarioType)
-  const includesStorage = scenarioType === 'b2cpvspeicher' || scenarioType === 'b2ckomplett'
-  const includesCharging = scenarioType === 'b2ckomplett'
-  const storageRatio = storageSize! / referenceStorageSize
-  const chargingRatio = chargingStations! / referenceChargingStations
-  const autarkyAtReference =
-    baseAutarky! +
-    (includesStorage ? referenceStorageSize * storageAutarkyBonusPerKwh! * storageRatio : 0) +
-    (includesCharging ? chargingAutarkyBonus! * chargingRatio : 0)
-  const autarky = Math.min(
-    100,
-    Math.max(0, autarkyAtReference * (referenceAnnualConsumption / annualConsumption!)),
-  )
-  const savingsAtReference =
-    baseAnnualSavings! +
-    (includesStorage ? referenceStorageSize * storageSavingsPerKwh! * storageRatio : 0) +
-    (includesCharging ? chargingAnnualSavings! * chargingRatio : 0)
-  const savings = Math.max(0, savingsAtReference * (annualConsumption! / referenceAnnualConsumption))
+  const result = calculateScenarioResult(bundle.scenarioType as ScenarioType, values, parameters)
 
   return {
-    autarky,
-    savings,
-    autarkyMetric,
-    savingsMetric,
+    autarkyPercent: result.autarkyPercent,
+    annualSavingsEur: result.annualSavingsEur,
   }
 }
 
-function formatMetricValue(value: number, metric: ScenarioMatrixMetric) {
-  const formatted = new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))
+function formatPercent(value: number) {
+  return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}%`
+}
 
-  return metric.unit ? `${formatted}${metric.unit}` : formatted
+function formatEuro(value: number) {
+  return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}€`
 }
 
 function SliderControl({
@@ -220,49 +209,67 @@ function BundleCard({
   bundle,
   imageUrl,
   imageAlt,
+  deltaIconUrl,
+  deltaIconAlt,
   result,
   previousResult,
   active,
   onSelect,
   isBusiness,
+  isWireframeLayout,
+  lowerCard,
 }: {
   bundle: ScenarioMatrixBundle
   imageUrl?: string
   imageAlt: string
+  deltaIconUrl?: string
+  deltaIconAlt: string
   result: CalculatedBundle
   previousResult?: CalculatedBundle
   active: boolean
   onSelect: () => void
   isBusiness: boolean
+  isWireframeLayout: boolean
+  lowerCard: boolean
 }) {
   const autarkyDelta =
-    result.autarky !== undefined && previousResult?.autarky !== undefined
-      ? Math.round(result.autarky - previousResult.autarky)
+    result.autarkyPercent !== undefined && previousResult?.autarkyPercent !== undefined
+      ? Math.round(result.autarkyPercent - previousResult.autarkyPercent)
       : undefined
   const savingsDelta =
-    result.savings !== undefined && previousResult?.savings !== undefined
-      ? Math.round(result.savings - previousResult.savings)
+    result.annualSavingsEur !== undefined && previousResult?.annualSavingsEur !== undefined
+      ? Math.round(result.annualSavingsEur - previousResult.annualSavingsEur)
       : undefined
+  const hasPositiveAutarkyDelta = autarkyDelta !== undefined && autarkyDelta > 0
+  const hasPositiveSavingsDelta = savingsDelta !== undefined && savingsDelta > 0
 
   return (
     <button
       type="button"
-      className={`group relative h-[420px] w-[315px] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+      className={`group relative text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+        isWireframeLayout ? 'h-[500px] w-[316px]' : 'h-[420px] w-[315px]'
+      } ${
+        lowerCard ? 'translate-y-[12px]' : ''
+      } ${
         isBusiness ? 'text-white' : 'text-[#3d4248]'
       }`}
       aria-pressed={active}
       onClick={onSelect}
     >
-      <span
-        className={`inline-flex h-[38px] min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${
-          active
-            ? 'bg-[#efb804] text-[#3d4248]'
-            : isBusiness
-              ? 'bg-[#4a4f54] text-white'
-              : 'bg-[#eceeef] text-[#3d4248]'
-        }`}
-      >
-        {bundle.title}
+      <span className="block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]">
+        <span
+          className={`inline-flex h-full min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+            active
+              ? 'bg-[#efb804] text-[#3d4248]'
+              : isBusiness
+                ? 'bg-[#4a4f54] text-white'
+                : isWireframeLayout
+                  ? 'bg-[#3d4248] text-white'
+                  : 'bg-[#eceeef] text-[#3d4248]'
+          }`}
+        >
+          {bundle.title}
+        </span>
       </span>
 
       {imageUrl ? (
@@ -270,64 +277,97 @@ function BundleCard({
         <img
           src={imageUrl}
           alt={imageAlt}
-          className="mt-[24px] h-[160px] w-[315px] object-contain object-center transition-transform duration-300 group-hover:scale-[1.015]"
+          className={`object-contain object-center transition-transform duration-300 group-hover:scale-[1.015] ${
+            isWireframeLayout ? 'mt-[14px] h-[214px] w-[316px]' : 'mt-[24px] h-[160px] w-[315px]'
+          }`}
         />
       ) : null}
 
-      {(autarkyDelta !== undefined || savingsDelta !== undefined) ? (
+      {hasPositiveAutarkyDelta || hasPositiveSavingsDelta ? (
         <span
-          className={`absolute left-[-188px] top-[166px] z-[3] flex h-[68px] w-[156px] flex-col items-center justify-center gap-[5px] text-[15px] font-semibold uppercase leading-none text-[#efb804] ${
-            isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'
+          className={`absolute z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[7px] text-[15px] font-semibold uppercase leading-none ${
+            isWireframeLayout
+              ? `left-[-188px] top-[198px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#3d4248]'}`
+              : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
           }`}
         >
-          {autarkyDelta !== undefined && result.autarkyMetric ? (
+          {hasPositiveAutarkyDelta ? (
             <span className="flex items-center gap-[7px]">
-              <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
+              {deltaIconUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={deltaIconUrl}
+                  alt={deltaIconAlt}
+                  className={`h-[14px] w-[14px] object-contain ${
+                    isBusiness
+                      ? '[filter:brightness(0)_saturate(100%)_invert(69%)_sepia(96%)_saturate(1050%)_hue-rotate(359deg)_brightness(101%)_contrast(95%)]'
+                      : ''
+                  }`}
+                />
+              ) : (
+                <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
+              )}
               <span>
-                {autarkyDelta >= 0 ? '+' : ''}{formatMetricValue(autarkyDelta, result.autarkyMetric)}{' '}
-                {result.autarkyMetric.title}
+                +{formatPercent(autarkyDelta)} AUTARK
               </span>
             </span>
           ) : null}
-          {savingsDelta !== undefined && result.savingsMetric ? (
+          {hasPositiveSavingsDelta ? (
             <span className="flex items-center gap-[7px]">
-              <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
-              <span>{savingsDelta >= 0 ? '+' : ''}{formatMetricValue(savingsDelta, result.savingsMetric)}</span>
+              {deltaIconUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={deltaIconUrl}
+                  alt=""
+                  className={`h-[14px] w-[14px] object-contain ${
+                    isBusiness
+                      ? '[filter:brightness(0)_saturate(100%)_invert(69%)_sepia(96%)_saturate(1050%)_hue-rotate(359deg)_brightness(101%)_contrast(95%)]'
+                      : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              ) : (
+                <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
+              )}
+              <span>+{formatEuro(savingsDelta)}</span>
             </span>
           ) : null}
         </span>
       ) : null}
 
-      <div className="mt-[18px] text-[#efb804]">
-        {result.autarky !== undefined && result.autarkyMetric ? (
+      <div className={`${isWireframeLayout ? `mt-[18px] h-[86px] ${isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'}` : 'mt-[18px] text-[#efb804]'}`}>
+        {result.autarkyPercent !== undefined ? (
           <p className="flex items-baseline gap-[14px] uppercase">
             <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
-              {formatMetricValue(result.autarky, result.autarkyMetric)}
+              {formatPercent(result.autarkyPercent)}
             </strong>
-            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">{result.autarkyMetric.title}</span>
+            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
           </p>
         ) : null}
-        {result.savings !== undefined && result.savingsMetric ? (
+        {result.annualSavingsEur !== undefined ? (
           <p className="mt-[6px] flex items-baseline gap-[14px] uppercase">
             <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
-              {formatMetricValue(result.savings, result.savingsMetric)}
+              {formatEuro(result.annualSavingsEur)}
             </strong>
-            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">{result.savingsMetric.title}</span>
+            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
           </p>
         ) : null}
       </div>
 
       <div
-        className={`mt-[18px] flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[14px] font-sans text-[16px] leading-[1.35] tracking-normal ${
+        className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[16px] leading-[1.35] tracking-normal ${
+          isWireframeLayout ? 'mt-0' : 'mt-[18px]'
+        } ${
           isBusiness ? 'border-white' : 'border-[#3d4248]'
         }`}
       >
         <span className="shrink-0 font-normal uppercase">Enthalten:</span>
         {bundle.includedItems.length > 0 ? (
-          <ul className="space-y-px font-semibold" aria-label="Enthaltene Leistungen">
+          <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
             {bundle.includedItems.map((item) => (
               <li key={item.id}>
-                {item.amount ? `${item.amount} ` : ''}{item.label}
+                {item.amount ? <strong className="font-bold">{item.amount} </strong> : null}
+                {item.label}
               </li>
             ))}
           </ul>
@@ -335,6 +375,24 @@ function BundleCard({
       </div>
     </button>
   )
+}
+
+function resolveTarget(target: string | null | undefined, customerType: CustomerGroup) {
+  const normalizedTarget = target?.trim()
+
+  if (!normalizedTarget || normalizedTarget === 'next') {
+    return `/offer?type=${customerType}`
+  }
+
+  if (normalizedTarget.startsWith('/')) {
+    return normalizedTarget
+  }
+
+  const screenKey = normalizedTarget.includes(':')
+    ? normalizedTarget.split(':').pop() || ''
+    : normalizedTarget
+
+  return screenKey ? `/${screenKey}?type=${customerType}` : `/offer?type=${customerType}`
 }
 
 function bottomNavigationHref(item: ProductNavigationItem, customerType: CustomerGroup) {
@@ -356,13 +414,17 @@ export function ScenarioMatrixScreen({
   bundleTabLabel,
   calculateButtonLabel,
   sliders,
-  metrics,
   parameters,
   bundles,
   heroImageUrl,
   heroImageAlt,
+  heroImage2Url,
+  heroImage2Alt,
+  primaryCta,
   offerImageUrl,
   offerImageAlt,
+  b2cBundleImageUrl,
+  b2cBundleImageAlt,
   bottomNavigation,
   navigationItems,
   logoUrl,
@@ -380,17 +442,25 @@ export function ScenarioMatrixScreen({
   const [values, setValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(sliders.map((slider) => [slider.key, slider.defaultValue])),
   )
-  const [submittedValues, setSubmittedValues] = useState<Record<string, number>>(() =>
-    Object.fromEntries(sliders.map((slider) => [slider.key, slider.defaultValue])),
-  )
   const isBusiness = customerType === 'b2b'
+  const isCalculation = activeTab === 'calculation'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const visibleBundles = useMemo(() => bundles.slice(0, 3), [bundles])
+  const calculatorValues = useMemo(() => buildCalculatorValues(sliders, values), [sliders, values])
+  const calculationParameters = useMemo(() => buildCalculationParameters(parameters), [parameters])
   const calculatedBundles = useMemo(
-    () => visibleBundles.map((bundle) => calculateBundle(bundle, sliders, submittedValues, parameters, metrics)),
-    [metrics, parameters, sliders, submittedValues, visibleBundles],
+    () => visibleBundles.map((bundle) => calculateBundle(bundle, calculatorValues, calculationParameters)),
+    [calculationParameters, calculatorValues, visibleBundles],
   )
+  const calculationCtaLabel = primaryCta?.label || visibleBundles[visibleBundles.length - 1]?.nextStepText
+  const calculationCtaHref = resolveTarget(primaryCta?.target, customerType)
+  const bundleImageUrl = b2cBundleImageUrl || offerImageUrl || heroImageUrl
+  const bundleImageAlt = b2cBundleImageUrl
+    ? b2cBundleImageAlt
+    : offerImageUrl
+      ? offerImageAlt
+      : heroImageAlt
 
   return (
     <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
@@ -424,7 +494,11 @@ export function ScenarioMatrixScreen({
         </div>
 
         {headline ? (
-          <h1 className="absolute left-[60px] top-[220px] z-[3] text-[50px] font-bold uppercase leading-none tracking-[0.035em] max-[1600px]:text-[56px] [@media(max-height:920px)]:text-[56px]">
+          <h1
+            className={`absolute left-[60px] top-[220px] z-[3] font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] ${
+              isBusiness ? 'text-[38px]' : 'text-[42px]'
+            }`}
+          >
             {headline}
           </h1>
         ) : null}
@@ -492,7 +566,6 @@ export function ScenarioMatrixScreen({
                     type="button"
                     className="group inline-flex h-[46px] min-w-[258px] items-center justify-between rounded-full bg-[#efb804] px-[28px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:text-[18px]"
                     onClick={() => {
-                      setSubmittedValues({...values})
                       setActiveTab('calculation')
                     }}
                   >
@@ -511,7 +584,7 @@ export function ScenarioMatrixScreen({
           ) : (
             <motion.section
               key="calculation"
-              className="absolute left-[60px] top-[370px] z-[3] h-[450px] w-[1320px]"
+              className="absolute left-[60px] top-[400px] z-[3] h-[515px] w-[1320px] max-[1600px]:top-[392px] [@media(max-height:920px)]:top-[392px]"
               initial={{opacity: 0, x: 10}}
               animate={{opacity: 1, x: 0}}
               exit={{opacity: 0, x: 10}}
@@ -519,18 +592,24 @@ export function ScenarioMatrixScreen({
               aria-label={bundleTabLabel}
             >
               {visibleBundles.length > 0 ? (
-                <div className="grid h-full grid-cols-[315px_315px_315px] gap-x-[188px]">
+                <div
+                  className="grid h-full grid-cols-[315px_315px_315px] gap-x-[188px] max-[1600px]:gap-x-[175px] [@media(max-height:920px)]:gap-x-[175px]"
+                >
                   {visibleBundles.map((bundle, index) => (
                     <BundleCard
                       key={bundle.id}
                       bundle={bundle}
-                      imageUrl={offerImageUrl}
-                      imageAlt={offerImageAlt}
+                      imageUrl={bundleImageUrl}
+                      imageAlt={bundleImageAlt}
+                      deltaIconUrl={heroImage2Url}
+                      deltaIconAlt={heroImage2Alt}
                       result={calculatedBundles[index]}
                       previousResult={index > 0 ? calculatedBundles[index - 1] : undefined}
                       active={bundle.id === activeBundleId}
                       onSelect={() => setActiveBundleId(bundle.id)}
                       isBusiness={isBusiness}
+                      isWireframeLayout
+                      lowerCard={index === 2}
                     />
                   ))}
                 </div>
@@ -539,7 +618,20 @@ export function ScenarioMatrixScreen({
           )}
         </AnimatePresence>
 
-        {bottomNavigation.length > 0 ? (
+        {isCalculation && calculationCtaLabel ? (
+          <div className="absolute bottom-[58px] right-[72px] z-[8] w-[262px] max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-auto [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-auto">
+            <Link
+              href={calculationCtaHref}
+              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
+            >
+              <span>{calculationCtaLabel}</span>
+              <ArrowRight className="h-[14px] w-[20px] transition-transform group-hover:translate-x-1" strokeWidth={2.2} aria-hidden="true" />
+            </Link>
+            <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+          </div>
+        ) : null}
+
+        {bottomNavigation.length > 0 && !isCalculation ? (
           <nav
             className="absolute bottom-[36px] left-[60px] z-[8] flex h-[48px] w-max items-center bg-[#464b50]"
             aria-label="Produktnavigation"

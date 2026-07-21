@@ -367,7 +367,9 @@ export function WhatFitsScreen({
                 {headline ? (
                   <h1
                     id="catalog-heading"
-                    className="text-[50px] font-bold uppercase leading-none tracking-[0.045em] max-[1600px]:text-[56px] [@media(max-height:920px)]:text-[56px]"
+                    className={`font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] ${
+                      isBusiness ? 'text-[38px]' : 'text-[42px]'
+                    }`}
                   >
                     {headline}
                   </h1>
@@ -451,7 +453,9 @@ export function WhatFitsScreen({
               <div className="absolute left-[60px] top-[225px] z-[3]">
                 <h1
                   id="product-detail-heading"
-                  className="text-[50px] font-bold uppercase leading-none tracking-[0.04em] max-[1600px]:text-[56px] [@media(max-height:920px)]:text-[56px]"
+                  className={`font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] ${
+                    isBusiness ? 'text-[38px]' : 'text-[42px]'
+                  }`}
                 >
                   {selectedProduct.detailTitle}
                 </h1>
