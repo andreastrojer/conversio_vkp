@@ -161,16 +161,16 @@ export const productModelType = defineType({
       },
       validation: (Rule) => Rule.required(),
     }),
-
     defineField({
-      name: 'modelGroup',
-      title: 'Modellgruppe',
+      name: 'seriesLabel',
+      title: 'Serienkürzel',
       type: 'string',
       group: 'basis',
       description:
-        'Überschrift der Gruppe im Dropdown, z. B. „LUFTGEKÜHLT“ oder „TAUCHGEKÜHLT“.',
-      validation: (Rule) => Rule.required(),
+        'Kurzes Label auf der Modellkarte, z. B. „SKS“.',
     }),
+
+
 
     defineField({
       name: 'modelGroupOrder',
@@ -188,6 +188,42 @@ export const productModelType = defineType({
       type: 'image',
       group: 'media',
       options: { hotspot: true },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alternativtext',
+          type: 'string',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'selectionCardBackground',
+      title: 'Hintergrundgrafik der Modellkarte optional',
+      type: 'image',
+      group: 'media',
+      description:
+        'Optionale dekorative Grafik für die Modellkarte. Leer lassen, wenn nur der normale graue beziehungsweise gelbe Card-Hintergrund verwendet wird.',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alternativtext',
+          type: 'string',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'selectionCardBackground2',
+      title: 'Hintergrundgrafik der Modellkarte optional',
+      type: 'image',
+      group: 'media',
+      description:
+        'Optionale dekorative Grafik für die Modellkarte. Leer lassen, wenn nur der normale graue beziehungsweise gelbe Card-Hintergrund verwendet wird.',
+      options: {
+        hotspot: true,
+      },
       fields: [
         defineField({
           name: 'alt',

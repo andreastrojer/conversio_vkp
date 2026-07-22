@@ -11,17 +11,20 @@ import type {CustomerGroup} from '@/lib/customerSelection'
 import type {
   ProductDetailSection,
   ProductDetailTab,
+  ProductModel,
   ProductNavigationItem,
   WhatFitsProduct,
 } from '@/lib/whatFits'
 import {AnimatePresence, motion} from 'framer-motion'
 import {ArrowLeft, ArrowRight, Hexagon, ListFilter} from 'lucide-react'
 import Link from 'next/link'
+import {useRouter} from 'next/navigation'
 import {useMemo, useState} from 'react'
 
 type WhatFitsScreenProps = {
   customerType: CustomerGroup
   initialProductSlug?: string
+  initialModelSlug?: string
   headline?: string | null
   subline?: string | null
   products: WhatFitsProduct[]
@@ -36,6 +39,8 @@ type WhatFitsScreenProps = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  modelCardActivePatternUrl?: string
+  modelCardInactivePatternUrl?: string
 }
 
 type ProductView = 'catalog' | 'detail'
@@ -209,21 +214,137 @@ function normalizeTabValue(value?: string | null) {
     .toLowerCase()
 }
 
-function isTechnicalDetailTab(tab?: ProductDetailTab) {
-  const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
-
-  return value.includes('technical') || value.includes('technisch')
-}
-
 function isOverviewDetailTab(tab: ProductDetailTab) {
   const value = `${normalizeTabValue(tab.key)} ${normalizeTabValue(tab.title)}`
 
   return value.includes('overview') || value.includes('uberblick')
 }
 
+function isTechnicalTabKey(tab?: ProductDetailTab) {
+  const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
+
+  return value.includes('technical') || value.includes('technisch')
+}
+
+function findTab(tabs: ProductDetailTab[] | undefined, key: string) {
+  return tabs?.find((tab) => normalizeTabValue(tab.key) === key)
+}
+
+function hasTabSections(tab?: ProductDetailTab) {
+  return Boolean(tab?.sections.length)
+}
+
+function resolveModelMedia(
+  product: WhatFitsProduct,
+  model: ProductModel | undefined,
+  tab: ProductDetailTab | undefined,
+  section: ProductDetailSection | undefined,
+): ResolvedMedia {
+  if (section?.mediaUrl && isVideo(section.mediaType)) {
+    return {key: `${section._key}-model-section-video`, kind: 'video', url: section.mediaUrl, alt: section.mediaAlt}
+  }
+
+  if (section?.mediaImageUrl) {
+    return {key: `${section._key}-model-section-media-image`, kind: 'image', url: section.mediaImageUrl, alt: section.mediaAlt}
+  }
+
+  if (section?.imageUrl) {
+    return {key: `${section._key}-model-section-image`, kind: 'image', url: section.imageUrl, alt: section.title || model?.title || product.detailTitle}
+  }
+
+  const firstTabSection = tab?.sections.find((item) => item.mediaUrl || item.mediaImageUrl || item.imageUrl)
+
+  if (firstTabSection && firstTabSection !== section) {
+    return resolveModelMedia(product, model, tab, firstTabSection)
+  }
+
+  if (model?.imageUrl) {
+    return {key: `${model._id}-model-image`, kind: 'image', url: model.imageUrl, alt: model.title}
+  }
+
+  if (model?.mediaUrl && isVideo(model.mediaType)) {
+    return {key: `${model._id}-model-video`, kind: 'video', url: model.mediaUrl, alt: model.mediaAlt}
+  }
+
+  if (model?.mediaImageUrl) {
+    return {key: `${model._id}-model-media-image`, kind: 'image', url: model.mediaImageUrl, alt: model.mediaAlt}
+  }
+
+  if (product.detailImageUrl) {
+    return {key: `${product._id}-detail-image`, kind: 'image', url: product.detailImageUrl, alt: product.detailTitle}
+  }
+
+  if (product.catalogImageUrl) {
+    return {key: `${product._id}-catalog-image`, kind: 'image', url: product.catalogImageUrl, alt: product.catalogLabel}
+  }
+
+  return {key: `${product._id}-model-empty`, kind: 'empty', alt: ''}
+}
+
+function buildNeedsHref(customerType: CustomerGroup, productSlug?: string, modelSlug?: string) {
+  const params = new URLSearchParams({type: customerType})
+
+  if (productSlug) {
+    params.set('product', productSlug)
+  }
+
+  if (modelSlug) {
+    params.set('model', modelSlug)
+  }
+
+  return `/needs?${params.toString()}`
+}
+
+function getBusinessCatalogOrder(product: WhatFitsProduct) {
+  const value = `${normalizeTabValue(product.slug)} ${normalizeTabValue(product.catalogLabel)} ${normalizeTabValue(product.title)}`
+
+  if (value.includes('photovoltaik') || value.includes('pv')) {
+    return 1
+  }
+
+  if (value.includes('warmepumpe')) {
+    return 2
+  }
+
+  if (value.includes('gewerbespeicher') || value.includes('speicher')) {
+    return 3
+  }
+
+  if (value.includes('ladeinfrastruktur') || value.includes('laden')) {
+    return 4
+  }
+
+  if (value.includes('energiegemeinschaft') || value.includes('beg')) {
+    return 5
+  }
+
+  return 99
+}
+
+function getBusinessCatalogLabel(label: string) {
+  return normalizeTabValue(label).includes('energiegemeinschaft') ? 'BEG' : label
+}
+
+function getModelDisplayOrder(model: ProductModel) {
+  const value = normalizeTabValue(model.title)
+  const order = [
+    'bres-240-125',
+    'bres-720-375',
+    'bres-1040-500',
+    'bres-1200-625',
+    'bres-4160-2000',
+    'bres-2400-1250',
+    'bres-2080-1000',
+  ]
+  const index = order.findIndex((item) => value.includes(item))
+
+  return index >= 0 ? index : Number.POSITIVE_INFINITY
+}
+
 export function WhatFitsScreen({
   customerType,
   initialProductSlug,
+  initialModelSlug,
   headline,
   subline,
   products,
@@ -238,24 +359,49 @@ export function WhatFitsScreen({
   productNavigationLeftArrowUrl,
   productNavigationRightArrowUrl,
   productNavigationCatalogIconUrl,
+  modelCardActivePatternUrl,
+  modelCardInactivePatternUrl,
 }: WhatFitsScreenProps) {
+  const router = useRouter()
   const initialProduct = products.find((product) => product.slug === initialProductSlug)
+  const initialModel = initialProduct?.models.find(
+    (model) => model.slug === initialModelSlug || model._id === initialModelSlug,
+  )
   const [view, setView] = useState<ProductView>(initialProduct ? 'detail' : 'catalog')
   const [selectedSlug, setSelectedSlug] = useState(initialProduct?.slug || products[0]?.slug || '')
   const selectedProduct = products.find((product) => product.slug === selectedSlug) || products[0]
-  const [activeTabKey, setActiveTabKey] = useState(selectedProduct?.detailTabs[0]?.key || '')
-  const activeTab =
-    selectedProduct?.detailTabs.find((tab) => tab.key === activeTabKey) ||
-    selectedProduct?.detailTabs[0]
-  const isTechnicalTab = isTechnicalDetailTab(activeTab)
-  const overviewTab =
-    selectedProduct?.detailTabs.find(isOverviewDetailTab) || selectedProduct?.detailTabs[0]
+  const [selectedModelSlug, setSelectedModelSlug] = useState(initialModel?.slug || selectedProduct?.models[0]?.slug || '')
+  const selectedModel =
+    selectedProduct?.models.find((model) => model.slug === selectedModelSlug || model._id === selectedModelSlug) ||
+    selectedProduct?.models[0]
+  const firstModelTechnicalTab = selectedProduct?.models.map((model) => findTab(model.detailTabs, 'technical')).find(hasTabSections)
+  const visibleTabs = selectedModel
+    ? [
+        findTab(selectedModel.detailTabs, 'overview'),
+        findTab(selectedModel.detailTabs, 'technical') || firstModelTechnicalTab,
+        findTab(selectedProduct?.detailTabs, 'interplay'),
+        findTab(selectedProduct?.detailTabs, 'reference'),
+      ].filter((tab): tab is ProductDetailTab => Boolean(tab))
+    : selectedProduct?.detailTabs || []
+  const [activeTabKey, setActiveTabKey] = useState(
+    initialModel ? 'overview' : visibleTabs[0]?.key || '',
+  )
+  const activeTab = visibleTabs.find((tab) => tab.key === activeTabKey) || visibleTabs[0]
+  const isTechnicalTab = isTechnicalTabKey(activeTab)
+  const overviewTab = visibleTabs.find(isOverviewDetailTab) || visibleTabs[0]
   const [activeSectionKey, setActiveSectionKey] = useState(activeTab?.sections[0]?._key || '')
   const activeSection =
     activeTab?.sections.find((section) => section._key === activeSectionKey) || activeTab?.sections[0]
-  const hasStructuredTabContent = Boolean(activeTab?.introText?.trim() || activeTab?.contentItems.length)
+  const hasStructuredTabContent = Boolean(
+    activeTab?.contentTitle?.trim() ||
+      activeTab?.introText?.trim() ||
+      activeTab?.contentItemsTitle?.trim() ||
+      activeTab?.contentItems.length,
+  )
   const detailMediaSection =
-    isTechnicalTab || hasStructuredTabContent ? overviewTab?.sections[0] : activeSection
+    selectedModel
+      ? activeSection || activeTab?.sections[0] || overviewTab?.sections[0]
+      : isTechnicalTab || hasStructuredTabContent ? overviewTab?.sections[0] : activeSection
   const isBusiness = customerType === 'b2b'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
@@ -265,9 +411,18 @@ export function WhatFitsScreen({
   )
   const detailMedia = useMemo(
     () => selectedProduct
-      ? resolveDetailMedia(selectedProduct, detailMediaSection)
+      ? selectedModel
+        ? resolveModelMedia(selectedProduct, selectedModel, activeTab, detailMediaSection)
+        : resolveDetailMedia(selectedProduct, detailMediaSection)
       : {key: 'detail-empty', kind: 'empty', alt: ''} as ResolvedMedia,
-    [detailMediaSection, selectedProduct],
+    [activeTab, detailMediaSection, selectedModel, selectedProduct],
+  )
+  const catalogProducts = useMemo(
+    () =>
+      isBusiness
+        ? [...products].sort((a, b) => getBusinessCatalogOrder(a) - getBusinessCatalogOrder(b))
+        : products,
+    [isBusiness, products],
   )
 
   function selectProduct(slug: string, nextView: ProductView = view) {
@@ -275,17 +430,42 @@ export function WhatFitsScreen({
     const firstTab = product?.detailTabs[0]
 
     setSelectedSlug(slug)
-    setActiveTabKey(firstTab?.key || '')
+    setSelectedModelSlug(product?.models[0]?.slug || '')
+    setActiveTabKey(product?.models.length ? 'overview' : firstTab?.key || '')
     setActiveSectionKey(firstTab?.sections[0]?._key || '')
     setView(nextView)
   }
 
   function openProduct(slug: string) {
+    const product = products.find((item) => item.slug === slug)
+
+    if (product?.models.length && product.models.length > 1) {
+      setSelectedSlug(slug)
+      setSelectedModelSlug(product.models[0]?.slug || '')
+      setActiveTabKey('overview')
+      setActiveSectionKey(findTab(product.models[0]?.detailTabs, 'overview')?.sections[0]?._key || '')
+      setView('detail')
+      router.push(buildNeedsHref(customerType, slug))
+      return
+    }
+
     selectProduct(slug, 'detail')
+    router.push(buildNeedsHref(customerType, slug))
+  }
+
+  function openModel(product: WhatFitsProduct, model: ProductModel) {
+    const overview = findTab(model.detailTabs, 'overview')
+
+    setSelectedSlug(product.slug)
+    setSelectedModelSlug(model.slug)
+    setActiveTabKey('overview')
+    setActiveSectionKey(overview?.sections[0]?._key || '')
+    setView('detail')
+    router.push(buildNeedsHref(customerType, product.slug, model.slug))
   }
 
   function selectTab(tabKey: string) {
-    const tab = selectedProduct?.detailTabs.find((item) => item.key === tabKey)
+    const tab = visibleTabs.find((item) => item.key === tabKey)
 
     setActiveTabKey(tabKey)
     setActiveSectionKey(tab?.sections[0]?._key || '')
@@ -383,9 +563,16 @@ export function WhatFitsScreen({
                   </p>
                 ) : null}
 
-                <div className="mt-[44px] grid grid-cols-2 gap-x-[72px] gap-y-[34px]">
-                  {products.map((product, index) => {
+                <div
+                  className={`mt-[44px] grid grid-cols-2 gap-x-[72px] gap-y-[34px] ${
+                    isBusiness ? 'grid-flow-col grid-rows-3' : ''
+                  }`}
+                >
+                  {catalogProducts.map((product, index) => {
                     const isSelected = product.slug === selectedProduct?.slug
+                    const catalogLabel = isBusiness
+                      ? getBusinessCatalogLabel(product.catalogLabel)
+                      : product.catalogLabel
 
                     return (
                       <button
@@ -417,7 +604,7 @@ export function WhatFitsScreen({
                           />
                           <span className="relative text-[16px] font-medium">{index + 1}</span>
                         </span>
-                        <span>{product.catalogLabel}</span>
+                        <span>{catalogLabel}</span>
                       </button>
                     )
                   })}
@@ -457,7 +644,7 @@ export function WhatFitsScreen({
                 </h1>
 
                 <div className="mt-[42px] flex items-start gap-[10px]" role="tablist" aria-label={selectedProduct.detailTitle}>
-                  {selectedProduct.detailTabs.map((tab) => {
+                  {visibleTabs.map((tab) => {
                     const isActive = tab.key === activeTab?.key
 
                     return (
@@ -487,8 +674,20 @@ export function WhatFitsScreen({
 
               <MediaLayer
                 media={detailMedia}
-                className="absolute bottom-0 left-0 h-[650px] w-[62cqw]"
-                imageClassName="h-full w-full object-cover object-left-top"
+                className={
+                  selectedModel && activeTab?.key === 'overview'
+                    ? 'absolute bottom-[58px] left-[150px] h-[420px] w-[420px]'
+                    : isTechnicalTab
+                      ? 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
+                    : 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
+                }
+                imageClassName={
+                  selectedModel && activeTab?.key === 'overview'
+                    ? 'h-full w-full object-contain object-center'
+                    : isTechnicalTab
+                      ? 'h-full w-full object-cover object-left-top'
+                    : 'h-full w-full object-cover object-left-top'
+                }
               />
 
               {!isBusiness ? (
@@ -501,17 +700,77 @@ export function WhatFitsScreen({
                 </div>
               ) : null}
 
+              {selectedModel && activeTab?.key === 'overview' ? (
+                <>
+                  <div className="absolute bottom-[118px] left-[42px] z-[4] w-[165px] text-right text-white">
+                    {selectedProduct.modelSeriesTitle ? (
+                      <h2 className="text-[24px] font-bold uppercase leading-none tracking-[0.01em]">
+                        {selectedProduct.modelSeriesTitle}
+                      </h2>
+                    ) : null}
+                    <p className="mt-[8px] text-[15px] font-bold uppercase leading-none tracking-[0.01em]">
+                      {selectedModel.title}
+                    </p>
+                  </div>
+
+                  <div className="absolute bottom-[118px] left-[560px] z-[4] flex h-[450px] items-end gap-[22px]">
+                    {[...selectedProduct.models].sort((a, b) => getModelDisplayOrder(a) - getModelDisplayOrder(b)).map((model) => {
+                      const isActive = model.slug === selectedModel.slug
+                      const cardPatternUrl = isActive
+                        ? modelCardActivePatternUrl || model.selectionCardBackgroundUrl
+                        : modelCardInactivePatternUrl || model.selectionCardBackground2Url || model.selectionCardBackgroundUrl
+
+                      return (
+                        <button
+                          key={model._id}
+                          type="button"
+                          className={`relative h-[450px] w-[90px] overflow-hidden rounded-[12px] text-left transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                            isActive ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#464b50] text-white'
+                          }`}
+                          aria-pressed={isActive}
+                          onClick={() => openModel(selectedProduct, model)}
+                        >
+                          <span className="absolute left-1/2 top-1/2 z-[2] flex -translate-x-1/2 -translate-y-1/2 rotate-[-90deg] items-center justify-center gap-[16px] whitespace-nowrap text-[20px] font-bold uppercase tracking-[0.03em]">
+                            {model.seriesLabel ? <span className="font-normal">{model.seriesLabel}</span> : null}
+                            <span aria-hidden="true">|</span>
+                            <span>{model.title}</span>
+                          </span>
+                          {cardPatternUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={cardPatternUrl}
+                              alt=""
+                              className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[92px] w-[72px] object-contain object-right-bottom"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <span
+                              className={`absolute bottom-0 right-0 z-[1] h-[78px] w-[58px] ${
+                                isActive ? 'bg-[#3d4248]' : 'bg-white'
+                              } [clip-path:polygon(100%_0,100%_100%,0_100%,0_48%)]`}
+                              aria-hidden="true"
+                            />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              ) : null}
+
               <div
                 className={`absolute left-[58.5cqw] right-[60px] z-[3] ${
-                  isTechnicalTab
-                    ? 'top-[365px]'
+                  selectedModel && activeTab?.key === 'overview'
+                    ? 'top-[820px]'
+                    : isTechnicalTab
+                    ? 'top-[350px]'
                     : hasStructuredTabContent
                       ? 'top-[420px]'
                       : 'top-[500px]'
                 }`}
               >
                 {isTechnicalTab && activeTab ? (
-                  <div className="ml-auto w-[440px]">
+                  <div className="ml-auto w-[470px]">
                     {activeTab.sections.map((section) => {
                       const isActive = section._key === activeSection?._key
                       const contentId = `${section._key}-technical-content`
@@ -521,13 +780,13 @@ export function WhatFitsScreen({
                           key={section._key}
                           className={
                             isActive
-                              ? 'pb-[26px]'
+                              ? 'pb-[34px]'
                               : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#3d4248]/80'}`
                           }
                         >
                           <button
                             type="button"
-                            className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[24px] [@media(max-height:920px)]:text-[24px] ${
+                            className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans text-[18px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
                               isActive
                                 ? 'text-[#efb804]'
                                 : isBusiness
@@ -556,7 +815,7 @@ export function WhatFitsScreen({
                                 transition={{duration: 0.4, ease: [0.22, 1, 0.36, 1]}}
                                 className="overflow-hidden"
                               >
-                                <div className="pb-[18px] pt-[24px]">
+                                <div className="pb-[18px] pt-[28px]">
                                   {section.text ? (
                                     <div
                                       className={`max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
@@ -576,19 +835,17 @@ export function WhatFitsScreen({
 
                                   {section.specificationRows.length > 0 ? (
                                     <dl
-                                      className={`space-y-[8px] text-[16px] leading-[1.35] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+                                      className={`space-y-[8px] text-[16px] leading-[1.32] tracking-[0.01em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
                                         section.text ? 'mt-[20px]' : ''
                                       }`}
                                     >
                                       {section.specificationRows.map((row, index) => (
                                         <div
                                           key={row._key || `${section._key}-row-${index}`}
-                                          className={`grid grid-cols-[minmax(0,1fr)_minmax(130px,0.7fr)] gap-[24px] border-b pb-[7px] ${
-                                            isBusiness ? 'border-white/25' : 'border-[#3d4248]/25'
-                                          }`}
+                                          className="grid grid-cols-[minmax(0,1fr)_minmax(150px,0.75fr)] gap-[24px]"
                                         >
                                           <dt>{row.label}</dt>
-                                          <dd className="font-bold">{row.value}</dd>
+                                          <dd className="text-right font-bold">{row.value}</dd>
                                         </div>
                                       ))}
                                     </dl>
@@ -603,6 +860,16 @@ export function WhatFitsScreen({
                   </div>
                 ) : hasStructuredTabContent && activeTab ? (
                   <div className="ml-auto w-[540px]">
+                    {activeTab.contentTitle?.trim() ? (
+                      <h2
+                        className={`mb-[28px] text-[24px] font-bold uppercase leading-[1.08] tracking-[0.01em] ${
+                          isBusiness ? 'text-white' : 'text-[#3d4248]'
+                        }`}
+                      >
+                        {activeTab.contentTitle.trim()}
+                      </h2>
+                    ) : null}
+
                     {activeTab.introText?.trim() ? (
                       <div
                         className={`max-w-[520px] whitespace-pre-line text-[21px] font-semibold leading-[1.35] tracking-[0.01em] ${
@@ -613,8 +880,18 @@ export function WhatFitsScreen({
                       </div>
                     ) : null}
 
+                    {activeTab.contentItemsTitle?.trim() ? (
+                      <h3
+                        className={`mt-[44px] text-[22px] font-bold uppercase leading-none tracking-[0.01em] ${
+                          isBusiness ? 'text-white' : 'text-[#3d4248]'
+                        }`}
+                      >
+                        {activeTab.contentItemsTitle.trim()}
+                      </h3>
+                    ) : null}
+
                     {activeTab.contentItems.length > 0 ? (
-                      <div className={`${activeTab.introText?.trim() ? 'mt-[66px]' : ''} space-y-[28px]`}>
+                      <div className={`${activeTab.introText?.trim() || activeTab.contentItemsTitle?.trim() ? 'mt-[42px]' : ''} space-y-[24px]`}>
                         {activeTab.contentItems.map((item) => (
                           <div key={item._key} className="grid grid-cols-[22px_minmax(0,1fr)] gap-[20px]">
                             <Hexagon
@@ -630,13 +907,13 @@ export function WhatFitsScreen({
                               }`}
                             >
                               {item.title?.trim() ? (
-                                <h2 className="mb-[2px] font-bold uppercase">{item.title.trim()}</h2>
+                                <strong className="font-bold">{item.title.trim()}</strong>
                               ) : null}
-                              {splitParagraphs(item.text).map((paragraph, index) => (
-                                <p key={`${item._key}-paragraph-${index}`} className="whitespace-pre-line">
-                                  {paragraph}
-                                </p>
-                              ))}
+                              {item.text?.trim() ? (
+                                <span className={item.title?.trim() ? 'ml-[5px]' : ''}>
+                                  {item.text.trim()}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
                         ))}

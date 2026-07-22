@@ -552,6 +552,20 @@ export const NEXT_STEP_PAGE_QUERY = defineQuery(groq`{
         "extension": asset->extension,
         "originalFilename": asset->originalFilename
       },
+      selectionCardBackground{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
+      selectionCardBackground2{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
       media->{
         title,
         altText,
@@ -746,7 +760,9 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
       title,
       key,
       isActive,
+      contentTitle,
       introText,
+      contentItemsTitle,
       contentItems[]{
         _key,
         title,
@@ -784,6 +800,81 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
           }
         },
         isActive
+      }
+    },
+    modelSeriesTitle,
+    "models": models[]-> | order(coalesce(sortOrder, 999999) asc){
+      _id,
+      title,
+      "slug": slug.current,
+      seriesLabel,
+      sortOrder,
+      isActive,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
+      media->{
+        title,
+        altText,
+        mediaType,
+        externalUrl,
+        "fileUrl": file.asset->url,
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      },
+      detailTabs[]{
+        _key,
+        title,
+        key,
+        isActive,
+        introText,
+        contentItems[]{
+          _key,
+          title,
+          text,
+          isActive
+        },
+        sections[]{
+          _key,
+          title,
+          text,
+          specificationRows[]{
+            _key,
+            label,
+            value
+          },
+          image{
+            ...,
+            "assetUrl": asset->url,
+            "mimeType": asset->mimeType,
+            "extension": asset->extension,
+            "originalFilename": asset->originalFilename
+          },
+          media->{
+            title,
+            altText,
+            mediaType,
+            externalUrl,
+            "fileUrl": file.asset->url,
+            image{
+              ...,
+              "assetUrl": asset->url,
+              "mimeType": asset->mimeType,
+              "extension": asset->extension,
+              "originalFilename": asset->originalFilename
+            }
+          },
+          isActive
+        }
       }
     }
   },
@@ -832,7 +923,7 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
     _type == "mediaAsset" &&
     mediaType == "image" &&
     isActive != false &&
-    title in ["Linker Nav Pfeil", "Rechter Nav Pfeil", "Linker Navbutton", "Buttonpfeil"]
+    title in ["Linker Nav Pfeil", "Rechter Nav Pfeil", "Linker Navbutton", "Buttonpfeil", "orangene card", "graue card"]
   ]{
     title,
     image{

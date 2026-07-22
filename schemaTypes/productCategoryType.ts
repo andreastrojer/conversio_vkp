@@ -200,6 +200,14 @@ export const productCategoryType = defineType({
       ],
       validation: (Rule) => Rule.unique(),
     }),
+    defineField({
+      name: 'modelSeriesTitle',
+      title: 'Titel der Modellserie',
+      type: 'string',
+      group: 'detail',
+      description:
+        'Überschrift auf der Modellauswahl, z. B. „BRES SERIES“.',
+    }),
 
     defineField({
       name: 'detailTabs',
@@ -207,7 +215,7 @@ export const productCategoryType = defineType({
       type: 'array',
       group: 'detail',
       description:
-        'Die Tabs „Überblick“, „Technische Daten“, „Zusammenspiel“ und „Referenzen“.',
+        'Bei Produkten ohne Modelle: alle Tabs. Bei Produkten mit Modellen: gemeinsame Inhalte für Zusammenspiel und Referenzen.',
       validation: (Rule) => Rule.required().min(1),
       of: [
         defineArrayMember({
@@ -240,6 +248,15 @@ export const productCategoryType = defineType({
               },
               validation: (Rule) => Rule.required(),
             }),
+            defineField({
+              name: 'contentTitle',
+              title: 'Inhaltsüberschrift',
+              type: 'string',
+              description:
+                'Überschrift über der Einleitung, z. B. „WASSERSTOFFSPEICHER“.',
+              hidden: ({ parent }) =>
+                parent?.key !== 'interplay' && parent?.key !== 'reference',
+            }),
 
             defineField({
               name: 'introText',
@@ -265,6 +282,15 @@ export const productCategoryType = defineType({
 
                   return true
                 }),
+            }),
+            defineField({
+              name: 'contentItemsTitle',
+              title: 'Überschrift der Stichpunkte',
+              type: 'string',
+              description:
+                'Überschrift über der Liste, z. B. „PROJEKTFAKTEN“.',
+              hidden: ({ parent }) =>
+                parent?.key !== 'interplay' && parent?.key !== 'reference',
             }),
 
             defineField({
@@ -309,7 +335,7 @@ export const productCategoryType = defineType({
                       title: 'Beschreibung',
                       type: 'text',
                       rows: 3,
-                      validation: (Rule) => Rule.required(),
+
                     }),
 
                     defineField({

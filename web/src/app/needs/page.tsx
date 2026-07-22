@@ -8,6 +8,7 @@ type WhatFitsPageProps = {
   searchParams: Promise<{
     type?: string | string[]
     product?: string | string[]
+    model?: string | string[]
   }>
 }
 
@@ -24,15 +25,17 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
     redirect('/login')
   }
 
-  const {type, product} = await searchParams
+  const {type, product, model} = await searchParams
   const customerType = resolveCustomerType(type)
   const initialProductSlug = Array.isArray(product) ? product[0] : product
+  const initialModelSlug = Array.isArray(model) ? model[0] : model
   const content = await getWhatFitsPageData(customerType)
 
   return (
     <WhatFitsScreen
       customerType={customerType}
       initialProductSlug={initialProductSlug}
+      initialModelSlug={initialModelSlug}
       headline={content.headline}
       subline={content.subline}
       products={content.products}
@@ -47,6 +50,8 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
       productNavigationLeftArrowUrl={content.productNavigationLeftArrowUrl}
       productNavigationRightArrowUrl={content.productNavigationRightArrowUrl}
       productNavigationCatalogIconUrl={content.productNavigationCatalogIconUrl}
+      modelCardActivePatternUrl={content.modelCardActivePatternUrl}
+      modelCardInactivePatternUrl={content.modelCardInactivePatternUrl}
     />
   )
 }
