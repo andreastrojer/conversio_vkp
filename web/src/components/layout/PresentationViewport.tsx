@@ -5,6 +5,8 @@ import {useLayoutEffect, useState} from 'react'
 
 const REFERENCE_HEIGHT = 940
 const MIN_REFERENCE_WIDTH = 1440
+const TABLET_MAX_WIDTH = 1366
+const TABLET_MIN_WIDTH = 768
 
 type ViewportGeometry = {
   bleedY: number
@@ -30,7 +32,11 @@ export function PresentationViewport({
         window.innerHeight / REFERENCE_HEIGHT,
       )
       const width = Math.max(MIN_REFERENCE_WIDTH, window.innerWidth / scale)
-      const bleedY = Math.max(0, (window.innerHeight / scale - REFERENCE_HEIGHT) / 2)
+      const isTabletWidth =
+        window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH
+      const bleedY = isTabletWidth
+        ? 0
+        : Math.max(0, (window.innerHeight / scale - REFERENCE_HEIGHT) / 2)
 
       setGeometry({bleedY, scale, width})
     }

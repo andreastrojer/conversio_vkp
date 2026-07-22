@@ -249,7 +249,7 @@ export function OfferScreen({
       </div>
 
       <section className="absolute inset-x-0 bottom-0 top-[150px] z-[2]">
-        <div className="absolute bottom-[18px] left-0 h-[740px] w-[1050px]">
+        <div className="absolute bottom-[18px] left-0 h-[740px] w-[1050px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[650px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[920px]">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeMedia.key}

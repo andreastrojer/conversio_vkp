@@ -120,6 +120,7 @@ export function ChapterNavigation({
   const ctaOffset = 'ml-[66px] mt-[14px]'
   const ctaSize =
     'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px]'
+  const ctaIconClassName = 'h-[17px] w-[17px] shrink-0 object-contain'
   const isPrivate = customerType === 'b2c'
   const panelTheme = isPrivate ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
   const dividerColor = isPrivate ? 'border-white/80' : 'border-[#3d4248]'
@@ -204,11 +205,11 @@ export function ChapterNavigation({
                         <img
                           src={navigationArrowUrl}
                           alt=""
-                          className={`h-[15px] w-[15px] object-contain ${arrowNeedsInvert ? 'invert' : ''}`}
+                          className={`${ctaIconClassName} ${arrowNeedsInvert ? 'invert' : ''}`}
                           aria-hidden="true"
                         />
                       ) : (
-                        <ArrowUpRight className="h-[16px] w-[16px]" strokeWidth={2.3} aria-hidden="true" />
+                        <ArrowUpRight className="h-[17px] w-[17px] shrink-0" strokeWidth={2.3} aria-hidden="true" />
                       )}
                     </Link>
                   ) : (
@@ -224,11 +225,11 @@ export function ChapterNavigation({
                         <img
                           src={navigationArrowUrl}
                           alt=""
-                          className={`h-[15px] w-[15px] object-contain ${arrowNeedsInvert ? 'invert' : ''}`}
+                          className={`${ctaIconClassName} ${arrowNeedsInvert ? 'invert' : ''}`}
                           aria-hidden="true"
                         />
                       ) : (
-                        <ArrowUpRight className="h-[16px] w-[16px]" strokeWidth={2.3} aria-hidden="true" />
+                        <ArrowUpRight className="h-[17px] w-[17px] shrink-0" strokeWidth={2.3} aria-hidden="true" />
                       )}
                     </button>
                   )}

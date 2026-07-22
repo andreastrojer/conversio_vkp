@@ -53,7 +53,7 @@ const cardTextClass =
 const cardButtonBaseClass =
   'mt-7 inline-flex h-[31px] w-[186px] items-center justify-between gap-[14px] overflow-hidden rounded-full px-[19px] pl-[23px] text-[14px] font-semibold uppercase leading-none tracking-[0.045em] transition-[background-color,color,transform] duration-150 hover:-translate-y-px max-[1600px]:h-[38px] max-[1600px]:w-[210px] max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[210px] [@media(max-height:920px)]:text-[16px]'
 const cardButtonIconClass =
-  'block !h-[14px] !max-h-[14px] !min-h-[14px] !w-[14px] !max-w-[14px] !min-w-[14px] shrink-0 object-contain object-center'
+  'block !h-[17px] !max-h-[17px] !min-h-[17px] !w-[17px] !max-w-[17px] !min-w-[17px] shrink-0 object-contain object-center'
 const selectionLayoutClassName =
   'absolute bottom-[66px] left-[56px] right-[190px] top-[174px] z-10 grid grid-cols-[minmax(0,1fr)_320px] items-stretch justify-start gap-x-[56px] font-sans [transform:translateX(134px)]'
 const selectionCardsClassName =
