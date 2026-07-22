@@ -41,6 +41,12 @@ type RawSalesDocument = {
   description?: string | null
   documentType?: string | null
   categoryIds?: string[] | null
+  categories?: Array<{
+    _id?: string | null
+    title?: string | null
+    navigationLabel?: string | null
+    slug?: string | null
+  } | null> | null
   scenarioIds?: string[] | null
   pdfUrl?: string | null
   sharePointUrl?: string | null
@@ -246,6 +252,18 @@ function normalizeDocuments(
       description: document.description?.trim() || undefined,
       href: document.pdfUrl?.trim() || document.sharePointUrl?.trim() || undefined,
       categoryIds: document.categoryIds || [],
+      categories: (document.categories || []).flatMap((category) => {
+        if (!category?._id) {
+          return []
+        }
+
+        return [{
+          id: category._id,
+          title: category.title?.trim() || '',
+          navigationLabel: category.navigationLabel?.trim() || '',
+          slug: category.slug?.trim() || '',
+        }]
+      }),
       scenarioIds: document.scenarioIds || [],
     }]
   })
@@ -260,6 +278,13 @@ function normalizeDocuments(
       selectedBundle?.id ? document.scenarioIds.includes(selectedBundle.id) : false,
     )
     const categoryDocuments = normalizedDocuments.filter((document) =>
+      document.categories.some((category) => {
+        const values = [category.title, category.navigationLabel, category.slug, category.id]
+          .filter(Boolean)
+          .map(normalizeCmsKey)
+
+        return values.some((value) => value.includes(normalizedTitle) || normalizedTitle.includes(value))
+      }) ||
       document.categoryIds.some((categoryId) => normalizeCmsKey(categoryId).includes(normalizedTitle)),
     )
     const matchingDocuments = [...scenarioDocuments, ...categoryDocuments].filter(

@@ -606,6 +606,12 @@ export const NEXT_STEP_PAGE_QUERY = defineQuery(groq`{
     documentType,
     targetGroup,
     "categoryIds": categories[]._ref,
+    "categories": categories[]->{
+      _id,
+      title,
+      navigationLabel,
+      "slug": slug.current
+    },
     "scenarioIds": scenarios[]._ref,
     version,
     "pdfUrl": pdfFile.asset->url,
@@ -923,7 +929,17 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
     _type == "mediaAsset" &&
     mediaType == "image" &&
     isActive != false &&
-    title in ["Linker Nav Pfeil", "Rechter Nav Pfeil", "Linker Navbutton", "Buttonpfeil", "orangene card", "graue card"]
+    title in [
+      "Linker Nav Pfeil",
+      "Rechter Nav Pfeil",
+      "Linker Navbutton",
+      "Buttonpfeil",
+      "orangene card",
+      "graue card",
+      "Katalogdetailpunktorange",
+      "Katalogdetailpunktweiß",
+      "Katalogdetailpunktweiss"
+    ]
   ]{
     title,
     image{

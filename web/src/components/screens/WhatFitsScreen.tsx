@@ -41,6 +41,8 @@ type WhatFitsScreenProps = {
   productNavigationCatalogIconUrl?: string
   modelCardActivePatternUrl?: string
   modelCardInactivePatternUrl?: string
+  catalogDetailPointActiveUrl?: string
+  catalogDetailPointInactiveUrl?: string
 }
 
 type ProductView = 'catalog' | 'detail'
@@ -230,6 +232,18 @@ function findTab(tabs: ProductDetailTab[] | undefined, key: string) {
   return tabs?.find((tab) => normalizeTabValue(tab.key) === key)
 }
 
+function isInterplayTab(tab?: ProductDetailTab) {
+  const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
+
+  return value.includes('interplay') || value.includes('zusammenspiel')
+}
+
+function isReferenceTab(tab?: ProductDetailTab) {
+  const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
+
+  return value.includes('reference') || value.includes('referenz')
+}
+
 function hasTabSections(tab?: ProductDetailTab) {
   return Boolean(tab?.sections.length)
 }
@@ -361,6 +375,8 @@ export function WhatFitsScreen({
   productNavigationCatalogIconUrl,
   modelCardActivePatternUrl,
   modelCardInactivePatternUrl,
+  catalogDetailPointActiveUrl,
+  catalogDetailPointInactiveUrl,
 }: WhatFitsScreenProps) {
   const router = useRouter()
   const initialProduct = products.find((product) => product.slug === initialProductSlug)
@@ -388,6 +404,9 @@ export function WhatFitsScreen({
   )
   const activeTab = visibleTabs.find((tab) => tab.key === activeTabKey) || visibleTabs[0]
   const isTechnicalTab = isTechnicalTabKey(activeTab)
+  const isInterplay = isInterplayTab(activeTab)
+  const isReference = isReferenceTab(activeTab)
+  const isCompactSharedTab = isInterplay || isReference
   const overviewTab = visibleTabs.find(isOverviewDetailTab) || visibleTabs[0]
   const [activeSectionKey, setActiveSectionKey] = useState(activeTab?.sections[0]?._key || '')
   const activeSection =
@@ -764,6 +783,8 @@ export function WhatFitsScreen({
                     ? 'top-[820px]'
                     : isTechnicalTab
                     ? 'top-[350px]'
+                    : isCompactSharedTab
+                      ? 'top-[405px] [@media(max-height:800px)]:top-[330px]'
                     : hasStructuredTabContent
                       ? 'top-[420px]'
                       : 'top-[500px]'
@@ -798,11 +819,29 @@ export function WhatFitsScreen({
                             onClick={() => setActiveSectionKey(section._key)}
                           >
                             <span>{section.title}</span>
-                            <Hexagon
-                              className="h-[21px] w-[21px] shrink-0"
-                              strokeWidth={2.4}
-                              aria-hidden="true"
-                            />
+                            {isActive && catalogDetailPointActiveUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={catalogDetailPointActiveUrl}
+                                alt=""
+                                className="h-[21px] w-[21px] shrink-0 object-contain"
+                                aria-hidden="true"
+                              />
+                            ) : !isActive && catalogDetailPointInactiveUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={catalogDetailPointInactiveUrl}
+                                alt=""
+                                className="h-[21px] w-[21px] shrink-0 object-contain"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <Hexagon
+                                className="h-[21px] w-[21px] shrink-0"
+                                strokeWidth={2.4}
+                                aria-hidden="true"
+                              />
+                            )}
                           </button>
 
                           <AnimatePresence initial={false}>
@@ -859,10 +898,16 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : hasStructuredTabContent && activeTab ? (
-                  <div className="ml-auto w-[540px]">
+                  <div className={`ml-auto ${isCompactSharedTab ? 'w-[470px] [@media(max-height:800px)]:w-[390px]' : 'w-[540px]'}`}>
                     {activeTab.contentTitle?.trim() ? (
                       <h2
-                        className={`mb-[28px] text-[24px] font-bold uppercase leading-[1.08] tracking-[0.01em] ${
+                        className={`mb-[28px] uppercase leading-[1.08] tracking-[0.01em] ${
+                          isReference
+                            ? 'text-[22px] font-semibold [@media(max-height:800px)]:text-[17px]'
+                            : isCompactSharedTab
+                              ? 'text-[20px] font-bold'
+                              : 'text-[24px] font-bold'
+                        } ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
                         }`}
                       >
@@ -872,7 +917,13 @@ export function WhatFitsScreen({
 
                     {activeTab.introText?.trim() ? (
                       <div
-                        className={`max-w-[520px] whitespace-pre-line text-[21px] font-semibold leading-[1.35] tracking-[0.01em] ${
+                        className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${
+                          isReference
+                            ? 'text-[17px] font-normal leading-[1.45] [@media(max-height:800px)]:text-[13px] [@media(max-height:800px)]:leading-[1.35]'
+                            : isCompactSharedTab
+                              ? 'text-[20px] font-semibold leading-[1.32] [@media(max-height:800px)]:text-[16px]'
+                              : 'text-[21px] font-semibold leading-[1.35]'
+                        } ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
                         }`}
                       >
@@ -882,7 +933,9 @@ export function WhatFitsScreen({
 
                     {activeTab.contentItemsTitle?.trim() ? (
                       <h3
-                        className={`mt-[44px] text-[22px] font-bold uppercase leading-none tracking-[0.01em] ${
+                        className={`${isReference ? 'mt-[38px] [@media(max-height:800px)]:mt-[24px]' : 'mt-[44px]'} font-bold uppercase leading-none tracking-[0.01em] ${
+                          isCompactSharedTab ? 'text-[20px]' : 'text-[22px]'
+                        } ${isReference ? '[@media(max-height:800px)]:text-[17px]' : ''} ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
                         }`}
                       >
@@ -891,29 +944,58 @@ export function WhatFitsScreen({
                     ) : null}
 
                     {activeTab.contentItems.length > 0 ? (
-                      <div className={`${activeTab.introText?.trim() || activeTab.contentItemsTitle?.trim() ? 'mt-[42px]' : ''} space-y-[24px]`}>
+                      <div className={`${activeTab.introText?.trim() || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px] [@media(max-height:800px)]:mt-[18px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isCompactSharedTab ? 'space-y-[18px] [@media(max-height:800px)]:space-y-[11px]' : 'space-y-[24px]'}`}>
                         {activeTab.contentItems.map((item) => (
-                          <div key={item._key} className="grid grid-cols-[22px_minmax(0,1fr)] gap-[20px]">
-                            <Hexagon
-                              className={`mt-[2px] h-[18px] w-[18px] shrink-0 ${
-                                isBusiness ? 'text-white' : 'text-[#3d4248]'
-                              }`}
-                              strokeWidth={2.3}
-                              aria-hidden="true"
-                            />
+                          <div key={item._key} className={`${isCompactSharedTab ? 'grid-cols-[16px_minmax(0,1fr)] gap-[14px]' : 'grid-cols-[22px_minmax(0,1fr)] gap-[20px]'} grid`}>
+                            {isCompactSharedTab && catalogDetailPointInactiveUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={catalogDetailPointInactiveUrl}
+                                alt=""
+                              className="mt-[5px] h-[13px] w-[13px] shrink-0 object-contain"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <Hexagon
+                                className={`${isCompactSharedTab ? 'mt-[5px] h-[13px] w-[13px]' : 'mt-[2px] h-[18px] w-[18px]'} shrink-0 ${
+                                  isBusiness ? 'text-white' : 'text-[#3d4248]'
+                                }`}
+                                strokeWidth={2.3}
+                                aria-hidden="true"
+                              />
+                            )}
                             <div
-                              className={`text-[18px] font-normal leading-[1.42] tracking-[0.025em] ${
+                              className={`font-normal tracking-[0.025em] ${
+                                isCompactSharedTab ? 'text-[17px] leading-[1.34] [@media(max-height:800px)]:text-[13px] [@media(max-height:800px)]:leading-[1.28]' : 'text-[18px] leading-[1.42]'
+                              } ${
                                 isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
                               }`}
                             >
-                              {item.title?.trim() ? (
-                                <strong className="font-bold">{item.title.trim()}</strong>
-                              ) : null}
-                              {item.text?.trim() ? (
-                                <span className={item.title?.trim() ? 'ml-[5px]' : ''}>
-                                  {item.text.trim()}
-                                </span>
-                              ) : null}
+                              {isReference ? (
+                                <>
+                                  {item.text?.trim() ? (
+                                    <span>
+                                      {item.text.trim()}
+                                    </span>
+                                  ) : null}
+                                  {item.title?.trim() ? (
+                                    <strong className={`font-bold ${item.text?.trim() ? 'ml-[5px]' : ''}`}>
+                                      {item.title.trim()}
+                                    </strong>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <>
+                                  {item.title?.trim() ? (
+                                    <strong className={`font-bold ${isInterplay ? 'mb-[2px] block uppercase' : ''}`}>{item.title.trim()}</strong>
+                                  ) : null}
+                                  {item.text?.trim() ? (
+                                    <span className={isInterplay ? 'block' : item.title?.trim() ? 'ml-[5px]' : ''}>
+                                      {item.text.trim()}
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
                             </div>
                           </div>
                         ))}

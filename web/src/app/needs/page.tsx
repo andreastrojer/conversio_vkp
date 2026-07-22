@@ -52,6 +52,8 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
       productNavigationCatalogIconUrl={content.productNavigationCatalogIconUrl}
       modelCardActivePatternUrl={content.modelCardActivePatternUrl}
       modelCardInactivePatternUrl={content.modelCardInactivePatternUrl}
+      catalogDetailPointActiveUrl={content.catalogDetailPointActiveUrl}
+      catalogDetailPointInactiveUrl={content.catalogDetailPointInactiveUrl}
     />
   )
 }

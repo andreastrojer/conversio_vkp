@@ -226,6 +226,8 @@ export type WhatFitsPageData = {
   productNavigationCatalogIconUrl?: string
   modelCardActivePatternUrl?: string
   modelCardInactivePatternUrl?: string
+  catalogDetailPointActiveUrl?: string
+  catalogDetailPointInactiveUrl?: string
   calculateButtonArrowUrl?: string
 }
 
@@ -569,6 +571,9 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       productNavigationCatalogIconUrl: navigationAssetUrl('Linker Navbutton'),
       modelCardActivePatternUrl: navigationAssetUrl('orangene card'),
       modelCardInactivePatternUrl: navigationAssetUrl('graue card'),
+      catalogDetailPointActiveUrl: navigationAssetUrl('Katalogdetailpunktorange'),
+      catalogDetailPointInactiveUrl:
+        navigationAssetUrl('Katalogdetailpunktweiß') || navigationAssetUrl('Katalogdetailpunktweiss'),
       calculateButtonArrowUrl: navigationAssetUrl('Buttonpfeil'),
     }
   } catch {

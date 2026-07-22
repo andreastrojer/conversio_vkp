@@ -13,6 +13,7 @@ import {
   type ScenarioType,
 } from '@/lib/calculation/scenarioCalculator'
 import type { NextStepPageData, NextStepDocumentCategory } from '@/lib/nextStep'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { ScenarioMatrixParameter } from '@/lib/scenarioMatrix'
 import { ArrowRight, Check, Hexagon } from 'lucide-react'
 import Link from 'next/link'
@@ -132,11 +133,15 @@ function DocumentCategory({
   category,
   active,
   onSelect,
+  selectedDocumentIds,
+  onToggleDocument,
   isBusiness,
 }: {
   category: NextStepDocumentCategory
   active: boolean
   onSelect: () => void
+  selectedDocumentIds: string[]
+  onToggleDocument: (documentId: string) => void
   isBusiness: boolean
 }) {
   return (
@@ -162,43 +167,51 @@ function DocumentCategory({
         />
       </button>
 
-      {active ? (
-        <div className={`w-[348px] rounded-b-[8px] px-[32px] pb-[24px] pt-[20px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}>
-          {category.documents.length > 0 ? (
-            <ul className="space-y-[22px]">
-              {category.documents.map((document) => {
-                const content = (
-                  <>
-                    <Hexagon className="mt-[1px] h-[16px] w-[16px] shrink-0 text-white" strokeWidth={2.2} aria-hidden="true" />
-                    <span>{document.title}</span>
-                  </>
-                )
+      <AnimatePresence initial={false}>
+        {active ? (
+          <motion.div
+            initial={{ height: 0, opacity: 0, y: -8 }}
+            animate={{ height: 'auto', opacity: 1, y: 0 }}
+            exit={{ height: 0, opacity: 0, y: -8 }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            className={`w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
+          >
+            <div className="px-[32px] pb-[24px] pt-[20px]">
+              {category.documents.length > 0 ? (
+                <ul className="space-y-[22px]">
+                  {category.documents.map((document) => {
+                    const isSelected = selectedDocumentIds.includes(document.id)
 
-                return (
-                  <li key={document.id}>
-                    {document.href ? (
-                      <a
-                        href={document.href}
-                        className="flex items-center gap-[14px] text-[15px] font-normal leading-none text-white"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {content}
-                      </a>
-                    ) : (
-                      <span className="flex items-center gap-[14px] text-[15px] font-normal leading-none text-white">
-                        {content}
-                      </span>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          ) : (
-            <div className="h-[122px]" aria-hidden="true" />
-          )}
-        </div>
-      ) : null}
+                    return (
+                      <li key={document.id}>
+                        <button
+                          type="button"
+                          className={`flex items-center gap-[14px] text-left text-[15px] font-normal leading-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                            isSelected ? 'text-[#efb804]' : 'text-white'
+                          }`}
+                          aria-pressed={isSelected}
+                          onClick={() => onToggleDocument(document.id)}
+                        >
+                          <Hexagon
+                            className={`mt-[1px] h-[16px] w-[16px] shrink-0 ${
+                              isSelected ? 'fill-[#efb804] text-[#efb804]' : 'text-white'
+                            }`}
+                            strokeWidth={2.2}
+                            aria-hidden="true"
+                          />
+                          <span>{document.title}</span>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                <div className="h-[122px]" aria-hidden="true" />
+              )}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }
@@ -226,6 +239,7 @@ export function NextStepScreen({
   navigationArrowUrl,
 }: NextStepPageData) {
   const [activeCategoryKey, setActiveCategoryKey] = useState(documentCategories[1]?.key || documentCategories[0]?.key || '')
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
   const [displayResult] = useState(() =>
     calculateStoredResult({ customerType, selectedBundle, selectedResult, parameters }),
   )
@@ -325,6 +339,14 @@ export function NextStepScreen({
                 category={category}
                 active={category.key === activeCategoryKey}
                 onSelect={() => setActiveCategoryKey(category.key)}
+                selectedDocumentIds={selectedDocumentIds}
+                onToggleDocument={(documentId) =>
+                  setSelectedDocumentIds((current) =>
+                    current.includes(documentId)
+                      ? current.filter((id) => id !== documentId)
+                      : [...current, documentId],
+                  )
+                }
                 isBusiness={isBusiness}
               />
             ))}
