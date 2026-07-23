@@ -221,7 +221,7 @@ function AboutDetailContent({
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
             </span>
-            <p className="relative z-[1] pl-[12px]">{trustBlock.replace(/^[’‘'"„“]+/, '').trim()}</p>
+            <p className="relative z-[1] pl-[10px]">{trustBlock.replace(/^[’‘'"„“]+/, '').trim()}</p>
           </div>
         ) : null}
       </div>

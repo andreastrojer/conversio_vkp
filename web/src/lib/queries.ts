@@ -685,7 +685,31 @@ export const NEXT_STEP_SCENARIO_DOCUMENT_CATEGORIES_QUERY = defineQuery(groq`*[
       isActive != false &&
       status == "active" &&
       (!defined(targetGroup) || targetGroup in [$customerType, "both"]) &&
-      $scenarioId in scenarios[]._ref
+      (!defined(scenarios[0]) || $scenarioId in scenarios[]._ref) &&
+      defined(pdfFile.asset)
+    ] | order(coalesce(sortOrder, 999999) asc){
+      _id,
+      title,
+      description,
+      documentType,
+      targetGroup,
+      status,
+      isActive,
+      version,
+      sortOrder,
+      "scenarioIds": scenarios[]._ref,
+      "pdfUrl": pdfFile.asset->url,
+      "pdfMimeType": pdfFile.asset->mimeType,
+      "pdfOriginalFilename": pdfFile.asset->originalFilename
+    },
+    "referencedDocuments": *[
+      _type == "salesDocument" &&
+      references(^._id) &&
+      isActive != false &&
+      status == "active" &&
+      (!defined(targetGroup) || targetGroup in [$customerType, "both"]) &&
+      (!defined(scenarios[0]) || $scenarioId in scenarios[]._ref) &&
+      defined(pdfFile.asset)
     ] | order(coalesce(sortOrder, 999999) asc){
       _id,
       title,
@@ -1395,6 +1419,13 @@ export const SITE_SETTINGS_QUERY = defineQuery(groq`*[_type == "siteSettings"][0
     "originalFilename": asset->originalFilename
   },
   logoDark{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  },
+  favicon{
     ...,
     "assetUrl": asset->url,
     "mimeType": asset->mimeType,

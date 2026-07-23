@@ -5,16 +5,16 @@ import type {
   CustomerInfoQuestion,
   CustomerSegmentDocument,
 } from '@/lib/customerSelection'
-import type {ConsultationCustomer} from '@/lib/consultation'
+import type { ConsultationCustomer } from '@/lib/consultation'
 import {
   saveCustomerDraft,
   saveCustomerSelection,
   useConsultationStore,
 } from '@/lib/consultationStore'
 import type { LoginScreenDocument } from '@/lib/authBranding'
-import {ArrowUpRight} from 'lucide-react'
-import {useRouter} from 'next/navigation'
-import {useMemo, useState} from 'react'
+import { ArrowUpRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useMemo, useState } from 'react'
 
 type ScreenSection = NonNullable<NonNullable<LoginScreenDocument>['sections']>[number]
 
@@ -78,14 +78,14 @@ const fallbackCards: Record<CustomerGroup, CustomerCard> = {
   b2c: {
     customerType: 'b2c',
     title: 'PRIVAT',
-    text: 'Veniam mollit nostrud eu quis cupidatat velit ad exercitation aute qui ullamco in tempor.',
+    text: 'Energie clever nutzen, Kosten senken und das eigene Zuhause nachhaltig für morgen rüsten.',
     ctaLabel: 'JETZT STARTEN',
     ctaTarget: 'customer-type:b2c',
   },
   b2b: {
     customerType: 'b2b',
     title: 'GEWERBE',
-    text: 'Veniam mollit nostrud eu quis cupidatat velit ad exercitation aute qui ullamco in tempor.',
+    text: 'Effiziente Energielösungen, die Betriebskosten senken und Unternehmen nachhaltig stärken.',
     ctaLabel: 'JETZT STARTEN',
     ctaTarget: 'customer-type:b2b',
   },
@@ -160,7 +160,7 @@ function buildCustomerCards(
     const section = findSectionForGroup(sortedSections, group, index)
     const segment = findSegmentForGroup(segments || [], group)
     const title = section?.title || segment?.headline || segment?.title || fallback.title
-    const text = segment?.mainText || segment?.focusText || section?.text || fallback.text
+    const text = section?.text || segment?.mainText || segment?.focusText || fallback.text
     const ctaLabel = section?.cta?.label || segment?.ctaText || fallback.ctaLabel
     const ctaTarget = section?.cta?.target || fallback.ctaTarget
 
@@ -423,7 +423,7 @@ export function CustomerSelectionScreen({
           const isActive = visibleSelectedCustomerType === card.customerType
           const patternUrl = card.patternUrl || rightPatternUrl
           const cardPatternStyle = patternUrl
-            ? {backgroundImage: `url("${patternUrl}")`}
+            ? { backgroundImage: `url("${patternUrl}")` }
             : undefined
 
           return (
@@ -433,9 +433,8 @@ export function CustomerSelectionScreen({
               tabIndex={0}
               aria-label={`${card.title}: ${card.ctaLabel}`}
               aria-pressed={isActive}
-              className={`${cardBaseClass} ${
-                card.customerType === 'b2c' ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#3d4248] text-white'
-              } ${isActive ? cardActiveClass : ''}`}
+              className={`${cardBaseClass} ${card.customerType === 'b2c' ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#3d4248] text-white'
+                } ${isActive ? cardActiveClass : ''}`}
               onClick={() => handleCustomerStart(card.customerType)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -446,11 +445,10 @@ export function CustomerSelectionScreen({
             >
               {cardPatternStyle ? (
                 <span
-                  className={`${cardPatternBaseClassName} ${
-                    card.customerType === 'b2c'
-                      ? privateCardPatternClassName
-                      : businessCardPatternClassName
-                  }`}
+                  className={`${cardPatternBaseClassName} ${card.customerType === 'b2c'
+                    ? privateCardPatternClassName
+                    : businessCardPatternClassName
+                    }`}
                   style={cardPatternStyle}
                   aria-hidden="true"
                 />
@@ -461,9 +459,8 @@ export function CustomerSelectionScreen({
                 <p className={cardTextClass}>{card.text}</p>
                 <span
                   data-target={card.ctaTarget}
-                  className={`${cardButtonBaseClass} ${
-                    card.customerType === 'b2c' ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
-                  }`}
+                  className={`${cardButtonBaseClass} ${card.customerType === 'b2c' ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+                    }`}
                   aria-hidden="true"
                 >
                   <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -532,11 +529,10 @@ export function CustomerSelectionScreen({
                   required={required}
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? `${fieldId}-error` : undefined}
-                  className={`block h-[38px] ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} border-0 border-b-2 bg-transparent font-sans text-[18px] text-[#3d4248] outline-none placeholder:text-[#aeb3b7] focus:border-b-[#efb804] max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${
-                    error
-                      ? 'border-b-[#efb804] shadow-[0_2px_0_rgba(239,184,4,0.26)]'
-                      : 'border-b-[#3d4248]'
-                  }`}
+                  className={`block h-[38px] ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} border-0 border-b-2 bg-transparent font-sans text-[18px] text-[#3d4248] outline-none placeholder:text-[#aeb3b7] focus:border-b-[#efb804] max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${error
+                    ? 'border-b-[#efb804] shadow-[0_2px_0_rgba(239,184,4,0.26)]'
+                    : 'border-b-[#3d4248]'
+                    }`}
                   onChange={(event) => {
                     const nextValue = event.target.value
                     const nextValues = {
@@ -553,7 +549,7 @@ export function CustomerSelectionScreen({
 
                     if (error && nextValue.trim()) {
                       setFieldErrors((currentErrors) => {
-                        const nextErrors = {...currentErrors}
+                        const nextErrors = { ...currentErrors }
                         delete nextErrors[questionKey]
                         return nextErrors
                       })

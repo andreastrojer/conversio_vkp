@@ -22,7 +22,7 @@ import type {NextStepDocumentCategory, NextStepPageData} from '@/lib/nextStep'
 import {AnimatePresence, motion} from 'framer-motion'
 import {ArrowRight, Download, Hexagon} from 'lucide-react'
 import Link from 'next/link'
-import {useMemo, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 
 type NextStepScreenProps = NextStepPageData & {
   salesPerson: {
@@ -36,6 +36,12 @@ type SendStatus = 'idle' | 'sending' | 'mock-success' | 'graph-success' | 'error
 type SendDocumentsResponse = {
   success: boolean
   sendMode?: 'mock' | 'graph'
+  error?: string
+}
+
+type ScenarioDocumentsResponse = {
+  success: boolean
+  categories?: NextStepDocumentCategory[]
   error?: string
 }
 
@@ -64,6 +70,54 @@ function parseSendDocumentsResponse(value: unknown): SendDocumentsResponse {
   return {
     success: value.success === true,
     sendMode: value.sendMode === 'mock' || value.sendMode === 'graph' ? value.sendMode : undefined,
+    error: typeof value.error === 'string' ? value.error : undefined,
+  }
+}
+
+function parseScenarioDocumentsResponse(value: unknown): ScenarioDocumentsResponse {
+  if (!isRecord(value)) {
+    return {success: false, error: 'Der Server hat keine gültige Dokumentliste geliefert.'}
+  }
+
+  const categories = Array.isArray(value.categories)
+    ? value.categories.flatMap((category): NextStepDocumentCategory[] => {
+        if (!isRecord(category)) {
+          return []
+        }
+
+        const key = typeof category.key === 'string' ? category.key : ''
+        const title = typeof category.title === 'string' ? category.title : ''
+
+        if (!key || !title) {
+          return []
+        }
+
+        const documents = Array.isArray(category.documents)
+          ? category.documents.flatMap((document) => {
+              if (!isRecord(document)) {
+                return []
+              }
+
+              const id = typeof document.id === 'string' ? document.id : ''
+              const documentTitle = typeof document.title === 'string' ? document.title : ''
+
+              return id && documentTitle
+                ? [{
+                    id,
+                    title: documentTitle,
+                    description: typeof document.description === 'string' ? document.description : undefined,
+                  }]
+                : []
+            })
+          : []
+
+        return [{key, title, documents}]
+      })
+    : undefined
+
+  return {
+    success: value.success === true,
+    categories,
     error: typeof value.error === 'string' ? value.error : undefined,
   }
 }
@@ -204,6 +258,7 @@ export function NextStepScreen({
   const [requestedActiveCategoryKey, setRequestedActiveCategoryKey] = useState(documentCategories[1]?.key || documentCategories[0]?.key || '')
   const [selectedDocumentIdsOverride, setSelectedDocumentIdsOverride] = useState<string[] | null>(null)
   const [recipientEmailOverride, setRecipientEmailOverride] = useState<string | null>(null)
+  const [documentCategoriesOverride, setDocumentCategoriesOverride] = useState<NextStepDocumentCategory[] | null>(null)
   const [sendStatus, setSendStatus] = useState<SendStatus>('idle')
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const isBusiness = customerType === 'b2b'
@@ -212,22 +267,6 @@ export function NextStepScreen({
   const foregroundClassName = isBusiness ? 'text-white' : 'text-[#3d4248]'
   const metricClassName = isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'
   const lineClassName = isBusiness ? 'bg-white' : 'bg-[#3d4248]'
-  const documentTitleById = useMemo(() => buildDocumentTitleMap(documentCategories), [documentCategories])
-  const availableDocumentIds = useMemo(
-    () => new Set(documentCategories.flatMap((category) => category.documents.map((document) => document.id))),
-    [documentCategories],
-  )
-  const selectedDocumentIds = useMemo(
-    () =>
-      (selectedDocumentIdsOverride || consultation.selectedSalesDocumentIds).filter((documentId) =>
-        availableDocumentIds.has(documentId),
-      ),
-    [availableDocumentIds, consultation.selectedSalesDocumentIds, selectedDocumentIdsOverride],
-  )
-  const activeCategoryKey = documentCategories.some((category) => category.key === requestedActiveCategoryKey)
-    ? requestedActiveCategoryKey
-    : documentCategories[1]?.key || documentCategories[0]?.key || ''
-  const recipientEmail = recipientEmailOverride ?? consultation.customer?.email ?? ''
   const displayBundle =
     consultation.customerType === customerType && consultation.selectedBundle
       ? consultation.selectedBundle
@@ -237,6 +276,29 @@ export function NextStepScreen({
       ? consultation.calculationResult
       : undefined
   const scenarioId = displayBundle?.id
+  const visibleDocumentCategories = documentCategoriesOverride || documentCategories
+  const documentTitleById = useMemo(
+    () => buildDocumentTitleMap(visibleDocumentCategories),
+    [visibleDocumentCategories],
+  )
+  const availableDocumentIds = useMemo(
+    () => new Set(visibleDocumentCategories.flatMap((category) => category.documents.map((document) => document.id))),
+    [visibleDocumentCategories],
+  )
+  const selectedDocumentIds = useMemo(
+    () =>
+      (selectedDocumentIdsOverride || consultation.selectedSalesDocumentIds).filter((documentId) =>
+        availableDocumentIds.has(documentId),
+      ),
+    [availableDocumentIds, consultation.selectedSalesDocumentIds, selectedDocumentIdsOverride],
+  )
+  const activeCategoryKey =
+    requestedActiveCategoryKey === ''
+      ? ''
+      : visibleDocumentCategories.some((category) => category.key === requestedActiveCategoryKey)
+        ? requestedActiveCategoryKey
+        : visibleDocumentCategories[1]?.key || visibleDocumentCategories[0]?.key || ''
+  const recipientEmail = recipientEmailOverride ?? consultation.customer?.email ?? ''
   const customerForSending = consultation.customer
     ? {
         ...consultation.customer,
@@ -258,6 +320,42 @@ export function NextStepScreen({
 
     return title ? [title] : []
   })
+
+  useEffect(() => {
+    if (!scenarioId) {
+      return
+    }
+
+    const abortController = new AbortController()
+    const params = new URLSearchParams({
+      customerType,
+      scenarioId,
+    })
+
+    fetch(`/api/scenario-documents?${params.toString()}`, {
+      signal: abortController.signal,
+    })
+      .then(async (response) => {
+        const payload = parseScenarioDocumentsResponse(await response.json().catch(() => undefined))
+
+        if (!response.ok || !payload.success || !payload.categories) {
+          throw new Error(payload.error || 'Die Produktblätter konnten nicht geladen werden.')
+        }
+
+        setDocumentCategoriesOverride(payload.categories)
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return
+        }
+
+        setDocumentCategoriesOverride(null)
+      })
+
+    return () => {
+      abortController.abort()
+    }
+  }, [customerType, scenarioId])
 
   function resetSuccessState() {
     if (successStatus) {
@@ -456,7 +554,7 @@ export function NextStepScreen({
           </h2>
 
           <div className="mt-[38px] space-y-[26px]">
-            {documentCategories.map((category) => (
+            {visibleDocumentCategories.map((category) => (
               <DocumentCategory
                 key={category.key}
                 category={category}

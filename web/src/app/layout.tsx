@@ -1,5 +1,11 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
+import {
+  buildLogoUrl,
+  type SiteSettingsDocument,
+} from '@/lib/authBranding'
+import {SITE_SETTINGS_QUERY} from '@/lib/queries'
+import {sanityClient} from '@/lib/sanity'
 import './globals.css'
 
 const barlow = localFont({
@@ -15,9 +21,38 @@ const barlow = localFont({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  title: 'conversio_vkp',
+const defaultMetadata: Metadata = {
+  title: 'Conversio Energie Web-App',
   description: 'Web-App fuer die Conversio VKP Beratung.',
+}
+
+const metadataClient = sanityClient.withConfig({useCdn: false})
+const freshFetchOptions = {cache: 'no-store' as const}
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const siteSettings = await metadataClient.fetch<SiteSettingsDocument>(
+      SITE_SETTINGS_QUERY,
+      {},
+      freshFetchOptions,
+    )
+    const faviconUrl = buildLogoUrl(siteSettings?.favicon)
+
+    return {
+      ...defaultMetadata,
+      title: siteSettings?.title?.trim() || defaultMetadata.title,
+      ...(faviconUrl
+        ? {
+            icons: {
+              icon: [{url: faviconUrl}],
+              shortcut: [{url: faviconUrl}],
+            },
+          }
+        : {}),
+    }
+  } catch {
+    return defaultMetadata
+  }
 }
 
 export default function RootLayout({

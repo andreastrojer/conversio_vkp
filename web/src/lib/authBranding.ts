@@ -63,6 +63,7 @@ export type SiteSettingsDocument = {
   companyName?: string | null
   logo?: SanityImage
   logoDark?: SanityImage
+  favicon?: SanityImage
   contact?: {
     address?: string | null
   } | null

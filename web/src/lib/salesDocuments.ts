@@ -62,6 +62,7 @@ type RawDocumentCategory = {
   targetGroup?: string | null
   isActive?: boolean | null
   documents?: RawSalesDocument[] | null
+  referencedDocuments?: RawSalesDocument[] | null
 }
 
 type RawScenarioDocuments = {
@@ -116,7 +117,7 @@ function normalizeDocument(
     document?.isActive === false ||
     document?.status !== 'active' ||
     !matchesAudience(document?.targetGroup, customerType) ||
-    !document?.scenarioIds?.includes(scenarioId)
+    (Boolean(document?.scenarioIds?.length) && !document?.scenarioIds?.includes(scenarioId))
   ) {
     return undefined
   }
@@ -157,7 +158,11 @@ function normalizeScenarioDocuments(
       return []
     }
 
-    const documents = (category.documents || [])
+    const rawDocuments = [
+      ...(category.documents || []),
+      ...(category.referencedDocuments || []),
+    ]
+    const documents = rawDocuments
       .map((document) => normalizeDocument(document, customerType, scenarioId))
       .filter((document): document is AllowedSalesDocument => Boolean(document))
       .filter(

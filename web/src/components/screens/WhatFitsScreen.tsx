@@ -1079,34 +1079,51 @@ export function WhatFitsScreen({
 
                     {isEnergyCommunityOverview && energyCommunityOverviewHintSections.length > 0 ? (
                       <div className="mt-[48px] space-y-[30px]">
-                        {energyCommunityOverviewHintSections.map((section) => (
-                          <div key={section._key} className="grid grid-cols-[7px_minmax(0,1fr)] gap-[24px]">
-                            <span
-                              className={`h-full min-h-[92px] w-[5px] bg-[repeating-linear-gradient(115deg,transparent_0,transparent_4px,currentColor_4px,currentColor_6px)] ${
-                                isBusiness ? 'text-white' : 'text-[#3d4248]'
-                              }`}
-                              aria-hidden="true"
-                            />
-                            <div>
-                              {section.title?.trim() ? (
-                                <h3 className="text-[21px] font-bold uppercase leading-none tracking-[0.01em]">
-                                  {section.title.trim()}
-                                </h3>
-                              ) : null}
-                              {section.text?.trim() ? (
-                                <div className={`mt-[16px] space-y-[12px] text-[21px] font-normal leading-[1.28] tracking-[0.01em] ${
-                                  isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
-                                }`}>
-                                  {splitParagraphs(section.text).map((paragraph, index) => (
-                                    <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
-                                      {paragraph}
-                                    </p>
-                                  ))}
-                                </div>
-                              ) : null}
+                        {energyCommunityOverviewHintSections.map((section) => {
+                          const hintLineImageUrl = isBusiness
+                            ? section.mediaImageUrl || section.imageUrl
+                            : section.imageUrl || section.mediaImageUrl
+                          const hintLineFilterClass = isBusiness
+                            ? section.mediaImageUrl ? '' : '[filter:brightness(0)_invert(1)]'
+                            : section.imageUrl ? '' : '[filter:brightness(0)]'
+
+                          return (
+                            <div key={section._key} className="grid grid-cols-[7px_minmax(0,1fr)] gap-[24px]">
+                              <span className="relative block min-h-[92px] w-[7px] self-stretch overflow-visible" aria-hidden="true">
+                                {hintLineImageUrl ? (
+                                  <span
+                                    className={`absolute bottom-[2px] left-0 top-[2px] block w-[5px] bg-repeat-y bg-top bg-[length:5px_auto] ${hintLineFilterClass}`}
+                                    style={{backgroundImage: `url("${hintLineImageUrl}")`}}
+                                  />
+                                ) : (
+                                  <span
+                                    className={`absolute bottom-[2px] left-0 top-[2px] block w-[3px] ${
+                                      isBusiness ? 'bg-white' : 'bg-black'
+                                    }`}
+                                  />
+                                )}
+                              </span>
+                              <div>
+                                {section.title?.trim() ? (
+                                  <h3 className="text-[21px] font-bold uppercase leading-none tracking-[0.01em]">
+                                    {section.title.trim()}
+                                  </h3>
+                                ) : null}
+                                {section.text?.trim() ? (
+                                  <div className={`mt-[16px] space-y-[12px] text-[21px] font-normal leading-[1.28] tracking-[0.01em] ${
+                                    isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                  }`}>
+                                    {splitParagraphs(section.text).map((paragraph, index) => (
+                                      <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
+                                        {paragraph}
+                                      </p>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     ) : null}
                   </div>
