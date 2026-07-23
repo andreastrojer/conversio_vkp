@@ -34,7 +34,7 @@ type ProcessScreenProps = {
 }
 
 const patternClassName =
-  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
 
 function sectionKey(section: ProcessSection, index: number) {
   return section._key || `process-section-${index}`
@@ -116,8 +116,8 @@ export function ProcessScreen({
           <span
             className={`${patternClassName} ${
               isBusiness
-                ? '[filter:brightness(0)_invert(1)]'
-                : '[filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+                ? 'opacity-[0.065] [filter:brightness(0)_invert(1)]'
+                : 'opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]'
             }`}
             style={{backgroundImage: `url("${patternUrl}")`}}
             title={patternAlt || undefined}

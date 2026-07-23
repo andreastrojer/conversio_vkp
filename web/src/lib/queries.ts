@@ -944,17 +944,25 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
     _type == "mediaAsset" &&
     mediaType == "image" &&
     isActive != false &&
-    title in [
-      "Linker Nav Pfeil",
-      "Rechter Nav Pfeil",
-      "Linker Navbutton",
-      "Buttonpfeil",
-      "orangene card",
-      "graue card",
-      "Katalogdetailpunktorange",
-      "Katalogdetailpunktweiß",
-      "Katalogdetailpunktweiss"
-    ]
+    (
+      title in [
+        "Linker Nav Pfeil",
+        "Rechter Nav Pfeil",
+        "Linker Navbutton",
+        "Buttonpfeil",
+        "orangene card",
+        "graue card",
+        "Katalogdetailpunktorange",
+        "Schwarzer Kachel",
+        "Schwarze Kachel",
+        "Katalogdetailpunktweiß",
+        "Katalogdetailpunktweiss"
+      ] ||
+      (
+        (title match "*Schwarz*" || title match "*schwarz*") &&
+        (title match "*Kachel*" || title match "*kachel*")
+      )
+    )
   ]{
     title,
     image{

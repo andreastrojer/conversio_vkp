@@ -7,6 +7,7 @@ const REFERENCE_HEIGHT = 940
 const MIN_REFERENCE_WIDTH = 1440
 const TABLET_MAX_WIDTH = 1366
 const TABLET_MIN_WIDTH = 768
+const SURFACE_OVERSCAN = 4
 
 type ViewportGeometry = {
   bleedY: number
@@ -31,7 +32,7 @@ export function PresentationViewport({
         window.innerWidth / MIN_REFERENCE_WIDTH,
         window.innerHeight / REFERENCE_HEIGHT,
       )
-      const width = Math.max(MIN_REFERENCE_WIDTH, window.innerWidth / scale)
+      const width = Math.ceil(Math.max(MIN_REFERENCE_WIDTH, window.innerWidth / scale)) + SURFACE_OVERSCAN
       const isTabletWidth =
         window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH
       const bleedY = isTabletWidth
@@ -62,6 +63,8 @@ export function PresentationViewport({
             opacity: geometry === null ? 0 : 1,
             transform: `translate(-50%, -50%) scale(${geometry?.scale ?? 1})`,
             transformOrigin: 'center',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
             width: `${geometry?.width ?? MIN_REFERENCE_WIDTH}px`,
           } as CSSProperties
         }

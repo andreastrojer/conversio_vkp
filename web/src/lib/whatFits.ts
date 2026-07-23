@@ -69,6 +69,7 @@ export type WhatFitsProduct = {
   _id: string
   title: string
   slug: string
+  categoryType?: string | null
   catalogLabel: string
   catalogCtaLabel: string
   detailTitle: string
@@ -229,6 +230,7 @@ export type WhatFitsPageData = {
   modelCardActivePatternUrl?: string
   modelCardInactivePatternUrl?: string
   catalogDetailPointActiveUrl?: string
+  catalogDetailPointDarkUrl?: string
   catalogDetailPointInactiveUrl?: string
   calculateButtonArrowUrl?: string
 }
@@ -352,6 +354,7 @@ function normalizeProducts(products: ProductDocument[] | null | undefined): What
       _id: product._id,
       title: product.title.trim(),
       slug: product.slug.trim(),
+      categoryType: product.categoryType,
       catalogLabel: product.catalogLabel?.trim() || product.title.trim(),
       catalogCtaLabel: product.catalogCtaLabel?.trim() || '',
       detailTitle: product.detailTitle?.trim() || product.title.trim(),
@@ -397,13 +400,8 @@ function selectScreenProducts(
       return []
     }
 
-    const screenLabel = item.label?.trim()
-
     return [{
       ...product,
-      catalogLabel: screenLabel || product.catalogLabel,
-      detailTitle: screenLabel || product.detailTitle,
-      navigationLabel: screenLabel || product.navigationLabel,
     }]
   })
 }
@@ -454,7 +452,10 @@ function normalizeBottomNavigation(
     if (matchingProduct) {
       return [{
         key: item._key || item._id || `product-${matchingProduct.slug}-${index}`,
-        label,
+        label:
+          matchingProduct.categoryType === 'energiegemeinschaft'
+            ? matchingProduct.navigationLabel
+            : label,
         kind: 'product',
         slug: matchingProduct.slug,
         iconUrl: resolveImageUrl(item.iconImage, 256),
@@ -545,11 +546,14 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       sharedContentPromise,
     ])
     const products = selectScreenProducts(result.screen || null, normalizeProducts(result.products))
-    const navigationAssetUrl = (title: string) =>
-      resolveImageUrl(
-        result.productNavigationAssets?.find((asset) => asset.title?.trim() === title)?.image,
+    const navigationAssetUrl = (...titles: string[]) => {
+      const normalizedTitles = new Set(titles.map((title) => title.trim()))
+
+      return resolveImageUrl(
+        result.productNavigationAssets?.find((asset) => normalizedTitles.has(asset.title?.trim() || ''))?.image,
         256,
       )
+    }
 
     return {
       headline: result.screen?.headline,
@@ -575,6 +579,7 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       modelCardActivePatternUrl: navigationAssetUrl('orangene card'),
       modelCardInactivePatternUrl: navigationAssetUrl('graue card'),
       catalogDetailPointActiveUrl: navigationAssetUrl('Katalogdetailpunktorange'),
+      catalogDetailPointDarkUrl: navigationAssetUrl('Schwarzer Kachel', 'Schwarze Kachel'),
       catalogDetailPointInactiveUrl:
         navigationAssetUrl('Katalogdetailpunktweiß') || navigationAssetUrl('Katalogdetailpunktweiss'),
       calculateButtonArrowUrl: navigationAssetUrl('Buttonpfeil'),

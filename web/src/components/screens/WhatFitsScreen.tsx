@@ -42,6 +42,7 @@ type WhatFitsScreenProps = {
   modelCardActivePatternUrl?: string
   modelCardInactivePatternUrl?: string
   catalogDetailPointActiveUrl?: string
+  catalogDetailPointDarkUrl?: string
   catalogDetailPointInactiveUrl?: string
 }
 
@@ -55,7 +56,8 @@ type ResolvedMedia = {
 }
 
 const patternClassName =
-  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat opacity-[0.065]'
+  'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
+const detailContentPanelClassName = 'ml-auto w-[470px]'
 
 function isVideo(mediaType?: string | null) {
   return mediaType === 'video' || mediaType === 'droneVideo'
@@ -216,8 +218,8 @@ function normalizeTabValue(value?: string | null) {
     .toLowerCase()
 }
 
-function isOverviewDetailTab(tab: ProductDetailTab) {
-  const value = `${normalizeTabValue(tab.key)} ${normalizeTabValue(tab.title)}`
+function isOverviewDetailTab(tab?: ProductDetailTab) {
+  const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
 
   return value.includes('overview') || value.includes('uberblick')
 }
@@ -226,6 +228,12 @@ function isTechnicalTabKey(tab?: ProductDetailTab) {
   const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
 
   return value.includes('technical') || value.includes('technisch')
+}
+
+function isFunctionsTab(tab?: ProductDetailTab) {
+  const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
+
+  return value.includes('functions') || value.includes('funktioniert')
 }
 
 function findTab(tabs: ProductDetailTab[] | undefined, key: string) {
@@ -242,6 +250,16 @@ function isReferenceTab(tab?: ProductDetailTab) {
   const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
 
   return value.includes('reference') || value.includes('referenz')
+}
+
+function isEnergyCommunityProduct(product?: WhatFitsProduct) {
+  const value = `${normalizeTabValue(product?.categoryType)} ${normalizeTabValue(product?.slug)} ${normalizeTabValue(product?.title)}`
+
+  return (
+    value.includes('energiegemeinschaft') ||
+    value.includes('burgerenergiegemeinschaft') ||
+    value.split(/\s+/).includes('beg')
+  )
 }
 
 function hasTabSections(tab?: ProductDetailTab) {
@@ -336,7 +354,7 @@ function getBusinessCatalogOrder(product: WhatFitsProduct) {
 }
 
 function getBusinessCatalogLabel(label: string) {
-  return normalizeTabValue(label).includes('energiegemeinschaft') ? 'BEG' : label
+  return label
 }
 
 function getModelDisplayOrder(model: ProductModel) {
@@ -380,6 +398,7 @@ export function WhatFitsScreen({
   modelCardActivePatternUrl,
   modelCardInactivePatternUrl,
   catalogDetailPointActiveUrl,
+  catalogDetailPointDarkUrl,
   catalogDetailPointInactiveUrl,
 }: WhatFitsScreenProps) {
   const router = useRouter()
@@ -408,9 +427,12 @@ export function WhatFitsScreen({
   )
   const activeTab = visibleTabs.find((tab) => tab.key === activeTabKey) || visibleTabs[0]
   const isTechnicalTab = isTechnicalTabKey(activeTab)
+  const isFunctions = isFunctionsTab(activeTab)
   const isInterplay = isInterplayTab(activeTab)
   const isReference = isReferenceTab(activeTab)
   const isCompactSharedTab = isInterplay || isReference
+  const isEnergyCommunity = isEnergyCommunityProduct(selectedProduct)
+  const isEnergyCommunityOverview = isEnergyCommunity && isOverviewDetailTab(activeTab || visibleTabs[0])
   const overviewTab = visibleTabs.find(isOverviewDetailTab) || visibleTabs[0]
   const [activeSectionKey, setActiveSectionKey] = useState(activeTab?.sections[0]?._key || '')
   const activeSection =
@@ -419,13 +441,44 @@ export function WhatFitsScreen({
     activeTab?.contentTitle?.trim() ||
       activeTab?.introText?.trim() ||
       activeTab?.contentItemsTitle?.trim() ||
-      activeTab?.contentItems.length,
+      activeTab?.contentItems.length ||
+      (isEnergyCommunity && activeTab?.sections.length),
   )
+  const energyCommunityOverviewBulletItems =
+    isEnergyCommunityOverview && activeTab
+      ? activeTab.contentItems.length > 0
+        ? activeTab.contentItems
+        : activeTab.sections
+            .filter((section) => !section.title?.trim())
+            .flatMap((section) =>
+              section.specificationRows
+                .map((row, index) => ({
+                  _key: row._key || `${section._key}-spec-${index}`,
+                  text: row.label?.trim() || row.value?.trim() || '',
+                }))
+                .filter((item) => item.text),
+            )
+      : activeTab?.contentItems || []
+  const energyCommunityOverviewHintSections =
+    isEnergyCommunityOverview && activeTab
+      ? activeTab.sections.filter((section) => section.title?.trim())
+      : []
+  const energyCommunityOverviewIntroText =
+    isEnergyCommunityOverview && activeTab
+      ? activeTab.introText?.trim() ||
+        activeTab.sections.find((section) => !section.title?.trim() && section.text?.trim())?.text?.trim()
+      : activeTab?.introText?.trim()
   const detailMediaSection =
     selectedModel
       ? activeSection || activeTab?.sections[0] || overviewTab?.sections[0]
-      : isTechnicalTab || hasStructuredTabContent ? overviewTab?.sections[0] : activeSection
+      : isTechnicalTab || isFunctions || hasStructuredTabContent ? overviewTab?.sections[0] : activeSection
   const isBusiness = customerType === 'b2b'
+  const inactiveDetailPointUrl = isBusiness
+    ? catalogDetailPointInactiveUrl
+    : catalogDetailPointDarkUrl
+  const inactiveDetailPointImageColorClass = isBusiness
+    ? ''
+    : '[filter:brightness(0)_saturate(100%)_invert(24%)_sepia(8%)_saturate(413%)_hue-rotate(176deg)_brightness(91%)_contrast(87%)]'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const catalogMedia = useMemo(
@@ -527,8 +580,8 @@ export function WhatFitsScreen({
           <span
             className={`${patternClassName} ${
               isBusiness
-                ? '[filter:brightness(0)_invert(1)]'
-                : '[filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+                ? 'opacity-[0.065] [filter:brightness(0)_invert(1)]'
+                : 'opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]'
             }`}
             style={{backgroundImage: `url("${patternUrl}")`}}
             title={patternAlt || undefined}
@@ -786,17 +839,13 @@ export function WhatFitsScreen({
                 className={`absolute left-[58.5cqw] right-[60px] z-[3] ${
                   selectedModel && activeTab?.key === 'overview'
                     ? 'top-[820px]'
-                    : isTechnicalTab
-                    ? 'top-[350px]'
-                    : isCompactSharedTab
-                      ? 'top-[405px]'
-                    : hasStructuredTabContent
-                      ? 'top-[420px]'
+                    : isTechnicalTab || isFunctions || isCompactSharedTab || isEnergyCommunityOverview || hasStructuredTabContent
+                      ? 'top-[330px]'
                       : 'top-[500px]'
                 }`}
               >
-                {isTechnicalTab && activeTab ? (
-                  <div className="ml-auto w-[470px]">
+                {(isTechnicalTab || isFunctions) && activeTab ? (
+                  <div className={detailContentPanelClassName}>
                     {activeTab.sections.map((section) => {
                       const isActive = section._key === activeSection?._key
                       const contentId = `${section._key}-technical-content`
@@ -832,17 +881,19 @@ export function WhatFitsScreen({
                                 className="h-[21px] w-[21px] shrink-0 object-contain"
                                 aria-hidden="true"
                               />
-                            ) : !isActive && catalogDetailPointInactiveUrl ? (
+                            ) : !isActive && inactiveDetailPointUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
-                                src={catalogDetailPointInactiveUrl}
+                                src={inactiveDetailPointUrl}
                                 alt=""
-                                className="h-[21px] w-[21px] shrink-0 object-contain"
+                                className={`h-[21px] w-[21px] shrink-0 object-contain ${inactiveDetailPointImageColorClass}`}
                                 aria-hidden="true"
                               />
                             ) : (
                               <Hexagon
-                                className="h-[21px] w-[21px] shrink-0"
+                                className={`h-[21px] w-[21px] shrink-0 ${
+                                  isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
+                                }`}
                                 strokeWidth={2.4}
                                 aria-hidden="true"
                               />
@@ -862,18 +913,24 @@ export function WhatFitsScreen({
                                 <div className="pb-[18px] pt-[28px]">
                                   {section.text ? (
                                     <div
-                                      className={`max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                                      className={`${isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
                                         isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
                                       }`}
                                     >
-                                      {splitParagraphs(section.text).map((paragraph, index) => (
-                                        <p
-                                          key={`${section._key}-paragraph-${index}`}
-                                          className="whitespace-pre-line"
-                                        >
-                                          {paragraph}
+                                      {isFunctions ? (
+                                        <p>
+                                          {splitParagraphs(section.text).join(' ').replace(/\s+/g, ' ')}
                                         </p>
-                                      ))}
+                                      ) : (
+                                        splitParagraphs(section.text).map((paragraph, index) => (
+                                          <p
+                                            key={`${section._key}-paragraph-${index}`}
+                                            className="whitespace-pre-line"
+                                          >
+                                            {paragraph}
+                                          </p>
+                                        ))
+                                      )}
                                     </div>
                                   ) : null}
 
@@ -903,12 +960,14 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : hasStructuredTabContent && activeTab ? (
-                  <div className={`ml-auto ${isCompactSharedTab ? 'w-[500px]' : 'w-[540px]'}`}>
+                  <div className={detailContentPanelClassName}>
                     {activeTab.contentTitle?.trim() ? (
                       <h2
                         className={`mb-[28px] uppercase leading-[1.08] tracking-[0.01em] ${
                           isReference
                             ? 'text-[22px] font-semibold'
+                            : isEnergyCommunityOverview
+                              ? 'text-[24px] font-bold'
                             : isCompactSharedTab
                               ? 'text-[20px] font-bold'
                               : 'text-[24px] font-bold'
@@ -920,11 +979,13 @@ export function WhatFitsScreen({
                       </h2>
                     ) : null}
 
-                    {activeTab.introText?.trim() ? (
+                    {energyCommunityOverviewIntroText ? (
                       <div
                         className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${
                           isReference
                             ? 'text-[17px] font-normal leading-[1.45]'
+                            : isEnergyCommunityOverview
+                              ? 'text-[22px] font-normal leading-[1.28]'
                             : isCompactSharedTab
                               ? 'text-[20px] font-semibold leading-[1.32] [@media(max-height:800px)]:text-[16px]'
                               : 'text-[21px] font-semibold leading-[1.35]'
@@ -932,14 +993,14 @@ export function WhatFitsScreen({
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
                         }`}
                       >
-                        {activeTab.introText.trim()}
+                        {energyCommunityOverviewIntroText}
                       </div>
                     ) : null}
 
                     {activeTab.contentItemsTitle?.trim() ? (
                       <h3
                         className={`${isReference ? 'mt-[38px]' : 'mt-[44px]'} font-bold uppercase leading-none tracking-[0.01em] ${
-                          isCompactSharedTab ? 'text-[20px]' : 'text-[22px]'
+                          isEnergyCommunityOverview ? 'text-[22px]' : isCompactSharedTab ? 'text-[20px]' : 'text-[22px]'
                         } ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
                         }`}
@@ -948,16 +1009,23 @@ export function WhatFitsScreen({
                       </h3>
                     ) : null}
 
-                    {activeTab.contentItems.length > 0 ? (
-                      <div className={`${activeTab.introText?.trim() || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isCompactSharedTab ? 'space-y-[18px]' : 'space-y-[24px]'}`}>
-                        {activeTab.contentItems.map((item) => (
-                          <div key={item._key} className={`${isCompactSharedTab ? 'grid-cols-[16px_minmax(0,1fr)] gap-[14px]' : 'grid-cols-[22px_minmax(0,1fr)] gap-[20px]'} grid`}>
-                            {isCompactSharedTab && catalogDetailPointInactiveUrl ? (
+                    {(isEnergyCommunityOverview ? energyCommunityOverviewBulletItems.length : activeTab.contentItems.length) > 0 ? (
+                      <div className={`${energyCommunityOverviewIntroText || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px]' : isEnergyCommunityOverview ? 'mt-[28px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isEnergyCommunityOverview ? 'space-y-[5px]' : isCompactSharedTab ? 'space-y-[18px]' : 'space-y-[24px]'}`}>
+                        {(isEnergyCommunityOverview ? energyCommunityOverviewBulletItems : activeTab.contentItems).map((item) => (
+                          <div key={item._key} className={`${isEnergyCommunityOverview ? 'grid-cols-[14px_minmax(0,1fr)] gap-[14px]' : isCompactSharedTab ? 'grid-cols-[16px_minmax(0,1fr)] gap-[14px]' : 'grid-cols-[22px_minmax(0,1fr)] gap-[20px]'} grid`}>
+                            {isEnergyCommunityOverview ? (
+                              <span
+                                className={`mt-[14px] h-[4px] w-[4px] rounded-full ${
+                                  isBusiness ? 'bg-white' : 'bg-[#3d4248]'
+                                }`}
+                                aria-hidden="true"
+                              />
+                            ) : isCompactSharedTab && inactiveDetailPointUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
-                                src={catalogDetailPointInactiveUrl}
+                                src={inactiveDetailPointUrl}
                                 alt=""
-                              className="mt-[5px] h-[13px] w-[13px] shrink-0 object-contain"
+                                className={`mt-[5px] h-[13px] w-[13px] shrink-0 object-contain ${inactiveDetailPointImageColorClass}`}
                                 aria-hidden="true"
                               />
                             ) : (
@@ -970,8 +1038,8 @@ export function WhatFitsScreen({
                               />
                             )}
                             <div
-                              className={`font-normal tracking-[0.025em] ${
-                                isCompactSharedTab ? 'text-[17px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
+                              className={`font-normal tracking-[0.01em] ${
+                                isEnergyCommunityOverview ? 'text-[21px] leading-[1.35]' : isCompactSharedTab ? 'text-[17px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
                               } ${
                                 isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
                               }`}
@@ -1006,10 +1074,43 @@ export function WhatFitsScreen({
                         ))}
                       </div>
                     ) : null}
+
+                    {isEnergyCommunityOverview && energyCommunityOverviewHintSections.length > 0 ? (
+                      <div className="mt-[48px] space-y-[30px]">
+                        {energyCommunityOverviewHintSections.map((section) => (
+                          <div key={section._key} className="grid grid-cols-[7px_minmax(0,1fr)] gap-[24px]">
+                            <span
+                              className={`h-full min-h-[92px] w-[5px] bg-[repeating-linear-gradient(115deg,transparent_0,transparent_4px,currentColor_4px,currentColor_6px)] ${
+                                isBusiness ? 'text-white' : 'text-[#3d4248]'
+                              }`}
+                              aria-hidden="true"
+                            />
+                            <div>
+                              {section.title?.trim() ? (
+                                <h3 className="text-[21px] font-bold uppercase leading-none tracking-[0.01em]">
+                                  {section.title.trim()}
+                                </h3>
+                              ) : null}
+                              {section.text?.trim() ? (
+                                <div className={`mt-[16px] space-y-[12px] text-[21px] font-normal leading-[1.28] tracking-[0.01em] ${
+                                  isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                }`}>
+                                  {splitParagraphs(section.text).map((paragraph, index) => (
+                                    <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
+                                      {paragraph}
+                                    </p>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 ) : activeSection?.text ? (
                   <div
-                    className={`space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                    className={`${detailContentPanelClassName} space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
                       isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
                     }`}
                   >

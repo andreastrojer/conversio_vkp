@@ -293,7 +293,7 @@ export function AboutScreen({
           className={`${patternPositionClassName} ${
             isBusiness
               ? 'opacity-[0.10] [filter:brightness(0)_invert(1)]'
-              : 'opacity-[0.08] [filter:brightness(0)_saturate(100%)_invert(25%)_sepia(7%)_saturate(442%)_hue-rotate(169deg)_brightness(91%)_contrast(83%)]'
+              : 'opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]'
           }`}
           style={{ backgroundImage: `url("${patternUrl}")` }}
           title={patternAlt || undefined}

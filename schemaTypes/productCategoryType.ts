@@ -31,7 +31,7 @@ export const productCategoryType = defineType({
       type: 'string',
       group: 'basis',
       description: 'Vollständiger Produktname, z. B. „Photovoltaik“.',
-      validation: (Rule) => Rule.required(),
+
     }),
 
     defineField({
@@ -241,6 +241,7 @@ export const productCategoryType = defineType({
                 list: [
                   { title: 'Überblick', value: 'overview' },
                   { title: 'Technische Daten', value: 'technical' },
+                  { title: 'So Funktionierts', value: 'functions' },
                   { title: 'Zusammenspiel', value: 'interplay' },
                   { title: 'Referenzen', value: 'reference' },
                 ],
@@ -426,14 +427,14 @@ export const productCategoryType = defineType({
                               name: 'label',
                               title: 'Bezeichnung',
                               type: 'string',
-                              validation: (Rule) => Rule.required(),
+
                             }),
 
                             defineField({
                               name: 'value',
                               title: 'Wert',
                               type: 'string',
-                              validation: (Rule) => Rule.required(),
+
                             }),
                           ],
 

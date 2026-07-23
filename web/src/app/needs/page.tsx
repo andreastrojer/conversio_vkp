@@ -53,6 +53,7 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
       modelCardActivePatternUrl={content.modelCardActivePatternUrl}
       modelCardInactivePatternUrl={content.modelCardInactivePatternUrl}
       catalogDetailPointActiveUrl={content.catalogDetailPointActiveUrl}
+      catalogDetailPointDarkUrl={content.catalogDetailPointDarkUrl}
       catalogDetailPointInactiveUrl={content.catalogDetailPointInactiveUrl}
     />
   )
