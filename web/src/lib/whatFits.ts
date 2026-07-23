@@ -51,6 +51,7 @@ export type ProductDetailTab = {
 export type ProductModel = {
   _id: string
   title: string
+  cardTitle?: string | null
   slug: string
   seriesLabel?: string | null
   sortOrder?: number | null
@@ -144,6 +145,7 @@ type ProductDocument = {
 type ProductModelDocument = {
   _id?: string | null
   title?: string | null
+  cardTitle?: string | null
   slug?: string | null
   seriesLabel?: string | null
   sortOrder?: number | null
@@ -320,6 +322,7 @@ function normalizeModels(models: ProductModelDocument[] | null | undefined): Pro
     .map((model) => ({
       _id: model._id,
       title: model.title.trim(),
+      cardTitle: model.cardTitle?.trim() || null,
       slug: model.slug.trim(),
       seriesLabel: model.seriesLabel,
       sortOrder: model.sortOrder,

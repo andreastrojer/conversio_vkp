@@ -340,6 +340,10 @@ function getBusinessCatalogLabel(label: string) {
 }
 
 function getModelDisplayOrder(model: ProductModel) {
+  if (typeof model.sortOrder === 'number') {
+    return model.sortOrder
+  }
+
   const value = normalizeTabValue(model.title)
   const order = [
     'bres-240-125',
@@ -735,6 +739,7 @@ export function WhatFitsScreen({
                   <div className="absolute bottom-[118px] left-[560px] z-[4] flex h-[450px] items-end gap-[22px]">
                     {[...selectedProduct.models].sort((a, b) => getModelDisplayOrder(a) - getModelDisplayOrder(b)).map((model) => {
                       const isActive = model.slug === selectedModel.slug
+                      const modelCardTitle = model.cardTitle?.trim() || model.title
                       const cardPatternUrl = isActive
                         ? modelCardActivePatternUrl || model.selectionCardBackgroundUrl
                         : modelCardInactivePatternUrl || model.selectionCardBackground2Url || model.selectionCardBackgroundUrl
@@ -749,10 +754,10 @@ export function WhatFitsScreen({
                           aria-pressed={isActive}
                           onClick={() => openModel(selectedProduct, model)}
                         >
-                          <span className="absolute left-1/2 top-1/2 z-[2] flex -translate-x-1/2 -translate-y-1/2 rotate-[-90deg] items-center justify-center gap-[16px] whitespace-nowrap text-[20px] font-bold uppercase tracking-[0.03em]">
+                          <span className="absolute left-1/2 top-1/2 z-[2] flex w-[250px] -translate-x-1/2 -translate-y-1/2 rotate-[-90deg] items-center justify-start gap-[16px] whitespace-nowrap text-[20px] font-bold uppercase tracking-[0.03em]">
                             {model.seriesLabel ? <span className="font-normal">{model.seriesLabel}</span> : null}
                             <span aria-hidden="true">|</span>
-                            <span>{model.title}</span>
+                            <span>{modelCardTitle}</span>
                           </span>
                           {cardPatternUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
@@ -784,7 +789,7 @@ export function WhatFitsScreen({
                     : isTechnicalTab
                     ? 'top-[350px]'
                     : isCompactSharedTab
-                      ? 'top-[405px] [@media(max-height:800px)]:top-[330px]'
+                      ? 'top-[405px]'
                     : hasStructuredTabContent
                       ? 'top-[420px]'
                       : 'top-[500px]'
@@ -898,12 +903,12 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : hasStructuredTabContent && activeTab ? (
-                  <div className={`ml-auto ${isCompactSharedTab ? 'w-[470px] [@media(max-height:800px)]:w-[390px]' : 'w-[540px]'}`}>
+                  <div className={`ml-auto ${isCompactSharedTab ? 'w-[500px]' : 'w-[540px]'}`}>
                     {activeTab.contentTitle?.trim() ? (
                       <h2
                         className={`mb-[28px] uppercase leading-[1.08] tracking-[0.01em] ${
                           isReference
-                            ? 'text-[22px] font-semibold [@media(max-height:800px)]:text-[17px]'
+                            ? 'text-[22px] font-semibold'
                             : isCompactSharedTab
                               ? 'text-[20px] font-bold'
                               : 'text-[24px] font-bold'
@@ -919,7 +924,7 @@ export function WhatFitsScreen({
                       <div
                         className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${
                           isReference
-                            ? 'text-[17px] font-normal leading-[1.45] [@media(max-height:800px)]:text-[13px] [@media(max-height:800px)]:leading-[1.35]'
+                            ? 'text-[17px] font-normal leading-[1.45]'
                             : isCompactSharedTab
                               ? 'text-[20px] font-semibold leading-[1.32] [@media(max-height:800px)]:text-[16px]'
                               : 'text-[21px] font-semibold leading-[1.35]'
@@ -933,9 +938,9 @@ export function WhatFitsScreen({
 
                     {activeTab.contentItemsTitle?.trim() ? (
                       <h3
-                        className={`${isReference ? 'mt-[38px] [@media(max-height:800px)]:mt-[24px]' : 'mt-[44px]'} font-bold uppercase leading-none tracking-[0.01em] ${
+                        className={`${isReference ? 'mt-[38px]' : 'mt-[44px]'} font-bold uppercase leading-none tracking-[0.01em] ${
                           isCompactSharedTab ? 'text-[20px]' : 'text-[22px]'
-                        } ${isReference ? '[@media(max-height:800px)]:text-[17px]' : ''} ${
+                        } ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
                         }`}
                       >
@@ -944,7 +949,7 @@ export function WhatFitsScreen({
                     ) : null}
 
                     {activeTab.contentItems.length > 0 ? (
-                      <div className={`${activeTab.introText?.trim() || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px] [@media(max-height:800px)]:mt-[18px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isCompactSharedTab ? 'space-y-[18px] [@media(max-height:800px)]:space-y-[11px]' : 'space-y-[24px]'}`}>
+                      <div className={`${activeTab.introText?.trim() || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isCompactSharedTab ? 'space-y-[18px]' : 'space-y-[24px]'}`}>
                         {activeTab.contentItems.map((item) => (
                           <div key={item._key} className={`${isCompactSharedTab ? 'grid-cols-[16px_minmax(0,1fr)] gap-[14px]' : 'grid-cols-[22px_minmax(0,1fr)] gap-[20px]'} grid`}>
                             {isCompactSharedTab && catalogDetailPointInactiveUrl ? (
@@ -966,7 +971,7 @@ export function WhatFitsScreen({
                             )}
                             <div
                               className={`font-normal tracking-[0.025em] ${
-                                isCompactSharedTab ? 'text-[17px] leading-[1.34] [@media(max-height:800px)]:text-[13px] [@media(max-height:800px)]:leading-[1.28]' : 'text-[18px] leading-[1.42]'
+                                isCompactSharedTab ? 'text-[17px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
                               } ${
                                 isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
                               }`}

@@ -169,7 +169,13 @@ export const productModelType = defineType({
       description:
         'Kurzes Label auf der Modellkarte, z. B. „SKS“.',
     }),
-
+    defineField({
+      name: 'cardTitle',
+      title: 'Titel auf der Modellkarte',
+      type: 'string',
+      description:
+        'Bezeichnung auf der Modellauswahl-Karte, z. B. „BRES-240-125“ oder „AIR COOLING TERMINAL“. Falls leer, wird die Modellbezeichnung verwendet.',
+    }),
 
 
     defineField({

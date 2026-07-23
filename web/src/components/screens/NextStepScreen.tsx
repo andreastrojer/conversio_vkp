@@ -150,8 +150,8 @@ function DocumentCategory({
         type="button"
         className={`flex h-[46px] w-[348px] items-center justify-between rounded-[8px] border px-[30px] text-left text-[18px] font-medium uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${active
           ? isBusiness
-            ? 'border-[#4a4f54] bg-[#4a4f54] text-white'
-            : 'border-[#3d4248] bg-[#3d4248] text-white'
+            ? 'rounded-b-none border-[#4a4f54] bg-[#4a4f54] text-white'
+            : 'rounded-b-none border-[#3d4248] bg-[#3d4248] text-white'
           : isBusiness
             ? 'border-white/10 bg-transparent text-white'
             : 'border-[#3d4248]/18 bg-transparent text-[#3d4248]'
@@ -170,11 +170,11 @@ function DocumentCategory({
       <AnimatePresence initial={false}>
         {active ? (
           <motion.div
-            initial={{ height: 0, opacity: 0, y: -8 }}
-            animate={{ height: 'auto', opacity: 1, y: 0 }}
-            exit={{ height: 0, opacity: 0, y: -8 }}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-            className={`w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
+            className={`mt-[-1px] w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
           >
             <div className="px-[32px] pb-[24px] pt-[20px]">
               {category.documents.length > 0 ? (

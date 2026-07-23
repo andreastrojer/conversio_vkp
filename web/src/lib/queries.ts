@@ -812,11 +812,26 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
     "models": models[]-> | order(coalesce(sortOrder, 999999) asc){
       _id,
       title,
+      cardTitle,
       "slug": slug.current,
       seriesLabel,
       sortOrder,
       isActive,
       image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
+      selectionCardBackground{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
+      selectionCardBackground2{
         ...,
         "assetUrl": asset->url,
         "mimeType": asset->mimeType,
