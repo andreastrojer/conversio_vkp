@@ -1,132 +1,95 @@
 'use client'
 
-import { PresentationViewport } from '@/components/layout/PresentationViewport'
-import { ChapterNavigation } from '@/components/navigation/ChapterNavigation'
+import {PresentationViewport} from '@/components/layout/PresentationViewport'
+import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
 import {
   brandLogoImageClassName,
   brandLogoPositionClassName,
 } from '@/lib/brandingLayout'
 import {
-  calculateScenarioResult,
-  type CalculationParameters,
-  type CalculatorValues,
-  type ScenarioType,
-} from '@/lib/calculation/scenarioCalculator'
-import type { NextStepPageData, NextStepDocumentCategory } from '@/lib/nextStep'
-import { AnimatePresence, motion } from 'framer-motion'
-import type { ScenarioMatrixParameter } from '@/lib/scenarioMatrix'
-import { ArrowRight, Hexagon } from 'lucide-react'
+  buildCrmCsv,
+  bundleToConsultationBundle,
+  isValidEmail,
+  validateConsultationCustomer,
+  type ConsultationState,
+} from '@/lib/consultation'
+import {
+  saveCustomerDraft,
+  saveSelectedSalesDocumentIds,
+  useConsultationStore,
+} from '@/lib/consultationStore'
+import type {NextStepDocumentCategory, NextStepPageData} from '@/lib/nextStep'
+import {AnimatePresence, motion} from 'framer-motion'
+import {ArrowRight, Download, Hexagon} from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import {useMemo, useState} from 'react'
+
+type NextStepScreenProps = NextStepPageData & {
+  salesPerson: {
+    name?: string | null
+    email?: string | null
+  }
+}
+
+type SendStatus = 'idle' | 'sending' | 'mock-success' | 'graph-success' | 'error'
+
+type SendDocumentsResponse = {
+  success: boolean
+  sendMode?: 'mock' | 'graph'
+  error?: string
+}
+
+type UnknownRecord = Record<string, unknown>
 
 const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
 
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 function formatPercent(value: number) {
-  return `${new Intl.NumberFormat('de-AT', { maximumFractionDigits: 0 }).format(Math.round(value))}%`
+  return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}%`
 }
 
 function formatEuro(value: number) {
-  return `${new Intl.NumberFormat('de-AT', { maximumFractionDigits: 0 }).format(Math.round(value))}€`
+  return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}€`
 }
 
-const validScenarioTypes = new Set<ScenarioType>(['b2c_pv', 'b2c_pv_speicher', 'b2c_komplett'])
-
-function buildCalculationParameters(parameters: ScenarioMatrixParameter[]): CalculationParameters | undefined {
-  const requiredKeys: Array<keyof CalculationParameters> = [
-    'pvSizeKwp',
-    'specificYieldKwhPerKwp',
-    'electricityPriceEurPerKwh',
-    'feedInTariffEurPerKwh',
-    'evDemandPerChargingStationKwh',
-    'smartChargingShiftShare',
-  ]
-  const values = Object.fromEntries(
-    requiredKeys.map((key) => [key, parameters.find((parameter) => parameter.key === key)?.value]),
-  )
-
-  if (requiredKeys.some((key) => typeof values[key] !== 'number' || !Number.isFinite(values[key]))) {
-    return undefined
+function parseSendDocumentsResponse(value: unknown): SendDocumentsResponse {
+  if (!isRecord(value)) {
+    return {success: false, error: 'Der Server hat keine gültige Antwort geliefert.'}
   }
-
-  return values as CalculationParameters
-}
-
-function readStoredCalculatorValues(
-  expectedCustomerType: string,
-  expectedBundleId: string | undefined,
-): CalculatorValues | undefined {
-  if (typeof window === 'undefined') {
-    return undefined
-  }
-
-  const rawValue = window.sessionStorage.getItem('scenarioMatrix.nextStep')
-
-  if (!rawValue) {
-    return undefined
-  }
-
-  try {
-    const parsedValue = JSON.parse(rawValue) as {
-      customerType?: string
-      bundleId?: string
-      calculatorValues?: Partial<CalculatorValues>
-    }
-    const values = parsedValue.calculatorValues
-
-    if (
-      parsedValue.customerType !== expectedCustomerType ||
-      (expectedBundleId && parsedValue.bundleId !== expectedBundleId) ||
-      typeof values?.annualConsumption !== 'number' ||
-      typeof values.storageSize !== 'number' ||
-      typeof values.chargingStations !== 'number'
-    ) {
-      return undefined
-    }
-
-    return {
-      annualConsumption: values.annualConsumption,
-      storageSize: values.storageSize,
-      chargingStations: values.chargingStations,
-      peakLoadKw: typeof values.peakLoadKw === 'number' ? values.peakLoadKw : undefined,
-    }
-  } catch {
-    return undefined
-  }
-}
-
-function calculateStoredResult({
-  customerType,
-  selectedBundle,
-  selectedResult,
-  parameters,
-}: {
-  customerType: string
-  selectedBundle: NextStepPageData['selectedBundle']
-  selectedResult: NextStepPageData['selectedResult']
-  parameters: ScenarioMatrixParameter[]
-}) {
-  if (!selectedBundle?.scenarioType || !validScenarioTypes.has(selectedBundle.scenarioType as ScenarioType)) {
-    return selectedResult
-  }
-
-  const storedValues = readStoredCalculatorValues(customerType, selectedBundle.id)
-  const calculationParameters = buildCalculationParameters(parameters)
-
-  if (!storedValues || !calculationParameters) {
-    return selectedResult
-  }
-
-  const result = calculateScenarioResult(
-    selectedBundle.scenarioType as ScenarioType,
-    storedValues,
-    calculationParameters,
-  )
 
   return {
-    autarkyPercent: result.autarkyPercent,
-    annualSavingsEur: result.annualSavingsEur,
+    success: value.success === true,
+    sendMode: value.sendMode === 'mock' || value.sendMode === 'graph' ? value.sendMode : undefined,
+    error: typeof value.error === 'string' ? value.error : undefined,
   }
+}
+
+function getSendButtonText(status: SendStatus, defaultLabel: string) {
+  if (status === 'sending') {
+    return 'WIRD GESENDET …'
+  }
+
+  if (status === 'mock-success') {
+    return 'VERSAND ERFOLGREICH SIMULIERT'
+  }
+
+  if (status === 'graph-success') {
+    return 'UNTERLAGEN WURDEN VERSENDET'
+  }
+
+  return (defaultLabel || 'Senden').toLocaleUpperCase('de-AT')
+}
+
+function buildDocumentTitleMap(categories: NextStepDocumentCategory[]) {
+  return new Map(
+    categories.flatMap((category) =>
+      category.documents.map((document) => [document.id, document.title] as const),
+    ),
+  )
 }
 
 function DocumentCategory({
@@ -170,10 +133,10 @@ function DocumentCategory({
       <AnimatePresence initial={false}>
         {active ? (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            initial={{height: 0, opacity: 0}}
+            animate={{height: 'auto', opacity: 1}}
+            exit={{height: 0, opacity: 0}}
+            transition={{duration: 0.32, ease: [0.22, 1, 0.36, 1]}}
             className={`mt-[-1px] w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
           >
             <div className="px-[32px] pb-[24px] pt-[20px]">
@@ -223,8 +186,6 @@ export function NextStepScreen({
   emailLabel,
   sendButtonLabel,
   selectedBundle,
-  selectedResult,
-  parameters,
   bundleImageUrl,
   bundleImageAlt,
   documentCategories,
@@ -237,18 +198,180 @@ export function NextStepScreen({
   patternUrl,
   patternAlt,
   navigationArrowUrl,
-}: NextStepPageData) {
-  const [activeCategoryKey, setActiveCategoryKey] = useState(documentCategories[1]?.key || documentCategories[0]?.key || '')
-  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
-  const [displayResult] = useState(() =>
-    calculateStoredResult({ customerType, selectedBundle, selectedResult, parameters }),
-  )
+  salesPerson,
+}: NextStepScreenProps) {
+  const consultation = useConsultationStore()
+  const [requestedActiveCategoryKey, setRequestedActiveCategoryKey] = useState(documentCategories[1]?.key || documentCategories[0]?.key || '')
+  const [selectedDocumentIdsOverride, setSelectedDocumentIdsOverride] = useState<string[] | null>(null)
+  const [recipientEmailOverride, setRecipientEmailOverride] = useState<string | null>(null)
+  const [sendStatus, setSendStatus] = useState<SendStatus>('idle')
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const isBusiness = customerType === 'b2b'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const foregroundClassName = isBusiness ? 'text-white' : 'text-[#3d4248]'
   const metricClassName = isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'
   const lineClassName = isBusiness ? 'bg-white' : 'bg-[#3d4248]'
+  const documentTitleById = useMemo(() => buildDocumentTitleMap(documentCategories), [documentCategories])
+  const availableDocumentIds = useMemo(
+    () => new Set(documentCategories.flatMap((category) => category.documents.map((document) => document.id))),
+    [documentCategories],
+  )
+  const selectedDocumentIds = useMemo(
+    () =>
+      (selectedDocumentIdsOverride || consultation.selectedSalesDocumentIds).filter((documentId) =>
+        availableDocumentIds.has(documentId),
+      ),
+    [availableDocumentIds, consultation.selectedSalesDocumentIds, selectedDocumentIdsOverride],
+  )
+  const activeCategoryKey = documentCategories.some((category) => category.key === requestedActiveCategoryKey)
+    ? requestedActiveCategoryKey
+    : documentCategories[1]?.key || documentCategories[0]?.key || ''
+  const recipientEmail = recipientEmailOverride ?? consultation.customer?.email ?? ''
+  const displayBundle =
+    consultation.customerType === customerType && consultation.selectedBundle
+      ? consultation.selectedBundle
+      : selectedBundle
+  const displayResult =
+    displayBundle && consultation.selectedBundle?.id === displayBundle.id
+      ? consultation.calculationResult
+      : undefined
+  const scenarioId = displayBundle?.id
+  const customerForSending = consultation.customer
+    ? {
+        ...consultation.customer,
+        email: recipientEmail.trim(),
+      }
+    : undefined
+  const customerValidation = validateConsultationCustomer(customerForSending, true)
+  const emailIsValid = isValidEmail(recipientEmail)
+  const successStatus = sendStatus === 'mock-success' || sendStatus === 'graph-success'
+  const sendDisabled =
+    !emailIsValid ||
+    !scenarioId ||
+    selectedDocumentIds.length === 0 ||
+    !customerValidation.success ||
+    sendStatus === 'sending' ||
+    successStatus
+  const selectedDocumentTitles = selectedDocumentIds.flatMap((documentId) => {
+    const title = documentTitleById.get(documentId)
+
+    return title ? [title] : []
+  })
+
+  function resetSuccessState() {
+    if (successStatus) {
+      setSendStatus('idle')
+      setStatusMessage(null)
+    }
+  }
+
+  function handleToggleDocument(documentId: string) {
+    resetSuccessState()
+
+    const nextDocumentIds = selectedDocumentIds.includes(documentId)
+      ? selectedDocumentIds.filter((id) => id !== documentId)
+      : [...selectedDocumentIds, documentId]
+
+    setSelectedDocumentIdsOverride(nextDocumentIds)
+    saveSelectedSalesDocumentIds(nextDocumentIds)
+  }
+
+  function handleEmailChange(nextEmail: string) {
+    resetSuccessState()
+    setRecipientEmailOverride(nextEmail)
+    saveCustomerDraft({
+      name: consultation.customer?.name || '',
+      phone: consultation.customer?.phone || '',
+      email: nextEmail,
+    })
+  }
+
+  async function handleSendDocuments() {
+    if (!scenarioId || !customerForSending) {
+      setSendStatus('error')
+      setStatusMessage('Die Beratung ist unvollständig. Bitte Kundendaten, Bundle und Produktblätter prüfen.')
+      return
+    }
+
+    if (!customerValidation.success) {
+      setSendStatus('error')
+      setStatusMessage(Object.values(customerValidation.errors)[0] || 'Bitte die Kundendaten prüfen.')
+      return
+    }
+
+    if (selectedDocumentIds.length === 0) {
+      setSendStatus('error')
+      setStatusMessage('Bitte mindestens ein Produktblatt auswählen.')
+      return
+    }
+
+    setSendStatus('sending')
+    setStatusMessage(null)
+
+    try {
+      const response = await fetch('/api/send-documents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientEmail: recipientEmail.trim(),
+          customerType: consultation.customerType || customerType,
+          scenarioId,
+          selectedSalesDocumentIds: selectedDocumentIds,
+          customer: customerForSending,
+          matrixValues: consultation.matrixValues,
+          calculationResult: consultation.calculationResult,
+        }),
+      })
+      const responsePayload = parseSendDocumentsResponse(await response.json().catch(() => undefined))
+
+      if (!response.ok || !responsePayload.success) {
+        throw new Error(responsePayload.error || 'Die Unterlagen konnten nicht versendet werden.')
+      }
+
+      if (responsePayload.sendMode === 'mock') {
+        setSendStatus('mock-success')
+        setStatusMessage('Mock-Modus: Unterlagen wurden geprüft, aber nicht versendet.')
+      } else {
+        setSendStatus('graph-success')
+        setStatusMessage('Die ausgewählten Unterlagen wurden per E-Mail versendet.')
+      }
+    } catch (error) {
+      setSendStatus('error')
+      setStatusMessage(error instanceof Error ? error.message : 'Die Unterlagen konnten nicht versendet werden.')
+    }
+  }
+
+  function handleExportCsv() {
+    const csvCustomer = customerForSending || consultation.customer
+    const csvConsultation: ConsultationState = {
+      ...consultation,
+      customer: csvCustomer,
+      selectedBundle:
+        consultation.selectedBundle ||
+        (selectedBundle ? bundleToConsultationBundle(selectedBundle) : undefined),
+      selectedSalesDocumentIds: selectedDocumentIds,
+    }
+    const csv = buildCrmCsv({
+      consultation: csvConsultation,
+      recipientEmail: recipientEmail.trim(),
+      salesPersonName: salesPerson.name,
+      salesPersonEmail: salesPerson.email,
+      selectedDocumentTitles,
+    })
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'})
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+
+    link.href = url
+    link.download = `conversio-crm-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2b3036]' : 'bg-white'}>
@@ -260,7 +383,7 @@ export function NextStepScreen({
                 ? 'opacity-[0.065] [filter:brightness(0)_invert(1)]'
                 : 'opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]'
             }`}
-            style={{ backgroundImage: `url("${patternUrl}")` }}
+            style={{backgroundImage: `url("${patternUrl}")`}}
             title={patternAlt || undefined}
             aria-hidden="true"
           />
@@ -282,10 +405,10 @@ export function NextStepScreen({
         </h1>
 
         <section className="absolute left-[60px] top-[368px] z-[4] w-[315px]" aria-label="Ausgewähltes Bundle">
-          {selectedBundle ? (
+          {displayBundle ? (
             <>
               <div className="inline-flex h-[38px] min-w-[238px] items-center justify-center bg-[#efb804] px-[24px] text-[18px] font-bold uppercase leading-none text-[#3d4248]">
-                {selectedBundle.title}
+                {displayBundle.title}
               </div>
 
               {bundleImageUrl ? (
@@ -312,9 +435,9 @@ export function NextStepScreen({
 
               <div className={`mt-[44px] flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[24px] text-[16px] leading-[1.35] ${isBusiness ? 'border-white' : 'border-[#3d4248]'}`}>
                 <span className="shrink-0 font-normal uppercase">Enthalten:</span>
-                {selectedBundle.includedItems.length > 0 ? (
+                {displayBundle.includedItems.length > 0 ? (
                   <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
-                    {selectedBundle.includedItems.map((item) => (
+                    {displayBundle.includedItems.map((item) => (
                       <li key={item.id}>
                         {item.amount ? <strong className="font-bold">{item.amount} </strong> : null}
                         {item.label}
@@ -339,16 +462,10 @@ export function NextStepScreen({
                 category={category}
                 active={category.key === activeCategoryKey}
                 onSelect={() =>
-                  setActiveCategoryKey((current) => current === category.key ? '' : category.key)
+                  setRequestedActiveCategoryKey((current) => current === category.key ? '' : category.key)
                 }
                 selectedDocumentIds={selectedDocumentIds}
-                onToggleDocument={(documentId) =>
-                  setSelectedDocumentIds((current) =>
-                    current.includes(documentId)
-                      ? current.filter((id) => id !== documentId)
-                      : [...current, documentId],
-                  )
-                }
+                onToggleDocument={handleToggleDocument}
                 isBusiness={isBusiness}
               />
             ))}
@@ -360,13 +477,52 @@ export function NextStepScreen({
             {emailLabel}
           </h2>
           <div className={`mt-[38px] h-[2px] w-[342px] ${lineClassName}`} aria-hidden="true" />
-          <button
-            type="button"
-            className="group mt-[22px] inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full bg-[#4a4f54] px-[26px] text-[15px] font-bold uppercase leading-none text-white transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
-          >
-            <span>{sendButtonLabel}</span>
-            <ArrowRight className="h-[14px] w-[16px] rotate-[-45deg] transition-transform group-hover:translate-x-0.5" strokeWidth={2.4} aria-hidden="true" />
-          </button>
+          <input
+            type="email"
+            value={recipientEmail}
+            placeholder=""
+            aria-label="Empfänger-E-Mail"
+            aria-invalid={recipientEmail.length > 0 && !emailIsValid}
+            className={`mt-[12px] block h-[34px] w-[342px] border-0 border-b-2 bg-transparent font-sans text-[17px] font-medium outline-none transition-colors focus:border-b-[#efb804] ${
+              recipientEmail.length > 0 && !emailIsValid
+                ? 'border-b-[#efb804]'
+                : isBusiness
+                  ? 'border-b-white text-white placeholder:text-white/45'
+                  : 'border-b-[#3d4248] text-[#3d4248] placeholder:text-[#aeb3b7]'
+            }`}
+            onChange={(event) => handleEmailChange(event.target.value)}
+          />
+          <div className="mt-[22px] flex flex-wrap items-center gap-[12px]">
+            <button
+              type="button"
+              disabled={sendDisabled}
+              className={`group inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full bg-[#4a4f54] px-[26px] text-[15px] font-bold uppercase leading-none text-white transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                sendDisabled ? 'cursor-not-allowed opacity-55' : 'hover:-translate-y-px'
+              }`}
+              onClick={handleSendDocuments}
+            >
+              <span>{getSendButtonText(sendStatus, sendButtonLabel)}</span>
+              <ArrowRight className="h-[14px] w-[16px] rotate-[-45deg] transition-transform group-hover:translate-x-0.5" strokeWidth={2.4} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="group inline-flex h-[30px] min-w-[132px] items-center justify-between rounded-full bg-[#efb804] px-[20px] text-[14px] font-bold uppercase leading-none text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
+              onClick={handleExportCsv}
+            >
+              <span>CSV EXPORT</span>
+              <Download className="h-[14px] w-[14px] transition-transform group-hover:translate-y-0.5" strokeWidth={2.4} aria-hidden="true" />
+            </button>
+          </div>
+          {statusMessage ? (
+            <p
+              className={`mt-[14px] w-[342px] text-[13px] font-semibold leading-[1.3] ${
+                sendStatus === 'error' ? 'text-[#efb804]' : foregroundClassName
+              }`}
+              role={sendStatus === 'error' ? 'alert' : 'status'}
+            >
+              {statusMessage}
+            </p>
+          ) : null}
         </section>
 
         {contactImageUrl ? (

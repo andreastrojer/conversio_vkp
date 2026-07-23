@@ -5,6 +5,12 @@ import type {
   CustomerInfoQuestion,
   CustomerSegmentDocument,
 } from '@/lib/customerSelection'
+import type {ConsultationCustomer} from '@/lib/consultation'
+import {
+  saveCustomerDraft,
+  saveCustomerSelection,
+  useConsultationStore,
+} from '@/lib/consultationStore'
 import type { LoginScreenDocument } from '@/lib/authBranding'
 import {ArrowUpRight} from 'lucide-react'
 import {useRouter} from 'next/navigation'
@@ -276,6 +282,68 @@ function getFieldId(questionKey: string, index: number) {
   return `customer-info-${index}-${questionKey.toLocaleLowerCase('de-AT').replace(/[^a-z0-9]+/g, '-')}`
 }
 
+function buildCustomerFromForm(
+  questions: CustomerInfoQuestion[],
+  values: Record<string, string>,
+): ConsultationCustomer {
+  const customer: ConsultationCustomer = {
+    name: '',
+    phone: '',
+    email: '',
+  }
+
+  questions.forEach((question, index) => {
+    const questionKey = getQuestionKey(question, index)
+    const value = values[questionKey]?.trim() || ''
+
+    if (!value) {
+      return
+    }
+
+    const answerKind = getAnswerKind(question.answerType)
+
+    if (answerKind === 'name' && !customer.name) {
+      customer.name = value
+    }
+
+    if (answerKind === 'phone' && !customer.phone) {
+      customer.phone = value
+    }
+
+    if (answerKind === 'email' && !customer.email) {
+      customer.email = value
+    }
+  })
+
+  return customer
+}
+
+function buildFormValuesFromCustomer(
+  questions: CustomerInfoQuestion[],
+  customer: ConsultationCustomer,
+) {
+  const values: Record<string, string> = {}
+
+  questions.forEach((question, index) => {
+    const questionKey = getQuestionKey(question, index)
+    const answerKind = getAnswerKind(question.answerType)
+
+    if (answerKind === 'name') {
+      values[questionKey] = customer.name
+    }
+
+    if (answerKind === 'phone') {
+      values[questionKey] = customer.phone
+    }
+
+    if (answerKind === 'email') {
+      values[questionKey] = customer.email
+    }
+  })
+
+  return values
+}
+
 export function CustomerSelectionScreen({
   screen,
   segments,
@@ -285,18 +353,31 @@ export function CustomerSelectionScreen({
   rightPatternUrl,
 }: CustomerSelectionScreenProps) {
   const router = useRouter()
+  const consultation = useConsultationStore()
   const cards = useMemo(
     () => buildCustomerCards(screen?.sections, segments, privateCtaIconUrl, businessCtaIconUrl),
     [screen?.sections, segments, privateCtaIconUrl, businessCtaIconUrl],
   )
   const questions = formQuestions && formQuestions.length > 0 ? formQuestions : fallbackQuestions
+  const storedFormValues = useMemo(
+    () => consultation.customer ? buildFormValuesFromCustomer(questions, consultation.customer) : {},
+    [consultation.customer, questions],
+  )
   const [selectedCustomerType, setSelectedCustomerType] = useState<CustomerGroup | null>(null)
   const [formValues, setFormValues] = useState<Record<string, string>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, CustomerInfoFieldError>>({})
   const [formError, setFormError] = useState<string | null>(null)
+  const currentFormValues = useMemo(
+    () => ({
+      ...storedFormValues,
+      ...formValues,
+    }),
+    [formValues, storedFormValues],
+  )
+  const visibleSelectedCustomerType = selectedCustomerType || consultation.customerType || null
 
   function validateCustomerInfo() {
-    const validation = validateCustomerInfoSchema(questions, formValues)
+    const validation = validateCustomerInfoSchema(questions, currentFormValues)
     const nextErrors = validation.errors
     const errorCount = Object.keys(nextErrors).length
 
@@ -330,6 +411,7 @@ export function CustomerSelectionScreen({
       return
     }
 
+    saveCustomerSelection(customerType, buildCustomerFromForm(questions, currentFormValues))
     setSelectedCustomerType(customerType)
     router.push(`/about?type=${customerType}`)
   }
@@ -338,7 +420,7 @@ export function CustomerSelectionScreen({
     <section className={selectionLayoutClassName}>
       <div className={selectionCardsClassName} aria-label={screen?.headline || 'Kundengruppe auswählen'}>
         {cards.map((card) => {
-          const isActive = selectedCustomerType === card.customerType
+          const isActive = visibleSelectedCustomerType === card.customerType
           const patternUrl = card.patternUrl || rightPatternUrl
           const cardPatternStyle = patternUrl
             ? {backgroundImage: `url("${patternUrl}")`}
@@ -445,7 +527,7 @@ export function CustomerSelectionScreen({
                 <input
                   id={fieldId}
                   type={getInputType(question.answerType)}
-                  value={formValues[questionKey] || ''}
+                  value={currentFormValues[questionKey] || ''}
                   placeholder={question.placeholder || ''}
                   required={required}
                   aria-invalid={Boolean(error)}
@@ -457,11 +539,17 @@ export function CustomerSelectionScreen({
                   }`}
                   onChange={(event) => {
                     const nextValue = event.target.value
-
-                    setFormValues((currentValues) => ({
-                      ...currentValues,
+                    const nextValues = {
+                      ...formValues,
                       [questionKey]: nextValue,
-                    }))
+                    }
+                    const nextCurrentValues = {
+                      ...storedFormValues,
+                      ...nextValues,
+                    }
+
+                    setFormValues(nextValues)
+                    saveCustomerDraft(buildCustomerFromForm(questions, nextCurrentValues))
 
                     if (error && nextValue.trim()) {
                       setFieldErrors((currentErrors) => {

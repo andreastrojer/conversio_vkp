@@ -4,20 +4,16 @@ import {
   buildLogoUrl,
   type SanityImage,
 } from '@/lib/authBranding'
-import {
-  calculateScenarioResult,
-  type CalculationParameters,
-  type CalculatorValues,
-  type ScenarioType,
-} from '@/lib/calculation/scenarioCalculator'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {NEXT_STEP_PAGE_QUERY} from '@/lib/queries'
+import {
+  fetchScenarioDocumentSelection,
+  type ScenarioDocumentSelection,
+} from '@/lib/salesDocuments'
 import {sanityClient} from '@/lib/sanity'
 import {
   getScenarioMatrixPageData,
   type ScenarioMatrixBundle,
-  type ScenarioMatrixParameter,
-  type ScenarioMatrixSlider,
 } from '@/lib/scenarioMatrix'
 
 type CmsMedia = {
@@ -34,23 +30,6 @@ type RawSection = {
   image?: SanityImage
   media?: CmsMedia
 } | null
-
-type RawSalesDocument = {
-  _id?: string | null
-  title?: string | null
-  description?: string | null
-  documentType?: string | null
-  categoryIds?: string[] | null
-  categories?: Array<{
-    _id?: string | null
-    title?: string | null
-    navigationLabel?: string | null
-    slug?: string | null
-  } | null> | null
-  scenarioIds?: string[] | null
-  pdfUrl?: string | null
-  sharePointUrl?: string | null
-}
 
 type RawEmailTemplate = {
   _id?: string | null
@@ -80,7 +59,6 @@ type RawNextStepQuery = {
     } | null
     sections?: RawSection[] | null
   } | null
-  documents?: RawSalesDocument[] | null
   defaultEmailTemplate?: RawEmailTemplate
 }
 
@@ -90,7 +68,6 @@ export type NextStepDocumentCategory = {
   documents: Array<{
     id: string
     title: string
-    href?: string
     description?: string
   }>
 }
@@ -105,11 +82,6 @@ export type NextStepPageData = {
   emailSubject?: string
   emailBody?: string
   selectedBundle?: ScenarioMatrixBundle
-  selectedResult?: {
-    autarkyPercent: number
-    annualSavingsEur: number
-  }
-  parameters: ScenarioMatrixParameter[]
   bundleImageUrl?: string
   bundleImageAlt: string
   documentCategories: NextStepDocumentCategory[]
@@ -124,17 +96,8 @@ export type NextStepPageData = {
   navigationArrowUrl?: string
 }
 
-type SliderSearchValues = Record<string, number>
-
 const nextStepClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
-const validScenarioTypes = new Set<ScenarioType>(['b2c_pv', 'b2c_pv_speicher', 'b2c_komplett'])
-const sliderKeyAliases: Record<keyof CalculatorValues, string[]> = {
-  annualConsumption: ['annualConsumption'],
-  storageSize: ['storageSize', 'speichergrösse', 'speichergroesse', 'speichergrosse'],
-  chargingStations: ['chargingStations', 'ladestationen', 'ladepunkte'],
-  peakLoadKw: ['peakLoadKw', 'lastspitze'],
-}
 
 function normalizeCmsKey(value: string) {
   return value
@@ -167,98 +130,6 @@ function normalizeFeatureTitleForCustomer(title: string, customerType: CustomerG
   return customerType === 'b2b' ? 'Gewerbespeicher' : 'Batteriespeicher'
 }
 
-function featureSearchKeys(title: string) {
-  const keys = new Set([normalizeCmsKey(title), compactCmsKey(title)])
-
-  if (isStorageTitle(title)) {
-    const aliases = ['Batteriespeicher', 'Gewerbespeicher', 'Stromspeicher', 'Speicher']
-
-    aliases.forEach((alias) => {
-      keys.add(normalizeCmsKey(alias))
-      keys.add(compactCmsKey(alias))
-    })
-  }
-
-  return [...keys].filter(Boolean)
-}
-
-function cmsSearchValues(values: Array<string | undefined>) {
-  return values
-    .filter((value): value is string => Boolean(value))
-    .flatMap((value) => [normalizeCmsKey(value), compactCmsKey(value)])
-    .filter(Boolean)
-}
-
-function findSliderValue(
-  sliders: ScenarioMatrixSlider[],
-  values: SliderSearchValues,
-  key: keyof CalculatorValues,
-) {
-  const aliases = sliderKeyAliases[key].map(normalizeCmsKey)
-  const slider = sliders.find((item) => aliases.includes(normalizeCmsKey(item.key)))
-
-  return slider ? values[slider.key] : undefined
-}
-
-function buildCalculatorValues(
-  sliders: ScenarioMatrixSlider[],
-  values: SliderSearchValues,
-): CalculatorValues | undefined {
-  const annualConsumption = findSliderValue(sliders, values, 'annualConsumption')
-  const storageSize = findSliderValue(sliders, values, 'storageSize')
-  const chargingStations = findSliderValue(sliders, values, 'chargingStations')
-  const peakLoadKw = findSliderValue(sliders, values, 'peakLoadKw')
-
-  if (
-    typeof annualConsumption !== 'number' ||
-    typeof storageSize !== 'number' ||
-    typeof chargingStations !== 'number'
-  ) {
-    return undefined
-  }
-
-  return {annualConsumption, storageSize, chargingStations, peakLoadKw}
-}
-
-function buildCalculationParameters(
-  parameters: ScenarioMatrixParameter[],
-): CalculationParameters | undefined {
-  const requiredKeys: Array<keyof CalculationParameters> = [
-    'pvSizeKwp',
-    'specificYieldKwhPerKwp',
-    'electricityPriceEurPerKwh',
-    'feedInTariffEurPerKwh',
-    'evDemandPerChargingStationKwh',
-    'smartChargingShiftShare',
-  ]
-  const values = Object.fromEntries(
-    requiredKeys.map((key) => [key, parameters.find((parameter) => parameter.key === key)?.value]),
-  )
-
-  if (requiredKeys.some((key) => typeof values[key] !== 'number' || !Number.isFinite(values[key]))) {
-    return undefined
-  }
-
-  return values as CalculationParameters
-}
-
-function calculateBundleResult(
-  bundle: ScenarioMatrixBundle | undefined,
-  values: CalculatorValues | undefined,
-  parameters: CalculationParameters | undefined,
-) {
-  if (!bundle?.scenarioType || !values || !parameters || !validScenarioTypes.has(bundle.scenarioType as ScenarioType)) {
-    return undefined
-  }
-
-  const result = calculateScenarioResult(bundle.scenarioType as ScenarioType, values, parameters)
-
-  return {
-    autarkyPercent: result.autarkyPercent,
-    annualSavingsEur: result.annualSavingsEur,
-  }
-}
-
 function resolveImageUrl(image: SanityImage | undefined, width = 1800) {
   return buildImageUrl(image, width, undefined, 100) || buildLogoUrl(image)
 }
@@ -280,99 +151,43 @@ function findContactImage(screen: RawNextStepQuery['screen'], customerType: Cust
   }
 }
 
-function normalizeDocuments(
-  documents: RawSalesDocument[] | null | undefined,
+function buildFallbackDocumentCategories(
   selectedBundle: ScenarioMatrixBundle | undefined,
   customerType: CustomerGroup,
 ) {
-  const normalizedDocuments = (documents || []).flatMap((document) => {
-    const title = document.title?.trim()
-
-    if (!document._id || !title) {
-      return []
-    }
-
-    return [{
-      id: document._id,
-      title,
-      description: document.description?.trim() || undefined,
-      href: document.pdfUrl?.trim() || document.sharePointUrl?.trim() || undefined,
-      categoryIds: document.categoryIds || [],
-      categories: (document.categories || []).flatMap((category) => {
-        if (!category?._id) {
-          return []
-        }
-
-        return [{
-          id: category._id,
-          title: category.title?.trim() || '',
-          navigationLabel: category.navigationLabel?.trim() || '',
-          slug: category.slug?.trim() || '',
-        }]
-      }),
-      scenarioIds: document.scenarioIds || [],
-    }]
-  })
-
-  const featureTitles = selectedBundle?.features.length
-    ? selectedBundle.features
-    : customerType === 'b2b'
-      ? ['Photovoltaik', 'Gewerbespeicher', 'Wärmepumpe', 'Ladeinfrastruktur', 'Energiegemeinschaft']
-      : ['Photovoltaik', 'Batteriespeicher', 'Wärmepumpe', 'Ladestation', 'Energiegemeinschaft']
-
-  return featureTitles.map((title, index) => {
-    const displayTitle = normalizeFeatureTitleForCustomer(title, customerType)
-    const normalizedTitle = normalizeCmsKey(displayTitle)
-    const searchKeys = featureSearchKeys(title)
-    const scenarioDocuments = normalizedDocuments.filter((document) =>
-      selectedBundle?.id ? document.scenarioIds.includes(selectedBundle.id) : false,
-    )
-    const categoryDocuments = normalizedDocuments.filter((document) =>
-      document.categories.some((category) => {
-        const values = cmsSearchValues([category.title, category.navigationLabel, category.slug, category.id])
-
-        return values.some((value) =>
-          searchKeys.some((searchKey) => value.includes(searchKey) || searchKey.includes(value)),
-        )
-      }) ||
-      cmsSearchValues(document.categoryIds).some((value) =>
-        searchKeys.some((searchKey) => value.includes(searchKey) || searchKey.includes(value)),
-      ),
-    )
-    const matchingDocuments = [...scenarioDocuments, ...categoryDocuments].filter(
-      (document, documentIndex, list) => list.findIndex((item) => item.id === document.id) === documentIndex,
-    )
-
-    return {
-      key: `${normalizedTitle || 'category'}-${index}`,
-      title: displayTitle,
-      documents: matchingDocuments,
-    }
-  })
+  return (selectedBundle?.features || []).map((title, index) => ({
+    key: `${normalizeCmsKey(title) || 'category'}-${index}`,
+    title: normalizeFeatureTitleForCustomer(title, customerType),
+    documents: [],
+  }))
 }
 
-export function parseNextStepSliderValues(searchParams: Record<string, string | string[] | undefined>) {
-  return Object.fromEntries(
-    Object.entries(searchParams).flatMap(([key, rawValue]) => {
-      if (!key.startsWith('slider.')) {
-        return []
-      }
+function normalizeDocumentCategories(
+  selection: ScenarioDocumentSelection | undefined,
+  selectedBundle: ScenarioMatrixBundle | undefined,
+  customerType: CustomerGroup,
+): NextStepDocumentCategory[] {
+  const categories = (selection?.categories || []).map((category) => ({
+    key: category.key,
+    title: normalizeFeatureTitleForCustomer(category.title, customerType),
+    documents: category.documents.map((document) => ({
+      id: document.id,
+      title: document.title,
+      description: document.description,
+    })),
+  }))
 
-      const value = Number(Array.isArray(rawValue) ? rawValue[0] : rawValue)
-
-      return Number.isFinite(value) ? [[key.slice('slider.'.length), value]] : []
-    }),
-  )
+  return categories.length > 0
+    ? categories
+    : buildFallbackDocumentCategories(selectedBundle, customerType)
 }
 
 export async function getNextStepPageData({
   customerType,
   bundleId,
-  sliderValues,
 }: {
   customerType: CustomerGroup
   bundleId?: string
-  sliderValues: SliderSearchValues
 }): Promise<NextStepPageData> {
   const [scenarioMatrix, nextStep] = await Promise.all([
     getScenarioMatrixPageData(customerType),
@@ -381,16 +196,21 @@ export async function getNextStepPageData({
   const selectedBundle =
     scenarioMatrix.bundles.find((bundle) => bundle.id === bundleId || bundle.slug === bundleId) ||
     scenarioMatrix.bundles[0]
-  const defaultValues = Object.fromEntries(
-    scenarioMatrix.sliders.map((slider) => [slider.key, slider.defaultValue]),
-  )
-  const mergedSliderValues = {...defaultValues, ...sliderValues}
-  const calculatorValues = buildCalculatorValues(scenarioMatrix.sliders, mergedSliderValues)
-  const calculationParameters = buildCalculationParameters(scenarioMatrix.parameters)
-  const selectedResult = calculateBundleResult(selectedBundle, calculatorValues, calculationParameters)
   const config = nextStep.screen?.documentSelectionConfig
   const emailTemplate = config?.emailTemplate || nextStep.defaultEmailTemplate
   const contactImage = findContactImage(nextStep.screen, customerType)
+  let documentSelection: ScenarioDocumentSelection | undefined
+
+  if (selectedBundle) {
+    try {
+      documentSelection = await fetchScenarioDocumentSelection({
+        customerType,
+        scenarioId: selectedBundle.id,
+      })
+    } catch {
+      documentSelection = undefined
+    }
+  }
 
   return {
     customerType,
@@ -402,14 +222,12 @@ export async function getNextStepPageData({
     emailSubject: emailTemplate?.subject?.trim() || undefined,
     emailBody: emailTemplate?.body?.trim() || undefined,
     selectedBundle,
-    selectedResult,
-    parameters: scenarioMatrix.parameters,
     bundleImageUrl: scenarioMatrix.b2cBundleImageUrl || scenarioMatrix.offerImageUrl || scenarioMatrix.heroImageUrl,
     bundleImageAlt:
       scenarioMatrix.b2cBundleImageAlt ||
       scenarioMatrix.offerImageAlt ||
       scenarioMatrix.heroImageAlt,
-    documentCategories: normalizeDocuments(nextStep.documents, selectedBundle, customerType),
+    documentCategories: normalizeDocumentCategories(documentSelection, selectedBundle, customerType),
     contactImageUrl: resolveImageUrl(contactImage.image, 1600),
     contactImageAlt: contactImage.alt,
     navigationItems: scenarioMatrix.navigationItems,

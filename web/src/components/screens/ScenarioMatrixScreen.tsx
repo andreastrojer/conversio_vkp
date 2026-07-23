@@ -19,6 +19,8 @@ import {
   type CalculatorValues,
   type ScenarioType,
 } from '@/lib/calculation/scenarioCalculator'
+import type {ConsultationCalculationResult} from '@/lib/consultation'
+import {saveScenarioSelection} from '@/lib/consultationStore'
 import type {ProductNavigationItem} from '@/lib/whatFits'
 import {AnimatePresence, motion} from 'framer-motion'
 import {ArrowLeft, ArrowRight, ArrowUp, ListFilter} from 'lucide-react'
@@ -445,25 +447,6 @@ function buildNextStepHref(
   return serializedParams ? `${path}?${serializedParams}` : path
 }
 
-function storeNextStepState(
-  customerType: CustomerGroup,
-  activeBundleId: string,
-  calculatorValues: CalculatorValues | undefined,
-) {
-  if (typeof window === 'undefined' || !calculatorValues) {
-    return
-  }
-
-  window.sessionStorage.setItem(
-    'scenarioMatrix.nextStep',
-    JSON.stringify({
-      customerType,
-      bundleId: activeBundleId,
-      calculatorValues,
-    }),
-  )
-}
-
 function bottomNavigationHref(item: ProductNavigationItem, customerType: CustomerGroup) {
   if (item.kind === 'catalog') {
     return `/needs?type=${customerType}`
@@ -474,6 +457,22 @@ function bottomNavigationHref(item: ProductNavigationItem, customerType: Custome
   }
 
   return item.href
+}
+
+function toConsultationCalculationResult(
+  result: CalculatedBundle | undefined,
+): ConsultationCalculationResult | undefined {
+  if (
+    typeof result?.autarkyPercent !== 'number' ||
+    typeof result.annualSavingsEur !== 'number'
+  ) {
+    return undefined
+  }
+
+  return {
+    autarkyPercent: result.autarkyPercent,
+    annualSavingsEur: result.annualSavingsEur,
+  }
 }
 
 export function ScenarioMatrixScreen({
@@ -524,6 +523,9 @@ export function ScenarioMatrixScreen({
     () => visibleBundles.map((bundle) => calculateBundle(bundle, calculatorValues, calculationParameters)),
     [calculationParameters, calculatorValues, visibleBundles],
   )
+  const activeBundleIndex = visibleBundles.findIndex((bundle) => bundle.id === activeBundleId)
+  const activeBundle = activeBundleIndex >= 0 ? visibleBundles[activeBundleIndex] : undefined
+  const activeBundleResult = activeBundleIndex >= 0 ? calculatedBundles[activeBundleIndex] : undefined
   const calculationCtaLabel = primaryCta?.label || visibleBundles[visibleBundles.length - 1]?.nextStepText
   const calculationCtaHref = resolveTarget(primaryCta?.target, customerType)
   const calculationCtaHrefWithState = useMemo(
@@ -698,7 +700,16 @@ export function ScenarioMatrixScreen({
           <div className="absolute bottom-[58px] right-[72px] z-[8] w-[262px] max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-auto [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-auto">
             <Link
               href={calculationCtaHrefWithState}
-              onClick={() => storeNextStepState(customerType, activeBundleId, calculatorValues)}
+              onClick={() => {
+                if (activeBundle) {
+                  saveScenarioSelection({
+                    customerType,
+                    bundle: activeBundle,
+                    matrixValues: values,
+                    calculationResult: toConsultationCalculationResult(activeBundleResult),
+                  })
+                }
+              }}
               className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
             >
               <span>{calculationCtaLabel}</span>

@@ -1,7 +1,7 @@
 import {NextStepScreen} from '@/components/screens/NextStepScreen'
 import {auth} from '@/lib/auth'
 import type {CustomerGroup} from '@/lib/customerSelection'
-import {getNextStepPageData, parseNextStepSliderValues} from '@/lib/nextStep'
+import {getNextStepPageData} from '@/lib/nextStep'
 import {redirect} from 'next/navigation'
 
 type NextStepPageProps = {
@@ -26,8 +26,15 @@ export default async function NextStepPage({searchParams}: NextStepPageProps) {
   const bundle = Array.isArray(resolvedSearchParams.bundle)
     ? resolvedSearchParams.bundle[0]
     : resolvedSearchParams.bundle
-  const sliderValues = parseNextStepSliderValues(resolvedSearchParams)
-  const content = await getNextStepPageData({customerType, bundleId: bundle, sliderValues})
+  const content = await getNextStepPageData({customerType, bundleId: bundle})
 
-  return <NextStepScreen {...content} />
+  return (
+    <NextStepScreen
+      {...content}
+      salesPerson={{
+        name: session.user.name,
+        email: session.user.email,
+      }}
+    />
+  )
 }

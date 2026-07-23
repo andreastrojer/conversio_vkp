@@ -95,6 +95,7 @@ const authSecret = readEnvValue('AUTH_SECRET')
 const microsoftClientId = readEnvValue('AUTH_MICROSOFT_ENTRA_ID_ID')
 const microsoftClientSecret = readEnvValue('AUTH_MICROSOFT_ENTRA_ID_SECRET')
 const microsoftIssuer = normalizeIssuer(readEnvValue('AUTH_MICROSOFT_ENTRA_ID_ISSUER'))
+const microsoftAuthorizationScope = readEnvValue('AUTH_MICROSOFT_ENTRA_ID_SCOPE')
 
 export const microsoftAuthStatus = {
   authSecretSet: !hasPlaceholder(authSecret),
@@ -182,6 +183,15 @@ function createMicrosoftEntraProvider() {
       clientSecret: microsoftClientSecret,
       issuer: microsoftIssuer,
       profilePhotoSize: 48,
+      ...(microsoftAuthorizationScope
+        ? {
+            authorization: {
+              params: {
+                scope: microsoftAuthorizationScope,
+              },
+            },
+          }
+        : {}),
     }),
     [customFetch]: microsoftEntraFetch,
   }
@@ -218,6 +228,16 @@ async function fetchMicrosoftPhotoDataUrl(accessToken: string) {
 }
 
 export async function getMicrosoftProfilePhotoDataUrl() {
+  const accessToken = await getMicrosoftAccessToken()
+
+  if (!accessToken) {
+    return undefined
+  }
+
+  return fetchMicrosoftPhotoDataUrl(accessToken)
+}
+
+export async function getMicrosoftAccessToken() {
   if (!authSecret) {
     return undefined
   }
@@ -232,11 +252,7 @@ export async function getMicrosoftProfilePhotoDataUrl() {
     const accessToken =
       typeof token?.microsoftAccessToken === 'string' ? token.microsoftAccessToken : undefined
 
-    if (!accessToken) {
-      return undefined
-    }
-
-    return fetchMicrosoftPhotoDataUrl(accessToken)
+    return accessToken
   } catch {
     return undefined
   }
@@ -248,6 +264,7 @@ if (process.env.NODE_ENV === 'development') {
     AUTH_MICROSOFT_ENTRA_ID_ID: microsoftAuthStatus.clientIdSet ? 'SET' : 'MISSING',
     AUTH_MICROSOFT_ENTRA_ID_SECRET: microsoftAuthStatus.clientSecretSet ? 'SET' : 'MISSING',
     AUTH_MICROSOFT_ENTRA_ID_ISSUER: microsoftAuthStatus.issuerSet ? 'SET' : 'MISSING',
+    AUTH_MICROSOFT_ENTRA_ID_SCOPE: microsoftAuthorizationScope ? 'CUSTOM' : 'DEFAULT',
     ISSUER_VALID: microsoftAuthStatus.issuerValid,
     PROVIDER_ENABLED: isMicrosoftAuthConfigured,
   })

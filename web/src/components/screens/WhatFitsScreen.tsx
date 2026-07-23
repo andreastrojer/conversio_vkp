@@ -9,6 +9,7 @@ import {
 } from '@/lib/brandingLayout'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {
+  ProductDetailContentItem,
   ProductDetailSection,
   ProductDetailTab,
   ProductModel,
@@ -444,7 +445,7 @@ export function WhatFitsScreen({
       activeTab?.contentItems.length ||
       (isEnergyCommunity && activeTab?.sections.length),
   )
-  const energyCommunityOverviewBulletItems =
+  const energyCommunityOverviewBulletItems: ProductDetailContentItem[] =
     isEnergyCommunityOverview && activeTab
       ? activeTab.contentItems.length > 0
         ? activeTab.contentItems
@@ -454,6 +455,7 @@ export function WhatFitsScreen({
               section.specificationRows
                 .map((row, index) => ({
                   _key: row._key || `${section._key}-spec-${index}`,
+                  title: null,
                   text: row.label?.trim() || row.value?.trim() || '',
                 }))
                 .filter((item) => item.text),

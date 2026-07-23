@@ -648,36 +648,6 @@ export const NEXT_STEP_PAGE_QUERY = defineQuery(groq`{
       }
     }
   },
-  "documents": *[
-    _type == "salesDocument" &&
-    isActive != false &&
-    status == "active" &&
-    (!defined(targetGroup) || targetGroup in [$customerType, "both"])
-  ] | order(coalesce(sortOrder, 999999) asc){
-    _id,
-    title,
-    description,
-    documentType,
-    targetGroup,
-    "categoryIds": categories[]._ref,
-    "categories": categories[]->{
-      _id,
-      title,
-      navigationLabel,
-      "slug": slug.current
-    },
-    "scenarioIds": scenarios[]._ref,
-    version,
-    "pdfUrl": pdfFile.asset->url,
-    sharePointUrl,
-    previewImage{
-      ...,
-      "assetUrl": asset->url,
-      "mimeType": asset->mimeType,
-      "extension": asset->extension,
-      "originalFilename": asset->originalFilename
-    }
-  },
   "defaultEmailTemplate": *[
     _type == "emailTemplate" &&
     isActive != false &&
@@ -689,6 +659,102 @@ export const NEXT_STEP_PAGE_QUERY = defineQuery(groq`{
     subject,
     body,
     signatureHint
+  }
+}`)
+
+export const NEXT_STEP_SCENARIO_DOCUMENT_CATEGORIES_QUERY = defineQuery(groq`*[
+  _type == "scenario" &&
+  _id == $scenarioId &&
+  isActive != false &&
+  (!defined(targetGroup) || targetGroup in [$customerType, "both"])
+][0]{
+  _id,
+  title,
+  "slug": slug.current,
+  targetGroup,
+  scenarioType,
+  recommendedCategories[]->{
+    _id,
+    title,
+    navigationLabel,
+    "slug": slug.current,
+    targetGroup,
+    isActive,
+    sortOrder,
+    "documents": documents[]->[
+      isActive != false &&
+      status == "active" &&
+      (!defined(targetGroup) || targetGroup in [$customerType, "both"]) &&
+      $scenarioId in scenarios[]._ref
+    ] | order(coalesce(sortOrder, 999999) asc){
+      _id,
+      title,
+      description,
+      documentType,
+      targetGroup,
+      status,
+      isActive,
+      version,
+      sortOrder,
+      "scenarioIds": scenarios[]._ref,
+      "pdfUrl": pdfFile.asset->url,
+      "pdfMimeType": pdfFile.asset->mimeType,
+      "pdfOriginalFilename": pdfFile.asset->originalFilename
+    }
+  }
+}`)
+
+export const NEXT_STEP_EMAIL_TEMPLATE_QUERY = defineQuery(groq`{
+  "screenTemplate": coalesce(
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      targetAudience == $customerType &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.emailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenKey.current == "next-step" &&
+      targetAudience == $customerType &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.emailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      targetAudience == "both" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.emailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenKey.current == "next-step" &&
+      targetAudience == "both" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.emailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.emailTemplate->
+  ){
+    _id,
+    title,
+    subject,
+    body,
+    signatureHint,
+    includeSignature
+  },
+  "defaultTemplate": *[
+    _type == "emailTemplate" &&
+    isActive != false &&
+    templateType == "customer" &&
+    (!defined(targetGroup) || targetGroup in [$customerType, "both"])
+  ] | order(coalesce(sortOrder, 999999) asc)[0]{
+    _id,
+    title,
+    subject,
+    body,
+    signatureHint,
+    includeSignature
   }
 }`)
 
