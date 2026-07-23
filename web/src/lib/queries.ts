@@ -299,12 +299,42 @@ export const PROCESS_SCREEN_QUERY = defineQuery(groq`*[
   }
 }`)
 
-export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
-  _type == "appScreen" &&
-  screenKey.current == "scenario-matrix" &&
-  screenType == "scenarioMatrix" &&
-  isActive == true
-][0]{
+export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`coalesce(
+  *[
+    _type == "appScreen" &&
+    screenType == "scenarioMatrix" &&
+    targetAudience == $customerType &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenKey.current == "scenario-matrix" &&
+    targetAudience == $customerType &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenType == "scenarioMatrix" &&
+    targetAudience == "both" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenKey.current == "scenario-matrix" &&
+    targetAudience == "both" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenType == "scenarioMatrix" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenKey.current == "scenario-matrix" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0]
+){
   title,
   "screenKey": screenKey.current,
   screenType,
@@ -482,11 +512,35 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`*[
 
 export const NEXT_STEP_PAGE_QUERY = defineQuery(groq`{
   "screen": coalesce(
-    *[_type == "appScreen" && screenKey.current == "next-step" && targetAudience == $customerType && isActive == true][0],
-    *[_type == "appScreen" && screenType == "documentSelection" && targetAudience == $customerType && isActive == true][0],
-    *[_type == "appScreen" && screenKey.current == "next-step" && targetAudience == "both" && isActive == true][0],
-    *[_type == "appScreen" && screenType == "documentSelection" && targetAudience == "both" && isActive == true][0],
-    *[_type == "appScreen" && screenType == "documentSelection" && isActive == true][0]
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      targetAudience == $customerType &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0],
+    *[
+      _type == "appScreen" &&
+      screenKey.current == "next-step" &&
+      targetAudience == $customerType &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0],
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      targetAudience == "both" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0],
+    *[
+      _type == "appScreen" &&
+      screenKey.current == "next-step" &&
+      targetAudience == "both" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0],
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0]
   ){
     title,
     "screenKey": screenKey.current,

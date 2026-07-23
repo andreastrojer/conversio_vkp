@@ -401,7 +401,16 @@ function BundleCard({
 function resolveTarget(target: string | null | undefined, customerType: CustomerGroup) {
   const normalizedTarget = target?.trim()
 
-  if (!normalizedTarget || normalizedTarget === 'next') {
+  function isNextStepTarget(value: string) {
+    const key = normalizeCmsKey(value)
+      .replace(/^\/+/, '')
+      .split('?')[0]
+      .replace(/-/g, '')
+
+    return /^(nextstep|closing|nachsterschritt|documentselection)\d*$/.test(key)
+  }
+
+  if (!normalizedTarget || normalizedTarget === 'next' || isNextStepTarget(normalizedTarget)) {
     return `/next-step?type=${customerType}`
   }
 
@@ -412,6 +421,10 @@ function resolveTarget(target: string | null | undefined, customerType: Customer
   const screenKey = normalizedTarget.includes(':')
     ? normalizedTarget.split(':').pop() || ''
     : normalizedTarget
+
+  if (isNextStepTarget(screenKey)) {
+    return `/next-step?type=${customerType}`
+  }
 
   return screenKey ? `/${screenKey}?type=${customerType}` : `/offer?type=${customerType}`
 }

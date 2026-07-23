@@ -144,6 +144,51 @@ function normalizeCmsKey(value: string) {
     .toLowerCase()
 }
 
+function compactCmsKey(value: string) {
+  return normalizeCmsKey(value).replace(/[\s_-]+/g, '')
+}
+
+function isStorageTitle(value: string) {
+  const key = compactCmsKey(value)
+
+  return (
+    key.includes('batteriespeicher') ||
+    key.includes('gewerbespeicher') ||
+    key.includes('stromspeicher') ||
+    key === 'speicher'
+  )
+}
+
+function normalizeFeatureTitleForCustomer(title: string, customerType: CustomerGroup) {
+  if (!isStorageTitle(title)) {
+    return title
+  }
+
+  return customerType === 'b2b' ? 'Gewerbespeicher' : 'Batteriespeicher'
+}
+
+function featureSearchKeys(title: string) {
+  const keys = new Set([normalizeCmsKey(title), compactCmsKey(title)])
+
+  if (isStorageTitle(title)) {
+    const aliases = ['Batteriespeicher', 'Gewerbespeicher', 'Stromspeicher', 'Speicher']
+
+    aliases.forEach((alias) => {
+      keys.add(normalizeCmsKey(alias))
+      keys.add(compactCmsKey(alias))
+    })
+  }
+
+  return [...keys].filter(Boolean)
+}
+
+function cmsSearchValues(values: Array<string | undefined>) {
+  return values
+    .filter((value): value is string => Boolean(value))
+    .flatMap((value) => [normalizeCmsKey(value), compactCmsKey(value)])
+    .filter(Boolean)
+}
+
 function findSliderValue(
   sliders: ScenarioMatrixSlider[],
   values: SliderSearchValues,
@@ -238,6 +283,7 @@ function findContactImage(screen: RawNextStepQuery['screen'], customerType: Cust
 function normalizeDocuments(
   documents: RawSalesDocument[] | null | undefined,
   selectedBundle: ScenarioMatrixBundle | undefined,
+  customerType: CustomerGroup,
 ) {
   const normalizedDocuments = (documents || []).flatMap((document) => {
     const title = document.title?.trim()
@@ -270,22 +316,28 @@ function normalizeDocuments(
 
   const featureTitles = selectedBundle?.features.length
     ? selectedBundle.features
-    : ['Photovoltaik', 'Batteriespeicher', 'Wärmepumpe', 'Ladestation', 'Energiegemeinschaft']
+    : customerType === 'b2b'
+      ? ['Photovoltaik', 'Gewerbespeicher', 'Wärmepumpe', 'Ladeinfrastruktur', 'Energiegemeinschaft']
+      : ['Photovoltaik', 'Batteriespeicher', 'Wärmepumpe', 'Ladestation', 'Energiegemeinschaft']
 
   return featureTitles.map((title, index) => {
-    const normalizedTitle = normalizeCmsKey(title)
+    const displayTitle = normalizeFeatureTitleForCustomer(title, customerType)
+    const normalizedTitle = normalizeCmsKey(displayTitle)
+    const searchKeys = featureSearchKeys(title)
     const scenarioDocuments = normalizedDocuments.filter((document) =>
       selectedBundle?.id ? document.scenarioIds.includes(selectedBundle.id) : false,
     )
     const categoryDocuments = normalizedDocuments.filter((document) =>
       document.categories.some((category) => {
-        const values = [category.title, category.navigationLabel, category.slug, category.id]
-          .filter(Boolean)
-          .map(normalizeCmsKey)
+        const values = cmsSearchValues([category.title, category.navigationLabel, category.slug, category.id])
 
-        return values.some((value) => value.includes(normalizedTitle) || normalizedTitle.includes(value))
+        return values.some((value) =>
+          searchKeys.some((searchKey) => value.includes(searchKey) || searchKey.includes(value)),
+        )
       }) ||
-      document.categoryIds.some((categoryId) => normalizeCmsKey(categoryId).includes(normalizedTitle)),
+      cmsSearchValues(document.categoryIds).some((value) =>
+        searchKeys.some((searchKey) => value.includes(searchKey) || searchKey.includes(value)),
+      ),
     )
     const matchingDocuments = [...scenarioDocuments, ...categoryDocuments].filter(
       (document, documentIndex, list) => list.findIndex((item) => item.id === document.id) === documentIndex,
@@ -293,7 +345,7 @@ function normalizeDocuments(
 
     return {
       key: `${normalizedTitle || 'category'}-${index}`,
-      title,
+      title: displayTitle,
       documents: matchingDocuments,
     }
   })
@@ -357,7 +409,7 @@ export async function getNextStepPageData({
       scenarioMatrix.b2cBundleImageAlt ||
       scenarioMatrix.offerImageAlt ||
       scenarioMatrix.heroImageAlt,
-    documentCategories: normalizeDocuments(nextStep.documents, selectedBundle),
+    documentCategories: normalizeDocuments(nextStep.documents, selectedBundle, customerType),
     contactImageUrl: resolveImageUrl(contactImage.image, 1600),
     contactImageAlt: contactImage.alt,
     navigationItems: scenarioMatrix.navigationItems,

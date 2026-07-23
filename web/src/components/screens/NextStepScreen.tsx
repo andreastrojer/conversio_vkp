@@ -15,7 +15,7 @@ import {
 import type { NextStepPageData, NextStepDocumentCategory } from '@/lib/nextStep'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { ScenarioMatrixParameter } from '@/lib/scenarioMatrix'
-import { ArrowRight, Check, Hexagon } from 'lucide-react'
+import { ArrowRight, Hexagon } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -338,7 +338,9 @@ export function NextStepScreen({
                 key={category.key}
                 category={category}
                 active={category.key === activeCategoryKey}
-                onSelect={() => setActiveCategoryKey(category.key)}
+                onSelect={() =>
+                  setActiveCategoryKey((current) => current === category.key ? '' : category.key)
+                }
                 selectedDocumentIds={selectedDocumentIds}
                 onToggleDocument={(documentId) =>
                   setSelectedDocumentIds((current) =>
@@ -378,8 +380,6 @@ export function NextStepScreen({
             />
           </div>
         ) : null}
-
-        <Check className="absolute left-[362px] top-[518px] h-[16px] w-[16px] text-[#4a4f54]" strokeWidth={2.6} aria-hidden="true" />
 
         <ChapterNavigation
           customerType={customerType}
