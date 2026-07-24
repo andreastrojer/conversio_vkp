@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsc -p tsconfig.test.json && node --test ../tmp/web-test-dist/tests/calculation/scenarioCalculator.test.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@sanity/client": "^7.23.0",

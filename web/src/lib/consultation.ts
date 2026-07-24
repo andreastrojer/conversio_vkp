@@ -233,6 +233,110 @@ function csvCell(value: string | number | undefined) {
   return `"${escaped}"`
 }
 
+function htmlCell(value: string | number | undefined) {
+  const text = value === undefined ? '' : String(value)
+
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function formatInteger(value: number) {
+  return new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))
+}
+
+function formatDecimal(value: number) {
+  return new Intl.NumberFormat('de-AT', {maximumFractionDigits: 1}).format(value)
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('de-AT', {
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+    style: 'currency',
+  }).format(Math.round(value))
+}
+
+function formatPercentValue(value: number) {
+  return `${formatInteger(value)} %`
+}
+
+function normalizeExportKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .toLowerCase()
+}
+
+function formatMatrixValue(key: string, value: number) {
+  const normalizedKey = normalizeExportKey(key)
+
+  if (normalizedKey === 'annualconsumption') {
+    return {
+      label: 'Jahresverbrauch',
+      value: `${formatInteger(value)} kWh/Jahr`,
+    }
+  }
+
+  if (
+    normalizedKey === 'storagesize' ||
+    normalizedKey === 'speichergroesse' ||
+    normalizedKey === 'speichergrosse'
+  ) {
+    return {
+      label: 'Speichergröße',
+      value: `${formatDecimal(value)} kWh`,
+    }
+  }
+
+  if (
+    normalizedKey === 'chargingstations' ||
+    normalizedKey === 'ladestationen' ||
+    normalizedKey === 'ladepunkte'
+  ) {
+    return {
+      label: 'Ladepunkte',
+      value: formatInteger(value),
+    }
+  }
+
+  if (normalizedKey === 'peakloadkw' || normalizedKey === 'lastspitze') {
+    return {
+      label: 'Lastspitze',
+      value: `${formatDecimal(value)} kW`,
+    }
+  }
+
+  return {
+    label: key,
+    value: Number.isInteger(value) ? formatInteger(value) : formatDecimal(value),
+  }
+}
+
+function formatCustomerType(value: CustomerGroup | undefined) {
+  if (value === 'b2b') {
+    return 'Geschäftskunden'
+  }
+
+  if (value === 'b2c') {
+    return 'Privatkunden'
+  }
+
+  return ''
+}
+
+function exportRow(label: string, value?: string | number, valueClassName = '') {
+  return `<tr><td class="label">${htmlCell(label)}</td><td class="value ${valueClassName}">${htmlCell(value)}</td></tr>`
+}
+
+function exportSection(title: string) {
+  return `<tr><td class="section" colspan="2">${htmlCell(title)}</td></tr>`
+}
+
 export function buildCrmCsv({
   consultation,
   recipientEmail,
@@ -281,4 +385,136 @@ export function buildCrmCsv({
   ]
 
   return `\uFEFF${header.map(csvCell).join(';')}\r\n${row.map(csvCell).join(';')}\r\n`
+}
+
+export function buildCrmSpreadsheetHtml({
+  consultation,
+  recipientEmail,
+  salesPersonName,
+  salesPersonEmail,
+  selectedDocumentTitles,
+}: {
+  consultation: ConsultationState
+  recipientEmail: string
+  salesPersonName?: string | null
+  salesPersonEmail?: string | null
+  selectedDocumentTitles: string[]
+}) {
+  const matrixRows = Object.entries(consultation.matrixValues)
+    .map(([key, value]) => formatMatrixValue(key, value))
+    .map(({label, value}) => exportRow(label, value))
+    .join('')
+  const includedItemRows = (consultation.selectedBundle?.includedItems || [])
+    .map((item) => exportRow(item.amount || '-', item.label))
+    .join('')
+  const documentRows = selectedDocumentTitles.length
+    ? selectedDocumentTitles.map((title, index) => exportRow(`Produktblatt ${index + 1}`, title)).join('')
+    : exportRow('Produktblätter', 'Keine Auswahl')
+  const generatedAt = new Intl.DateTimeFormat('de-AT', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date())
+
+  return `\uFEFF<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        background: #ffffff;
+        color: #3d4248;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+      }
+
+      table {
+        border-collapse: collapse;
+        min-width: 720px;
+      }
+
+      td {
+        border: 1px solid #d8dde2;
+        padding: 8px 10px;
+        vertical-align: top;
+      }
+
+      .title {
+        background: #3d4248;
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 14px 12px;
+      }
+
+      .subtitle {
+        background: #f4f5f6;
+        color: #5d646b;
+        font-size: 11px;
+        padding: 7px 10px;
+      }
+
+      .section {
+        background: #efb804;
+        color: #3d4248;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .label {
+        background: #f7f8f9;
+        color: #3d4248;
+        font-weight: 700;
+        width: 230px;
+      }
+
+      .value {
+        background: #ffffff;
+        color: #1f2428;
+        width: 490px;
+      }
+
+      .metric {
+        color: #167047;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .money {
+        color: #167047;
+        font-size: 14px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tr><td class="title" colspan="2">Conversio CRM Export</td></tr>
+      <tr><td class="subtitle" colspan="2">Erstellt am ${htmlCell(generatedAt)} · Quelle: Conversio Web-App</td></tr>
+      ${exportSection('Kunde')}
+      ${exportRow('Kundenname', consultation.customer?.name)}
+      ${exportRow('Telefon', consultation.customer?.phone)}
+      ${exportRow('E-Mail', recipientEmail || consultation.customer?.email)}
+      ${exportRow('Kundengruppe', formatCustomerType(consultation.customerType))}
+      ${exportSection('Beratung')}
+      ${exportRow('Bundle', consultation.selectedBundle?.title)}
+      ${exportRow('Scenario-ID', consultation.selectedBundle?.id)}
+      ${exportRow('Scenario-Typ', consultation.selectedBundle?.scenarioType)}
+      ${exportRow('Status', 'Unterlagen vorbereitet')}
+      ${exportSection('Ergebnis')}
+      ${exportRow('Autarkiegrad', consultation.calculationResult ? formatPercentValue(consultation.calculationResult.autarkyPercent) : undefined, 'metric')}
+      ${exportRow('Ersparnis pro Jahr', consultation.calculationResult ? formatCurrency(consultation.calculationResult.annualSavingsEur) : undefined, 'money')}
+      ${exportSection('Matrixwerte')}
+      ${matrixRows || exportRow('Matrixwerte', 'Keine Werte gespeichert')}
+      ${exportSection('Enthaltene Leistungen')}
+      ${includedItemRows || exportRow('Leistungen', 'Keine Leistungen gespeichert')}
+      ${exportSection('Ausgewählte Produktblätter')}
+      ${documentRows}
+      ${exportSection('Mitarbeiter')}
+      ${exportRow('Mitarbeiter', salesPersonName || '')}
+      ${exportRow('Mitarbeiter E-Mail', salesPersonEmail || '')}
+    </table>
+  </body>
+</html>`
 }

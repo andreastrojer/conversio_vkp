@@ -1,4 +1,5 @@
 import {SCENARIO_MATRIX_PAGE_QUERY} from '@/lib/queries'
+import {normalizeB2cSliderDefinition} from '@/lib/calculation/scenarioCalculator'
 import {
   buildImageUrl,
   buildLogoUrl,
@@ -214,7 +215,10 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-function normalizeSliders(sliders: RawSlider[] | null | undefined): ScenarioMatrixSlider[] {
+function normalizeSliders(
+  sliders: RawSlider[] | null | undefined,
+  customerType: CustomerGroup,
+): ScenarioMatrixSlider[] {
   return (sliders || []).flatMap((slider, index) => {
     const key = slider.key?.trim()
     const label = slider.label?.trim()
@@ -239,7 +243,7 @@ function normalizeSliders(sliders: RawSlider[] | null | undefined): ScenarioMatr
       return []
     }
 
-    return [{
+    const normalizedSlider = {
       id: slider._key?.trim() || `${key}-${index}`,
       key,
       label,
@@ -248,7 +252,13 @@ function normalizeSliders(sliders: RawSlider[] | null | undefined): ScenarioMatr
       step,
       defaultValue: clamp(defaultValue, min, max),
       unit: slider.unit?.trim() || undefined,
-    }]
+    }
+
+    return [
+      customerType === 'b2c'
+        ? normalizeB2cSliderDefinition(normalizedSlider)
+        : normalizedSlider,
+    ]
   })
 }
 
@@ -443,7 +453,7 @@ export async function getScenarioMatrixPageData(
       calculatorTabLabel: screen?.calculatorConfig?.calculatorTabLabel?.trim() || '',
       bundleTabLabel: screen?.calculatorConfig?.bundleTabLabel?.trim() || '',
       calculateButtonLabel: screen?.calculatorConfig?.calculateButtonLabel?.trim() || undefined,
-      sliders: normalizeSliders(screen?.calculatorConfig?.sliders),
+      sliders: normalizeSliders(screen?.calculatorConfig?.sliders, customerType),
       metrics: normalizeMetrics(screen?.calculatorConfig?.resultMetrics, customerType),
       parameters: normalizeParameters(screen?.calculatorConfig?.calculationParameters),
       bundles: normalizeBundles(screen?.calculatorConfig?.bundleScenarios, customerType),

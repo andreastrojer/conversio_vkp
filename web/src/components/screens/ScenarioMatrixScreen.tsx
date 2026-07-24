@@ -73,10 +73,6 @@ function normalizeCmsKey(value: string) {
     .toLowerCase()
 }
 
-function findExactParameter(parameters: ScenarioMatrixParameter[], key: keyof CalculationParameters) {
-  return parameters.find((parameter) => parameter.key === key)?.value
-}
-
 function findExactSliderValue(
   sliders: ScenarioMatrixSlider[],
   values: Record<string, number>,
@@ -118,22 +114,12 @@ function getVisibleSliders(sliders: ScenarioMatrixSlider[], customerType: Custom
 
 function buildCalculationParameters(
   parameters: ScenarioMatrixParameter[],
-): CalculationParameters | undefined {
-  const keys: Array<keyof CalculationParameters> = [
-    'pvSizeKwp',
-    'specificYieldKwhPerKwp',
-    'electricityPriceEurPerKwh',
-    'feedInTariffEurPerKwh',
-    'evDemandPerChargingStationKwh',
-    'smartChargingShiftShare',
-  ]
-  const entries = keys.map((key) => [key, findExactParameter(parameters, key)] as const)
-
-  if (entries.some(([, value]) => typeof value !== 'number' || !Number.isFinite(value))) {
-    return undefined
-  }
-
-  return Object.fromEntries(entries) as CalculationParameters
+): CalculationParameters {
+  return Object.fromEntries(
+    parameters.flatMap((parameter) =>
+      Number.isFinite(parameter.value) ? [[parameter.key, parameter.value]] : [],
+    ),
+  ) as CalculationParameters
 }
 
 function calculateBundle(

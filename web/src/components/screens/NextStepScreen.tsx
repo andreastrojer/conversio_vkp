@@ -7,7 +7,7 @@ import {
   brandLogoPositionClassName,
 } from '@/lib/brandingLayout'
 import {
-  buildCrmCsv,
+  buildCrmSpreadsheetHtml,
   bundleToConsultationBundle,
   isValidEmail,
   validateConsultationCustomer,
@@ -442,29 +442,29 @@ export function NextStepScreen({
     }
   }
 
-  function handleExportCsv() {
-    const csvCustomer = customerForSending || consultation.customer
-    const csvConsultation: ConsultationState = {
+  function handleExportSpreadsheet() {
+    const exportCustomer = customerForSending || consultation.customer
+    const exportConsultation: ConsultationState = {
       ...consultation,
-      customer: csvCustomer,
+      customer: exportCustomer,
       selectedBundle:
         consultation.selectedBundle ||
         (selectedBundle ? bundleToConsultationBundle(selectedBundle) : undefined),
       selectedSalesDocumentIds: selectedDocumentIds,
     }
-    const csv = buildCrmCsv({
-      consultation: csvConsultation,
+    const spreadsheet = buildCrmSpreadsheetHtml({
+      consultation: exportConsultation,
       recipientEmail: recipientEmail.trim(),
       salesPersonName: salesPerson.name,
       salesPersonEmail: salesPerson.email,
       selectedDocumentTitles,
     })
-    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'})
+    const blob = new Blob([spreadsheet], {type: 'application/vnd.ms-excel;charset=utf-8'})
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
 
     link.href = url
-    link.download = `conversio-crm-${new Date().toISOString().slice(0, 10)}.csv`
+    link.download = `conversio-crm-${new Date().toISOString().slice(0, 10)}.xls`
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -605,9 +605,9 @@ export function NextStepScreen({
             <button
               type="button"
               className="group inline-flex h-[30px] min-w-[132px] items-center justify-between rounded-full bg-[#efb804] px-[20px] text-[14px] font-bold uppercase leading-none text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
-              onClick={handleExportCsv}
+              onClick={handleExportSpreadsheet}
             >
-              <span>CSV EXPORT</span>
+              <span>EXCEL EXPORT</span>
               <Download className="h-[14px] w-[14px] transition-transform group-hover:translate-y-0.5" strokeWidth={2.4} aria-hidden="true" />
             </button>
           </div>
