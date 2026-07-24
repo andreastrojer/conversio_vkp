@@ -158,7 +158,7 @@ function AboutDetailContent({
 
   return (
     <section className="relative z-[2] h-full w-full overflow-hidden">
-      <div className="absolute left-[-90px] top-[-200px] z-[1] w-[86%] [@media(min-width:768px)_and_(max-width:1366px)]:top-[-124px]">
+      <div className="absolute left-[-90px] top-[-200px] z-[1] w-[86%] [@media(min-width:768px)_and_(max-width:1366px)]:top-[-76px]">
         {mapUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -231,7 +231,7 @@ function AboutDetailContent({
           {ctaHref ? (
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
             >
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
@@ -245,7 +245,7 @@ function AboutDetailContent({
               ) : null}
             </Link>
           ) : (
-            <span className="flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
+            <span className="flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

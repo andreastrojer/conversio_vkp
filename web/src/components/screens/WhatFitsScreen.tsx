@@ -436,8 +436,10 @@ export function WhatFitsScreen({
   const isEnergyCommunityOverview = isEnergyCommunity && isOverviewDetailTab(activeTab || visibleTabs[0])
   const overviewTab = visibleTabs.find(isOverviewDetailTab) || visibleTabs[0]
   const [activeSectionKey, setActiveSectionKey] = useState(activeTab?.sections[0]?._key || '')
-  const activeSection =
-    activeTab?.sections.find((section) => section._key === activeSectionKey) || activeTab?.sections[0]
+  const activeSectionIndex = activeTab?.sections.findIndex((section) => section._key === activeSectionKey) ?? -1
+  const safeActiveSectionIndex =
+    activeTab && activeTab.sections.length > 0 ? Math.max(activeSectionIndex, 0) : 0
+  const activeSection = activeTab?.sections[safeActiveSectionIndex]
   const hasStructuredTabContent = Boolean(
     activeTab?.contentTitle?.trim() ||
       activeTab?.introText?.trim() ||
@@ -848,8 +850,8 @@ export function WhatFitsScreen({
               >
                 {(isTechnicalTab || isFunctions) && activeTab ? (
                   <div className={detailContentPanelClassName}>
-                    {activeTab.sections.map((section) => {
-                      const isActive = section._key === activeSection?._key
+                    {activeTab.sections.map((section, index) => {
+                      const isActive = index === safeActiveSectionIndex
                       const contentId = `${section._key}-technical-content`
 
                       return (
@@ -902,61 +904,58 @@ export function WhatFitsScreen({
                             )}
                           </button>
 
-                          <AnimatePresence initial={false}>
-                            {isActive ? (
-                              <motion.div
-                                id={contentId}
-                                initial={{height: 0, opacity: 0, y: -8}}
-                                animate={{height: 'auto', opacity: 1, y: 0}}
-                                exit={{height: 0, opacity: 0, y: -8}}
-                                transition={{duration: 0.4, ease: [0.22, 1, 0.36, 1]}}
-                                className="overflow-hidden"
-                              >
-                                <div className="pb-[18px] pt-[28px]">
-                                  {section.text ? (
-                                    <div
-                                      className={`${isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
-                                        isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
-                                      }`}
-                                    >
-                                      {isFunctions ? (
-                                        <p>
-                                          {splitParagraphs(section.text).join(' ').replace(/\s+/g, ' ')}
-                                        </p>
-                                      ) : (
-                                        splitParagraphs(section.text).map((paragraph, index) => (
-                                          <p
-                                            key={`${section._key}-paragraph-${index}`}
-                                            className="whitespace-pre-line"
-                                          >
-                                            {paragraph}
-                                          </p>
-                                        ))
-                                      )}
-                                    </div>
-                                  ) : null}
-
-                                  {section.specificationRows.length > 0 ? (
-                                    <dl
-                                      className={`space-y-[8px] text-[16px] leading-[1.32] tracking-[0.01em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
-                                        section.text ? 'mt-[20px]' : ''
-                                      }`}
-                                    >
-                                      {section.specificationRows.map((row, index) => (
-                                        <div
-                                          key={row._key || `${section._key}-row-${index}`}
-                                          className="grid grid-cols-[minmax(0,1fr)_minmax(150px,0.75fr)] gap-[24px]"
+                          {isActive ? (
+                            <motion.div
+                              key={contentId}
+                              id={contentId}
+                              initial={{opacity: 0, y: -6}}
+                              animate={{opacity: 1, y: 0}}
+                              transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
+                            >
+                              <div className="pb-[18px] pt-[28px]">
+                                {section.text ? (
+                                  <div
+                                    className={`${isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
+                                      isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                    }`}
+                                  >
+                                    {isFunctions ? (
+                                      <p>
+                                        {splitParagraphs(section.text).join(' ').replace(/\s+/g, ' ')}
+                                      </p>
+                                    ) : (
+                                      splitParagraphs(section.text).map((paragraph, index) => (
+                                        <p
+                                          key={`${section._key}-paragraph-${index}`}
+                                          className="whitespace-pre-line"
                                         >
-                                          <dt>{row.label}</dt>
-                                          <dd className="text-right font-bold">{row.value}</dd>
-                                        </div>
-                                      ))}
-                                    </dl>
-                                  ) : null}
-                                </div>
-                              </motion.div>
-                            ) : null}
-                          </AnimatePresence>
+                                          {paragraph}
+                                        </p>
+                                      ))
+                                    )}
+                                  </div>
+                                ) : null}
+
+                                {section.specificationRows.length > 0 ? (
+                                  <dl
+                                    className={`space-y-[8px] text-[16px] leading-[1.32] tracking-[0.01em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+                                      section.text ? 'mt-[20px]' : ''
+                                    }`}
+                                  >
+                                    {section.specificationRows.map((row, index) => (
+                                      <div
+                                        key={row._key || `${section._key}-row-${index}`}
+                                        className="grid grid-cols-[minmax(0,1fr)_minmax(150px,0.75fr)] gap-[24px]"
+                                      >
+                                        <dt>{row.label}</dt>
+                                        <dd className="text-right font-bold">{row.value}</dd>
+                                      </div>
+                                    ))}
+                                  </dl>
+                                ) : null}
+                              </div>
+                            </motion.div>
+                          ) : null}
                         </div>
                       )
                     })}

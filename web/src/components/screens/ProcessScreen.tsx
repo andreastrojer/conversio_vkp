@@ -268,7 +268,7 @@ export function ProcessScreen({
           <div className="absolute bottom-[58px] right-[72px] z-[4] w-[276px]">
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
             >
               <span>{primaryCta.label}</span>
               <ArrowRight
