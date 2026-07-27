@@ -5,7 +5,10 @@ import {
   type SanityImage,
 } from '@/lib/authBranding'
 import type {CustomerGroup} from '@/lib/customerSelection'
-import {NEXT_STEP_PAGE_QUERY} from '@/lib/queries'
+import {
+  BUSINESS_BUTTON_ARROW_QUERY,
+  NEXT_STEP_PAGE_QUERY,
+} from '@/lib/queries'
 import {
   fetchScenarioDocumentSelection,
   type ScenarioDocumentSelection,
@@ -37,6 +40,12 @@ type RawEmailTemplate = {
   subject?: string | null
   body?: string | null
   signatureHint?: string | null
+} | null
+
+type MediaAssetDocument = {
+  title?: string | null
+  altText?: string | null
+  image?: SanityImage
 } | null
 
 type RawNextStepQuery = {
@@ -94,6 +103,7 @@ export type NextStepPageData = {
   patternUrl?: string
   patternAlt: string
   navigationArrowUrl?: string
+  sendButtonArrowUrl?: string
 }
 
 const nextStepClient = sanityClient.withConfig({useCdn: false})
@@ -132,6 +142,10 @@ function normalizeFeatureTitleForCustomer(title: string, customerType: CustomerG
 
 function resolveImageUrl(image: SanityImage | undefined, width = 1800) {
   return buildImageUrl(image, width, undefined, 100) || buildLogoUrl(image)
+}
+
+function resolveIconUrl(image: SanityImage | undefined) {
+  return buildLogoUrl(image) || buildImageUrl(image, 96, undefined, 100)
 }
 
 function findContactImage(screen: RawNextStepQuery['screen'], customerType: CustomerGroup) {
@@ -189,9 +203,12 @@ export async function getNextStepPageData({
   customerType: CustomerGroup
   bundleId?: string
 }): Promise<NextStepPageData> {
-  const [scenarioMatrix, nextStep] = await Promise.all([
+  const [scenarioMatrix, nextStep, businessButtonArrow] = await Promise.all([
     getScenarioMatrixPageData(customerType),
     nextStepClient.fetch<RawNextStepQuery>(NEXT_STEP_PAGE_QUERY, {customerType}, freshFetchOptions),
+    nextStepClient
+      .fetch<MediaAssetDocument>(BUSINESS_BUTTON_ARROW_QUERY, {}, freshFetchOptions)
+      .catch(() => null),
   ])
   const selectedBundle =
     scenarioMatrix.bundles.find((bundle) => bundle.id === bundleId || bundle.slug === bundleId) ||
@@ -237,5 +254,6 @@ export async function getNextStepPageData({
     patternUrl: scenarioMatrix.patternUrl,
     patternAlt: scenarioMatrix.patternAlt,
     navigationArrowUrl: scenarioMatrix.navigationArrowUrl,
+    sendButtonArrowUrl: resolveIconUrl(businessButtonArrow?.image),
   }
 }

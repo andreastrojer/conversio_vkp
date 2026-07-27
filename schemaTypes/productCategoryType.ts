@@ -208,6 +208,27 @@ export const productCategoryType = defineType({
       description:
         'Überschrift auf der Modellauswahl, z. B. „BRES SERIES“.',
     }),
+    defineField({
+      name: 'modelGroupLabels',
+      title: 'Beschriftungen der Modellgruppen',
+      type: 'object',
+      group: 'detail',
+      fields: [
+        defineField({
+          name: 'air',
+          title: 'Bezeichnung Luftkühlung',
+          type: 'string',
+          initialValue: 'LUFTGEKÜHLT',
+        }),
+
+        defineField({
+          name: 'immersion',
+          title: 'Bezeichnung Tauchkühlung',
+          type: 'string',
+          initialValue: 'TAUCHGEKÜHLT',
+        }),
+      ],
+    }),
 
     defineField({
       name: 'detailTabs',

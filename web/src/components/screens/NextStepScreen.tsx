@@ -165,13 +165,13 @@ function DocumentCategory({
     <div>
       <button
         type="button"
-        className={`flex h-[46px] w-[348px] items-center justify-between rounded-[8px] border px-[30px] text-left text-[18px] font-medium uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${active
+        className={`flex h-[46px] w-[348px] items-center justify-between rounded-[8px] border-2 px-[30px] text-left text-[18px] font-medium uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${active
           ? isBusiness
-            ? 'rounded-b-none border-[#4a4f54] bg-[#4a4f54] text-white'
+            ? 'rounded-b-none border-white bg-[#4a4f54] text-white'
             : 'rounded-b-none border-[#3d4248] bg-[#3d4248] text-white'
           : isBusiness
-            ? 'border-white/10 bg-transparent text-white'
-            : 'border-[#3d4248]/18 bg-transparent text-[#3d4248]'
+            ? 'border-white bg-transparent text-white'
+            : 'border-[#3d4248] bg-transparent text-[#3d4248]'
           }`}
         aria-expanded={active}
         onClick={onSelect}
@@ -187,10 +187,9 @@ function DocumentCategory({
       <AnimatePresence initial={false}>
         {active ? (
           <motion.div
-            initial={{height: 0, opacity: 0}}
-            animate={{height: 'auto', opacity: 1}}
-            exit={{height: 0, opacity: 0}}
-            transition={{duration: 0.32, ease: [0.22, 1, 0.36, 1]}}
+            initial={{opacity: 0, y: -6}}
+            animate={{opacity: 1, y: 0}}
+            transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
             className={`mt-[-1px] w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
           >
             <div className="px-[32px] pb-[24px] pt-[20px]">
@@ -252,6 +251,7 @@ export function NextStepScreen({
   patternUrl,
   patternAlt,
   navigationArrowUrl,
+  sendButtonArrowUrl,
   salesPerson,
 }: NextStepScreenProps) {
   const consultation = useConsultationStore()
@@ -266,7 +266,6 @@ export function NextStepScreen({
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const foregroundClassName = isBusiness ? 'text-white' : 'text-[#3d4248]'
   const metricClassName = isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'
-  const lineClassName = isBusiness ? 'bg-white' : 'bg-[#3d4248]'
   const displayBundle =
     consultation.customerType === customerType && consultation.selectedBundle
       ? consultation.selectedBundle
@@ -502,36 +501,38 @@ export function NextStepScreen({
           {headline}
         </h1>
 
-        <section className="absolute left-[60px] top-[368px] z-[4] w-[315px]" aria-label="Ausgewähltes Bundle">
+        <section className="absolute left-[60px] top-[368px] z-[4] h-[500px] w-[316px]" aria-label="Ausgewähltes Bundle">
           {displayBundle ? (
             <>
-              <div className="inline-flex h-[38px] min-w-[238px] items-center justify-center bg-[#efb804] px-[24px] text-[18px] font-bold uppercase leading-none text-[#3d4248]">
-                {displayBundle.title}
-              </div>
+              <span className="block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]">
+                <span className="inline-flex h-full min-w-[205px] items-center justify-center bg-[#efb804] px-[24px] text-[18px] font-bold uppercase leading-none text-[#3d4248] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
+                  {displayBundle.title}
+                </span>
+              </span>
 
               {bundleImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={bundleImageUrl}
                   alt={bundleImageAlt}
-                  className="mt-[38px] h-[160px] w-[315px] object-contain object-center"
+                  className="mt-[14px] h-[214px] w-[316px] object-contain object-center"
                 />
               ) : null}
 
               {displayResult ? (
-                <div className={`mt-[58px] ${metricClassName}`}>
+                <div className={`mt-[18px] h-[104px] ${metricClassName}`}>
                   <p className="flex items-baseline gap-[14px] uppercase">
-                    <strong className="text-[34px] font-bold leading-none">{formatPercent(displayResult.autarkyPercent)}</strong>
-                    <span className="text-[22px] font-medium tracking-[0.025em]">AUTARK</span>
+                    <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">{formatPercent(displayResult.autarkyPercent)}</strong>
+                    <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
                   </p>
                   <p className="mt-[6px] flex items-baseline gap-[14px] uppercase">
-                    <strong className="text-[34px] font-bold leading-none">{formatEuro(displayResult.annualSavingsEur)}</strong>
-                    <span className="text-[22px] font-medium tracking-[0.025em]">ERSPARNIS / JAHR</span>
+                    <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">{formatEuro(displayResult.annualSavingsEur)}</strong>
+                    <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
                   </p>
                 </div>
               ) : null}
 
-              <div className={`mt-[44px] flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[24px] text-[16px] leading-[1.35] ${isBusiness ? 'border-white' : 'border-[#3d4248]'}`}>
+              <div className={`mt-0 flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[16px] leading-[1.35] tracking-normal ${isBusiness ? 'border-white' : 'border-[#3d4248]'}`}>
                 <span className="shrink-0 font-normal uppercase">Enthalten:</span>
                 {displayBundle.includedItems.length > 0 ? (
                   <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
@@ -548,7 +549,7 @@ export function NextStepScreen({
           ) : null}
         </section>
 
-        <section className="absolute left-[507px] top-[353px] z-[4] w-[350px]" aria-labelledby="documents-heading">
+        <section className="absolute left-[507px] top-[368px] z-[4] w-[350px]" aria-labelledby="documents-heading">
           <h2 id="documents-heading" className={`text-[36px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {documentsHeadline}
           </h2>
@@ -574,14 +575,13 @@ export function NextStepScreen({
           <h2 id="email-heading" className={`text-[18px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {emailLabel}
           </h2>
-          <div className={`mt-[38px] h-[2px] w-[342px] ${lineClassName}`} aria-hidden="true" />
           <input
             type="email"
             value={recipientEmail}
             placeholder=""
             aria-label="Empfänger-E-Mail"
             aria-invalid={recipientEmail.length > 0 && !emailIsValid}
-            className={`mt-[12px] block h-[34px] w-[342px] border-0 border-b-2 bg-transparent font-sans text-[17px] font-medium outline-none transition-colors focus:border-b-[#efb804] ${
+            className={`mt-[22px] block h-[34px] w-[342px] border-0 border-b-2 bg-transparent font-sans text-[17px] font-medium outline-none transition-colors focus:border-b-[#efb804] ${
               recipientEmail.length > 0 && !emailIsValid
                 ? 'border-b-[#efb804]'
                 : isBusiness
@@ -590,17 +590,27 @@ export function NextStepScreen({
             }`}
             onChange={(event) => handleEmailChange(event.target.value)}
           />
-          <div className="mt-[22px] flex flex-wrap items-center gap-[12px]">
+          <div className="mt-[18px] flex flex-wrap items-center gap-[12px]">
             <button
               type="button"
               disabled={sendDisabled}
               className={`group inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full bg-[#4a4f54] px-[26px] text-[15px] font-bold uppercase leading-none text-white transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
-                sendDisabled ? 'cursor-not-allowed opacity-55' : 'hover:-translate-y-px'
+                sendDisabled ? 'cursor-not-allowed bg-[#a7aaad]' : 'hover:-translate-y-px'
               }`}
               onClick={handleSendDocuments}
             >
               <span>{getSendButtonText(sendStatus, sendButtonLabel)}</span>
-              <ArrowRight className="h-[14px] w-[16px] rotate-[-45deg] transition-transform group-hover:translate-x-0.5" strokeWidth={2.4} aria-hidden="true" />
+              {sendButtonArrowUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={sendButtonArrowUrl}
+                  alt=""
+                  className="block h-[17px] w-[17px] shrink-0 object-contain object-center [filter:brightness(0)] transition-transform group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              ) : (
+                <ArrowRight className="h-[14px] w-[16px] rotate-[-45deg] transition-transform group-hover:translate-x-0.5" strokeWidth={2.4} aria-hidden="true" />
+              )}
             </button>
             <button
               type="button"

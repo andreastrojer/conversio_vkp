@@ -953,12 +953,15 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
       }
     },
     modelSeriesTitle,
-    "models": models[]-> | order(coalesce(sortOrder, 999999) asc){
+    modelGroupLabels,
+    "models": models[]-> | order(coalesce(modelGroupOrder, 999999) asc, coalesce(sortOrder, 999999) asc){
       _id,
       title,
       cardTitle,
       "slug": slug.current,
       seriesLabel,
+      coolingType,
+      modelGroupOrder,
       sortOrder,
       isActive,
       image{
@@ -1344,6 +1347,47 @@ export const CUSTOMER_SELECTION_BUSINESS_CTA_ICON_QUERY = defineQuery(groq`*[
     image.asset->originalFilename match "*arrow*"
   )
 ] | order(_updatedAt desc, sortOrder asc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)
+
+export const BUSINESS_BUTTON_ARROW_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive != false &&
+  defined(image.asset) &&
+  (
+    title == "Buttonpfeil Gewerbe" ||
+    title match "*Buttonpfeil Gewerbe*" ||
+    usage match "*Buttonpfeil Gewerbe*" ||
+    category match "*Buttonpfeil Gewerbe*" ||
+    "Buttonpfeil Gewerbe" in tags[] ||
+    "buttonpfeil-gewerbe" in tags[] ||
+    (
+      (
+        title match "*Buttonpfeil*" ||
+        usage match "*Buttonpfeil*" ||
+        category match "*Buttonpfeil*" ||
+        image.asset->originalFilename match "*Buttonpfeil*"
+      ) &&
+      (
+        targetGroup == "b2b" ||
+        title match "*Gewerbe*" ||
+        usage match "*Gewerbe*" ||
+        category match "*Gewerbe*" ||
+        "gewerbe" in tags[] ||
+        "b2b" in tags[]
+      )
+    )
+  )
+] | order(sortOrder asc, _updatedAt desc)[0]{
   title,
   altText,
   image{

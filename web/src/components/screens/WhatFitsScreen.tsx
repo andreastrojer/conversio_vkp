@@ -263,6 +263,75 @@ function isEnergyCommunityProduct(product?: WhatFitsProduct) {
   )
 }
 
+function isStorageProduct(product?: WhatFitsProduct) {
+  const value = `${normalizeTabValue(product?.categoryType)} ${normalizeTabValue(product?.slug)} ${normalizeTabValue(product?.title)}`
+
+  return value.includes('gewerbespeicher') || value.includes('batteriespeicher') || value.includes('speicher')
+}
+
+type ModelCoolingType = 'air' | 'immersion'
+
+function normalizeCoolingType(value?: string | null): ModelCoolingType | null {
+  const normalizedValue = normalizeTabValue(value)
+
+  if (normalizedValue === 'air' || normalizedValue.includes('luft')) {
+    return 'air'
+  }
+
+  if (normalizedValue === 'immersion' || normalizedValue.includes('tauch')) {
+    return 'immersion'
+  }
+
+  return null
+}
+
+function getCoolingTypeFallbackOrder(type: ModelCoolingType) {
+  return type === 'air' ? 10 : 20
+}
+
+function getCoolingGroupLabel(product: WhatFitsProduct, type: ModelCoolingType) {
+  const label = type === 'air' ? product.modelGroupLabels?.air : product.modelGroupLabels?.immersion
+
+  return label?.trim() || (type === 'air' ? 'LUFTGEKÜHLT' : 'TAUCHGEKÜHLT')
+}
+
+function getModelCoolingGroups(product: WhatFitsProduct | undefined) {
+  if (!product) {
+    return []
+  }
+
+  const groups = new Map<ModelCoolingType, ProductModel[]>()
+
+  for (const model of product.models) {
+    const type = normalizeCoolingType(model.coolingType)
+
+    if (!type) {
+      continue
+    }
+
+    groups.set(type, [...(groups.get(type) || []), model])
+  }
+
+  return [...groups.entries()]
+    .map(([type, models]) => ({
+      type,
+      label: getCoolingGroupLabel(product, type),
+      order:
+        models.reduce(
+          (lowestOrder, model) =>
+            Math.min(
+              lowestOrder,
+              typeof model.modelGroupOrder === 'number'
+                ? model.modelGroupOrder
+                : getCoolingTypeFallbackOrder(type),
+            ),
+          Number.POSITIVE_INFINITY,
+        ),
+      models,
+    }))
+    .sort((a, b) => a.order - b.order)
+}
+
 function hasTabSections(tab?: ProductDetailTab) {
   return Boolean(tab?.sections.length)
 }
@@ -359,23 +428,35 @@ function getBusinessCatalogLabel(label: string) {
 }
 
 function getModelDisplayOrder(model: ProductModel) {
-  if (typeof model.sortOrder === 'number') {
-    return model.sortOrder
+  const value = normalizeTabValue(`${model.cardTitle || ''} ${model.title}`)
+  const bresMatch = value.match(/bres[-\s]*(\d+)[-\s]*(\d+)/)
+
+  if (bresMatch) {
+    return Number(bresMatch[1]) * 10000 + Number(bresMatch[2])
   }
 
-  const value = normalizeTabValue(model.title)
   const order = [
     'bres-240-125',
+    'bres-260-125',
+    'bres-520-250',
     'bres-720-375',
     'bres-1040-500',
     'bres-1200-625',
-    'bres-4160-2000',
-    'bres-2400-1250',
     'bres-2080-1000',
+    'bres-2400-1250',
+    'bres-4160-2000',
   ]
   const index = order.findIndex((item) => value.includes(item))
 
-  return index >= 0 ? index : Number.POSITIVE_INFINITY
+  if (index >= 0) {
+    return index
+  }
+
+  return typeof model.sortOrder === 'number' ? model.sortOrder : Number.POSITIVE_INFINITY
+}
+
+function sortModelsByDisplayOrder(models: ProductModel[]) {
+  return [...models].sort((a, b) => getModelDisplayOrder(a) - getModelDisplayOrder(b))
 }
 
 export function WhatFitsScreen({
@@ -544,6 +625,17 @@ export function WhatFitsScreen({
     router.push(buildNeedsHref(customerType, product.slug, model.slug))
   }
 
+  function openCoolingGroup(groupType: ModelCoolingType) {
+    const group = modelCoolingGroups.find((item) => item.type === groupType)
+    const firstModel = group ? sortModelsByDisplayOrder(group.models)[0] : undefined
+
+    if (!selectedProduct || !firstModel) {
+      return
+    }
+
+    openModel(selectedProduct, firstModel)
+  }
+
   function selectTab(tabKey: string) {
     const tab = visibleTabs.find((item) => item.key === tabKey)
 
@@ -572,6 +664,25 @@ export function WhatFitsScreen({
     currentBottomIndex >= 0 && currentBottomIndex < bottomNavigation.length - 1
       ? bottomNavigation[currentBottomIndex + 1]
       : undefined
+  const modelCoolingGroups = getModelCoolingGroups(selectedProduct)
+  const selectedCoolingType = normalizeCoolingType(selectedModel?.coolingType)
+  const activeCoolingGroup =
+    modelCoolingGroups.find((group) => group.type === selectedCoolingType) || modelCoolingGroups[0]
+  const usesCoolingModelGroups = Boolean(
+    selectedModel &&
+      activeTab?.key === 'overview' &&
+      isStorageProduct(selectedProduct) &&
+      modelCoolingGroups.length > 1,
+  )
+  const visibleModelGroups = usesCoolingModelGroups && activeCoolingGroup
+    ? [activeCoolingGroup]
+    : [{type: 'air' as const, label: '', order: 0, models: selectedProduct?.models || []}]
+  const coolingModelCount = visibleModelGroups.reduce((count, group) => count + group.models.length, 0)
+  const compactCoolingModelCards = usesCoolingModelGroups && coolingModelCount > 5
+  const modelCardClassName = compactCoolingModelCards ? 'h-[450px] w-[72px]' : 'h-[450px] w-[90px]'
+  const modelCardTitleClassName = compactCoolingModelCards
+    ? 'w-[224px] text-[18px]'
+    : 'w-[250px] text-[20px]'
 
   return (
     <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
@@ -756,7 +867,7 @@ export function WhatFitsScreen({
                 media={detailMedia}
                 className={
                   selectedModel && activeTab?.key === 'overview'
-                    ? 'absolute bottom-[58px] left-[150px] h-[420px] w-[420px]'
+                    ? 'absolute bottom-[48px] left-[150px] h-[420px] w-[420px]'
                     : isTechnicalTab
                       ? 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
                     : 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
@@ -782,7 +893,11 @@ export function WhatFitsScreen({
 
               {selectedModel && activeTab?.key === 'overview' ? (
                 <>
-                  <div className="absolute bottom-[118px] left-[42px] z-[4] w-[165px] text-right text-white">
+                  <div
+                    className={`absolute bottom-[118px] left-[42px] z-[4] w-[165px] text-right ${
+                      isBusiness ? 'text-white' : 'text-[#3d4248]'
+                    }`}
+                  >
                     {selectedProduct.modelSeriesTitle ? (
                       <h2 className="text-[24px] font-bold uppercase leading-none tracking-[0.01em]">
                         {selectedProduct.modelSeriesTitle}
@@ -794,47 +909,99 @@ export function WhatFitsScreen({
                   </div>
 
                   <div className="absolute bottom-[118px] left-[560px] z-[4] flex h-[450px] items-end gap-[22px]">
-                    {[...selectedProduct.models].sort((a, b) => getModelDisplayOrder(a) - getModelDisplayOrder(b)).map((model) => {
-                      const isActive = model.slug === selectedModel.slug
-                      const modelCardTitle = model.cardTitle?.trim() || model.title
-                      const cardPatternUrl = isActive
-                        ? modelCardActivePatternUrl || model.selectionCardBackgroundUrl
-                        : modelCardInactivePatternUrl || model.selectionCardBackground2Url || model.selectionCardBackgroundUrl
-
-                      return (
-                        <button
-                          key={model._id}
-                          type="button"
-                          className={`relative h-[450px] w-[90px] overflow-hidden rounded-[12px] text-left transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
-                            isActive ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#464b50] text-white'
-                          }`}
-                          aria-pressed={isActive}
-                          onClick={() => openModel(selectedProduct, model)}
+                    <div className={`flex h-full items-end ${usesCoolingModelGroups ? 'gap-[30px]' : 'gap-[22px]'}`}>
+                      {visibleModelGroups.map((group) => (
+                        <div
+                          key={group.type}
+                          className={`flex h-full items-end ${usesCoolingModelGroups ? 'gap-[16px]' : 'gap-[22px]'}`}
+                          aria-label={group.label || undefined}
                         >
-                          <span className="absolute left-1/2 top-1/2 z-[2] flex w-[250px] -translate-x-1/2 -translate-y-1/2 rotate-[-90deg] items-center justify-start gap-[16px] whitespace-nowrap text-[20px] font-bold uppercase tracking-[0.03em]">
-                            {model.seriesLabel ? <span className="font-normal">{model.seriesLabel}</span> : null}
-                            <span aria-hidden="true">|</span>
-                            <span>{modelCardTitle}</span>
-                          </span>
-                          {cardPatternUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={cardPatternUrl}
-                              alt=""
-                              className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[92px] w-[72px] object-contain object-right-bottom"
-                              aria-hidden="true"
-                            />
-                          ) : (
-                            <span
-                              className={`absolute bottom-0 right-0 z-[1] h-[78px] w-[58px] ${
-                                isActive ? 'bg-[#3d4248]' : 'bg-white'
-                              } [clip-path:polygon(100%_0,100%_100%,0_100%,0_48%)]`}
-                              aria-hidden="true"
-                            />
-                          )}
-                        </button>
-                      )
-                    })}
+                          {sortModelsByDisplayOrder(group.models).map((model) => {
+                            const isActive = model.slug === selectedModel.slug
+                            const modelCardTitle = model.cardTitle?.trim() || model.title
+                            const cardPatternUrl = isActive
+                              ? modelCardActivePatternUrl || model.selectionCardBackgroundUrl
+                              : modelCardInactivePatternUrl || model.selectionCardBackground2Url || model.selectionCardBackgroundUrl
+
+                            return (
+                              <button
+                                key={model._id}
+                                type="button"
+                                className={`relative ${modelCardClassName} overflow-hidden rounded-[12px] text-left transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                                  isActive ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#464b50] text-white'
+                                }`}
+                                aria-pressed={isActive}
+                                onClick={() => openModel(selectedProduct, model)}
+                              >
+                                <span className={`absolute left-1/2 top-1/2 z-[2] flex ${modelCardTitleClassName} -translate-x-1/2 -translate-y-1/2 rotate-[-90deg] items-center justify-start gap-[16px] whitespace-nowrap font-bold uppercase tracking-[0.03em]`}>
+                                  {model.seriesLabel ? <span className="font-normal">{model.seriesLabel}</span> : null}
+                                  <span aria-hidden="true">|</span>
+                                  <span>{modelCardTitle}</span>
+                                </span>
+                                {cardPatternUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={cardPatternUrl}
+                                    alt=""
+                                    className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[92px] w-[72px] object-contain object-right-bottom"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <span
+                                    className={`absolute bottom-0 right-0 z-[1] h-[78px] w-[58px] ${
+                                      isActive ? 'bg-[#3d4248]' : 'bg-white'
+                                    } [clip-path:polygon(100%_0,100%_100%,0_100%,0_48%)]`}
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+
+                    {usesCoolingModelGroups ? (
+                      <div className="mb-[26px] ml-[2px] flex h-[128px] w-[154px] flex-col justify-between self-end">
+                        {modelCoolingGroups.map((group) => {
+                          const isImmersion = group.type === 'immersion'
+                          const markerIconUrl = isImmersion
+                            ? catalogDetailPointActiveUrl
+                            : isBusiness
+                              ? catalogDetailPointInactiveUrl
+                              : catalogDetailPointDarkUrl || catalogDetailPointInactiveUrl
+                          const markerIconClassName =
+                            !isImmersion && !isBusiness && !catalogDetailPointDarkUrl
+                              ? inactiveDetailPointImageColorClass
+                              : ''
+
+                          return (
+                            <button
+                              key={`cooling-${group.type}`}
+                              type="button"
+                              className={`flex items-center gap-[10px] text-[14px] font-bold uppercase leading-none tracking-[0.02em] transition-opacity hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                                isImmersion ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
+                              } ${group.type === activeCoolingGroup?.type ? 'opacity-100' : 'opacity-65'}`}
+                              aria-pressed={group.type === activeCoolingGroup?.type}
+                              onClick={() => openCoolingGroup(group.type)}
+                            >
+                              {markerIconUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={markerIconUrl}
+                                  alt=""
+                                  className={`h-[58px] w-[58px] shrink-0 object-contain ${markerIconClassName}`}
+                                  aria-hidden="true"
+                                />
+                              ) : (
+                                <Hexagon className="h-[58px] w-[58px] shrink-0" strokeWidth={2.8} aria-hidden="true" />
+                              )}
+                              <span>{group.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : null}
                   </div>
                 </>
               ) : null}
@@ -966,11 +1133,11 @@ export function WhatFitsScreen({
                       <h2
                         className={`mb-[28px] uppercase leading-[1.08] tracking-[0.01em] ${
                           isReference
-                            ? 'text-[22px] font-semibold'
+                            ? 'text-[24px] font-semibold'
                             : isEnergyCommunityOverview
                               ? 'text-[24px] font-bold'
                             : isCompactSharedTab
-                              ? 'text-[20px] font-bold'
+                              ? 'text-[24px] font-bold'
                               : 'text-[24px] font-bold'
                         } ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
@@ -984,11 +1151,11 @@ export function WhatFitsScreen({
                       <div
                         className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${
                           isReference
-                            ? 'text-[17px] font-normal leading-[1.45]'
+                            ? 'text-[21px] font-normal leading-[1.38]'
                             : isEnergyCommunityOverview
                               ? 'text-[22px] font-normal leading-[1.28]'
                             : isCompactSharedTab
-                              ? 'text-[20px] font-semibold leading-[1.32] [@media(max-height:800px)]:text-[16px]'
+                              ? 'text-[22px] font-semibold leading-[1.32]'
                               : 'text-[21px] font-semibold leading-[1.35]'
                         } ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
@@ -1001,7 +1168,7 @@ export function WhatFitsScreen({
                     {activeTab.contentItemsTitle?.trim() ? (
                       <h3
                         className={`${isReference ? 'mt-[38px]' : 'mt-[44px]'} font-bold uppercase leading-none tracking-[0.01em] ${
-                          isEnergyCommunityOverview ? 'text-[22px]' : isCompactSharedTab ? 'text-[20px]' : 'text-[22px]'
+                          isEnergyCommunityOverview ? 'text-[22px]' : isCompactSharedTab ? 'text-[22px]' : 'text-[22px]'
                         } ${
                           isBusiness ? 'text-white' : 'text-[#3d4248]'
                         }`}
@@ -1040,7 +1207,7 @@ export function WhatFitsScreen({
                             )}
                             <div
                               className={`font-normal tracking-[0.01em] ${
-                                isEnergyCommunityOverview ? 'text-[21px] leading-[1.35]' : isCompactSharedTab ? 'text-[17px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
+                                isEnergyCommunityOverview ? 'text-[21px] leading-[1.35]' : isCompactSharedTab ? 'text-[18px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
                               } ${
                                 isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
                               }`}
@@ -1061,7 +1228,7 @@ export function WhatFitsScreen({
                               ) : (
                                 <>
                                   {item.title?.trim() ? (
-                                    <strong className={`font-bold ${isInterplay ? 'mb-[2px] block uppercase' : ''}`}>{item.title.trim()}</strong>
+                                    <strong className={`font-semibold ${isInterplay ? 'mb-[2px] block uppercase' : ''}`}>{item.title.trim()}</strong>
                                   ) : null}
                                   {item.text?.trim() ? (
                                     <span className={isInterplay ? 'block' : item.title?.trim() ? 'ml-[5px]' : ''}>
@@ -1079,12 +1246,10 @@ export function WhatFitsScreen({
                     {isEnergyCommunityOverview && energyCommunityOverviewHintSections.length > 0 ? (
                       <div className="mt-[48px] space-y-[30px]">
                         {energyCommunityOverviewHintSections.map((section) => {
-                          const hintLineImageUrl = isBusiness
-                            ? section.mediaImageUrl || section.imageUrl
-                            : section.imageUrl || section.mediaImageUrl
+                          const hintLineImageUrl = section.mediaImageUrl || section.imageUrl
                           const hintLineFilterClass = isBusiness
                             ? section.mediaImageUrl ? '' : '[filter:brightness(0)_invert(1)]'
-                            : section.imageUrl ? '' : '[filter:brightness(0)]'
+                            : section.mediaImageUrl ? '' : '[filter:brightness(0)]'
 
                           return (
                             <div key={section._key} className="grid grid-cols-[7px_minmax(0,1fr)] gap-[24px]">

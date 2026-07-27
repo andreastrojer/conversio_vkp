@@ -54,6 +54,8 @@ export type ProductModel = {
   cardTitle?: string | null
   slug: string
   seriesLabel?: string | null
+  coolingType?: string | null
+  modelGroupOrder?: number | null
   sortOrder?: number | null
   imageUrl?: string
   selectionCardBackgroundUrl?: string
@@ -87,6 +89,10 @@ export type WhatFitsProduct = {
   detailMediaAlt: string
   detailTabs: ProductDetailTab[]
   modelSeriesTitle?: string | null
+  modelGroupLabels?: {
+    air?: string | null
+    immersion?: string | null
+  } | null
   models: ProductModel[]
 }
 
@@ -116,6 +122,10 @@ type ProductDocument = {
   detailImage?: SanityImage
   detailMedia?: CmsMedia
   modelSeriesTitle?: string | null
+  modelGroupLabels?: {
+    air?: string | null
+    immersion?: string | null
+  } | null
   models?: ProductModelDocument[] | null
   detailTabs?: Array<{
     _key?: string | null
@@ -149,6 +159,8 @@ type ProductModelDocument = {
   cardTitle?: string | null
   slug?: string | null
   seriesLabel?: string | null
+  coolingType?: string | null
+  modelGroupOrder?: number | null
   sortOrder?: number | null
   isActive?: boolean | null
   image?: SanityImage
@@ -317,6 +329,15 @@ function normalizeModels(models: ProductModelDocument[] | null | undefined): Pro
         Boolean(model._id && model.title?.trim() && model.slug?.trim() && model.isActive !== false),
     )
     .sort((a, b) => {
+      const firstGroup =
+        typeof a.modelGroupOrder === 'number' ? a.modelGroupOrder : Number.POSITIVE_INFINITY
+      const secondGroup =
+        typeof b.modelGroupOrder === 'number' ? b.modelGroupOrder : Number.POSITIVE_INFINITY
+
+      if (firstGroup !== secondGroup) {
+        return firstGroup - secondGroup
+      }
+
       const first = typeof a.sortOrder === 'number' ? a.sortOrder : Number.POSITIVE_INFINITY
       const second = typeof b.sortOrder === 'number' ? b.sortOrder : Number.POSITIVE_INFINITY
       return first - second
@@ -327,6 +348,8 @@ function normalizeModels(models: ProductModelDocument[] | null | undefined): Pro
       cardTitle: model.cardTitle?.trim() || null,
       slug: model.slug.trim(),
       seriesLabel: model.seriesLabel,
+      coolingType: model.coolingType,
+      modelGroupOrder: model.modelGroupOrder,
       sortOrder: model.sortOrder,
       imageUrl: resolveImageUrl(model.image, 8000),
       selectionCardBackgroundUrl: resolveImageUrl(model.selectionCardBackground),
@@ -374,6 +397,7 @@ function normalizeProducts(products: ProductDocument[] | null | undefined): What
         product.detailMedia?.altText || product.detailMedia?.title || product.detailTitle || product.title,
       detailTabs: normalizeDetailTabs(product.detailTabs, product.detailTitle || product.title),
       modelSeriesTitle: product.modelSeriesTitle,
+      modelGroupLabels: product.modelGroupLabels,
       models: normalizeModels(product.models),
     }))
 }

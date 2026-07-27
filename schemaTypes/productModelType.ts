@@ -170,6 +170,20 @@ export const productModelType = defineType({
         'Kurzes Label auf der Modellkarte, z. B. „SKS“.',
     }),
     defineField({
+      name: 'coolingType',
+      title: 'Kühlungsart',
+      type: 'string',
+      group: 'basis',
+      options: {
+        list: [
+          { title: 'Luftgekühlt', value: 'air' },
+          { title: 'Tauchgekühlt', value: 'immersion' },
+        ],
+        layout: 'radio',
+      },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: 'cardTitle',
       title: 'Titel auf der Modellkarte',
       type: 'string',
