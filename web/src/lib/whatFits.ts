@@ -244,6 +244,9 @@ export type WhatFitsPageData = {
   catalogDetailPointActiveUrl?: string
   catalogDetailPointDarkUrl?: string
   catalogDetailPointInactiveUrl?: string
+  modelGroupAirIconUrl?: string
+  modelGroupImmersionIconUrl?: string
+  modelGroupImmersionDarkIconUrl?: string
   calculateButtonArrowUrl?: string
 }
 
@@ -570,14 +573,17 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       sharedContentPromise,
     ])
     const products = selectScreenProducts(result.screen || null, normalizeProducts(result.products))
-    const navigationAssetUrl = (...titles: string[]) => {
+    const navigationAssetMatches = (...titles: string[]) => {
       const normalizedTitles = new Set(titles.map((title) => title.trim()))
 
-      return resolveImageUrl(
-        result.productNavigationAssets?.find((asset) => normalizedTitles.has(asset.title?.trim() || ''))?.image,
-        256,
+      return (result.productNavigationAssets || []).filter((asset) =>
+        normalizedTitles.has(asset.title?.trim() || ''),
       )
     }
+    const navigationAssetUrlAt = (index: number, ...titles: string[]) =>
+      resolveImageUrl(navigationAssetMatches(...titles)[index]?.image, 256)
+    const navigationAssetUrl = (...titles: string[]) => navigationAssetUrlAt(0, ...titles)
+    const immersionIconTitles = ['Modellgruppe Tauchgekühlt', 'Modellgruppe Tauchgekuehlt']
 
     return {
       headline: result.screen?.headline,
@@ -606,6 +612,9 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       catalogDetailPointDarkUrl: navigationAssetUrl('Schwarzer Kachel', 'Schwarze Kachel'),
       catalogDetailPointInactiveUrl:
         navigationAssetUrl('Katalogdetailpunktweiß') || navigationAssetUrl('Katalogdetailpunktweiss'),
+      modelGroupAirIconUrl: navigationAssetUrl('Modellgruppe Luftgekühlt', 'Modellgruppe Luftgekuehlt'),
+      modelGroupImmersionIconUrl: navigationAssetUrl(...immersionIconTitles),
+      modelGroupImmersionDarkIconUrl: navigationAssetUrlAt(1, ...immersionIconTitles),
       calculateButtonArrowUrl: navigationAssetUrl('Buttonpfeil'),
     }
   } catch {

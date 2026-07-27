@@ -114,6 +114,7 @@ type ScenarioMatrixDocument = {
     calculationParameters?: RawParameter[] | null
     bundleScenarios?: RawBundleScenario[] | null
   } | null
+  fallbackBundleScenarios?: RawBundleScenario[] | null
   offerSections?: RawOfferSection[] | null
   b2cOfferSections?: RawOfferSection[] | null
 } | null
@@ -336,6 +337,7 @@ function findPhotovoltaicOfferSection(sections: RawOfferSection[] | null | undef
 function normalizeBundles(
   bundles: RawBundleScenario[] | null | undefined,
   customerType: CustomerGroup,
+  allowAnyAudienceFallback = false,
 ): ScenarioMatrixBundle[] {
   const activeBundles = (bundles || []).filter((bundle) => bundle.isActive !== false)
   const audienceBundles = activeBundles.filter(
@@ -343,7 +345,7 @@ function normalizeBundles(
       !bundle.targetGroup || bundle.targetGroup === 'both' || bundle.targetGroup === customerType,
   )
 
-  return (audienceBundles.length > 0 ? audienceBundles : activeBundles)
+  return (audienceBundles.length > 0 ? audienceBundles : allowAnyAudienceFallback ? activeBundles : [])
     .sort((a, b) => (a.sortOrder ?? Number.POSITIVE_INFINITY) - (b.sortOrder ?? Number.POSITIVE_INFINITY))
     .flatMap((bundle, index) => {
       const title = bundle.title?.trim()
@@ -446,6 +448,9 @@ export async function getScenarioMatrixPageData(
       findPhotovoltaicOfferSection(screen?.b2cOfferSections) ||
       (screen?.b2cOfferSections || []).find((section) => section.image || section.media?.image)
     const b2cBundleImage = b2cBundleSection?.image || b2cBundleSection?.media?.image
+    const configuredBundles = normalizeBundles(screen?.calculatorConfig?.bundleScenarios, customerType)
+    const fallbackBundles = normalizeBundles(screen?.fallbackBundleScenarios, customerType)
+    const bundles = configuredBundles.length > 0 ? configuredBundles : fallbackBundles
 
     return {
       headline: screen?.headline?.trim() || undefined,
@@ -456,7 +461,7 @@ export async function getScenarioMatrixPageData(
       sliders: normalizeSliders(screen?.calculatorConfig?.sliders, customerType),
       metrics: normalizeMetrics(screen?.calculatorConfig?.resultMetrics, customerType),
       parameters: normalizeParameters(screen?.calculatorConfig?.calculationParameters),
-      bundles: normalizeBundles(screen?.calculatorConfig?.bundleScenarios, customerType),
+      bundles,
       heroImageUrl: resolveImageUrl(heroImage, 3200),
       heroImageAlt: screen?.heroMedia?.altText?.trim() || screen?.heroMedia?.title?.trim() || '',
       heroImage2Url: resolveImageUrl(heroImage2, 3200),

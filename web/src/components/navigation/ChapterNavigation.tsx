@@ -7,6 +7,10 @@ import {ArrowUpRight} from 'lucide-react'
 import Link from 'next/link'
 import {type PointerEvent as ReactPointerEvent, useEffect, useRef, useState} from 'react'
 
+const navigationPanelWidthPx = 510
+const closedNavigationOffsetPx = -(navigationPanelWidthPx + 2)
+const dragOpenThresholdPx = navigationPanelWidthPx * 0.42
+
 type ChapterNavigationProps = {
   customerType: CustomerGroup
   items: ChapterNavigationItem[]
@@ -25,8 +29,10 @@ export function ChapterNavigation({
   navigationArrowUrl,
 }: ChapterNavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [dragTranslateX, setDragTranslateX] = useState<number | null>(null)
   const navigationRef = useRef<HTMLElement>(null)
   const dragStartXRef = useRef<number | null>(null)
+  const dragStartTranslateXRef = useRef(closedNavigationOffsetPx)
   const suppressNextClickRef = useRef(false)
 
   useEffect(() => {
@@ -53,6 +59,8 @@ export function ChapterNavigation({
 
   function handleTriggerPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
     dragStartXRef.current = event.clientX
+    dragStartTranslateXRef.current = isOpen ? 0 : closedNavigationOffsetPx
+    setDragTranslateX(dragStartTranslateXRef.current)
     suppressNextClickRef.current = false
     event.currentTarget.setPointerCapture(event.pointerId)
   }
@@ -65,16 +73,17 @@ export function ChapterNavigation({
     }
 
     const deltaX = event.clientX - startX
+    const nextTranslateX = Math.min(
+      0,
+      Math.max(closedNavigationOffsetPx, dragStartTranslateXRef.current + deltaX),
+    )
 
-    if (!isOpen && deltaX > 44) {
+    setDragTranslateX(nextTranslateX)
+
+    if (Math.abs(deltaX) > 6) {
       suppressNextClickRef.current = true
-      setIsOpen(true)
     }
 
-    if (isOpen && deltaX < -44) {
-      suppressNextClickRef.current = true
-      setIsOpen(false)
-    }
   }
 
   function handleTriggerPointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -82,14 +91,20 @@ export function ChapterNavigation({
 
     if (startX !== null) {
       const deltaX = event.clientX - startX
+      const nextTranslateX = Math.min(
+        0,
+        Math.max(closedNavigationOffsetPx, dragStartTranslateXRef.current + deltaX),
+      )
+      const openAmount = nextTranslateX - closedNavigationOffsetPx
 
-      if (Math.abs(deltaX) > 28) {
+      if (Math.abs(deltaX) > 6) {
         suppressNextClickRef.current = true
-        setIsOpen(deltaX > 0)
+        setIsOpen(openAmount >= dragOpenThresholdPx)
       }
     }
 
     dragStartXRef.current = null
+    setDragTranslateX(null)
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
@@ -104,6 +119,8 @@ export function ChapterNavigation({
     setIsOpen((currentValue) => !currentValue)
   }
 
+  const panelTranslateX =
+    dragTranslateX === null ? (isOpen ? 0 : closedNavigationOffsetPx) : dragTranslateX
   const panelWidth = 'w-[510px]'
   const panelSpacing =
     `rounded-r-[18px] pb-[24px] pr-[54px] ${brandLogoPanelInsetClassName}`
@@ -131,13 +148,14 @@ export function ChapterNavigation({
   return (
     <aside
       ref={navigationRef}
-      className={`fixed left-0 z-50 ${panelWidth} transition-transform duration-300 ease-out ${
-        isOpen ? '[transform:translateX(0)]' : '[transform:translateX(calc(-100%_-_2px))]'
+      className={`fixed left-0 z-50 ${panelWidth} transition-transform ease-out ${
+        dragTranslateX === null ? 'duration-300' : 'duration-0'
       }`}
       aria-label="Kapitel-Navigation"
       style={{
         bottom: 'calc(-1 * var(--presentation-bleed-y, 0px))',
         top: 'calc(-1 * var(--presentation-bleed-y, 0px))',
+        transform: `translateX(${panelTranslateX}px)`,
       }}
     >
       <div
@@ -249,6 +267,7 @@ export function ChapterNavigation({
         onClick={handleTriggerClick}
         onPointerCancel={() => {
           dragStartXRef.current = null
+          setDragTranslateX(null)
         }}
         onPointerDown={handleTriggerPointerDown}
         onPointerMove={handleTriggerPointerMove}

@@ -45,6 +45,9 @@ type WhatFitsScreenProps = {
   catalogDetailPointActiveUrl?: string
   catalogDetailPointDarkUrl?: string
   catalogDetailPointInactiveUrl?: string
+  modelGroupAirIconUrl?: string
+  modelGroupImmersionIconUrl?: string
+  modelGroupImmersionDarkIconUrl?: string
 }
 
 type ProductView = 'catalog' | 'detail'
@@ -289,6 +292,20 @@ function getCoolingTypeFallbackOrder(type: ModelCoolingType) {
   return type === 'air' ? 10 : 20
 }
 
+function resolveModelCoolingType(model?: ProductModel | null): ModelCoolingType | null {
+  const type = normalizeCoolingType(model?.coolingType)
+
+  if (type) {
+    return type
+  }
+
+  if (typeof model?.modelGroupOrder === 'number' && model.modelGroupOrder > 0) {
+    return model.modelGroupOrder >= getCoolingTypeFallbackOrder('immersion') ? 'immersion' : 'air'
+  }
+
+  return null
+}
+
 function getCoolingGroupLabel(product: WhatFitsProduct, type: ModelCoolingType) {
   const label = type === 'air' ? product.modelGroupLabels?.air : product.modelGroupLabels?.immersion
 
@@ -303,7 +320,7 @@ function getModelCoolingGroups(product: WhatFitsProduct | undefined) {
   const groups = new Map<ModelCoolingType, ProductModel[]>()
 
   for (const model of product.models) {
-    const type = normalizeCoolingType(model.coolingType)
+    const type = resolveModelCoolingType(model)
 
     if (!type) {
       continue
@@ -482,6 +499,9 @@ export function WhatFitsScreen({
   catalogDetailPointActiveUrl,
   catalogDetailPointDarkUrl,
   catalogDetailPointInactiveUrl,
+  modelGroupAirIconUrl,
+  modelGroupImmersionIconUrl,
+  modelGroupImmersionDarkIconUrl,
 }: WhatFitsScreenProps) {
   const router = useRouter()
   const initialProduct = products.find((product) => product.slug === initialProductSlug)
@@ -564,6 +584,11 @@ export function WhatFitsScreen({
   const inactiveDetailPointImageColorClass = isBusiness
     ? ''
     : '[filter:brightness(0)_saturate(100%)_invert(24%)_sepia(8%)_saturate(413%)_hue-rotate(176deg)_brightness(91%)_contrast(87%)]'
+  const modelGroupActiveIconColorClass =
+    '[filter:brightness(0)_saturate(100%)_invert(72%)_sepia(96%)_saturate(1828%)_hue-rotate(359deg)_brightness(98%)_contrast(101%)]'
+  const modelGroupInactiveIconColorClass = isBusiness
+    ? 'brightness-0 invert'
+    : inactiveDetailPointImageColorClass
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const catalogMedia = useMemo(
@@ -665,7 +690,7 @@ export function WhatFitsScreen({
       ? bottomNavigation[currentBottomIndex + 1]
       : undefined
   const modelCoolingGroups = getModelCoolingGroups(selectedProduct)
-  const selectedCoolingType = normalizeCoolingType(selectedModel?.coolingType)
+  const selectedCoolingType = resolveModelCoolingType(selectedModel)
   const activeCoolingGroup =
     modelCoolingGroups.find((group) => group.type === selectedCoolingType) || modelCoolingGroups[0]
   const usesCoolingModelGroups = Boolean(
@@ -962,27 +987,38 @@ export function WhatFitsScreen({
                     </div>
 
                     {usesCoolingModelGroups ? (
-                      <div className="mb-[26px] ml-[2px] flex h-[128px] w-[154px] flex-col justify-between self-end">
+                      <div className="mb-0 ml-[2px] flex h-[128px] w-[154px] flex-col justify-between self-end">
                         {modelCoolingGroups.map((group) => {
+                          const isActive = group.type === activeCoolingGroup?.type
                           const isImmersion = group.type === 'immersion'
                           const markerIconUrl = isImmersion
-                            ? catalogDetailPointActiveUrl
+                            ? modelGroupImmersionIconUrl ||
+                              (isBusiness
+                                ? catalogDetailPointInactiveUrl
+                                : modelGroupImmersionDarkIconUrl ||
+                                  catalogDetailPointDarkUrl ||
+                                  catalogDetailPointInactiveUrl)
+                            : modelGroupAirIconUrl || catalogDetailPointActiveUrl
+                          const markerTextClassName = isActive
+                            ? 'text-[#efb804]'
                             : isBusiness
-                              ? catalogDetailPointInactiveUrl
-                              : catalogDetailPointDarkUrl || catalogDetailPointInactiveUrl
+                              ? 'text-white'
+                              : 'text-[#3d4248]'
                           const markerIconClassName =
-                            !isImmersion && !isBusiness && !catalogDetailPointDarkUrl
-                              ? inactiveDetailPointImageColorClass
-                              : ''
+                            isActive && isImmersion
+                              ? modelGroupActiveIconColorClass
+                              : isActive
+                                ? ''
+                                : isImmersion && isBusiness && modelGroupImmersionIconUrl
+                                  ? ''
+                                  : modelGroupInactiveIconColorClass
 
                           return (
                             <button
                               key={`cooling-${group.type}`}
                               type="button"
-                              className={`flex items-center gap-[10px] text-[14px] font-bold uppercase leading-none tracking-[0.02em] transition-opacity hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
-                                isImmersion ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
-                              } ${group.type === activeCoolingGroup?.type ? 'opacity-100' : 'opacity-65'}`}
-                              aria-pressed={group.type === activeCoolingGroup?.type}
+                              className={`flex items-center text-[14px] font-bold uppercase leading-none tracking-[0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${markerTextClassName}`}
+                              aria-pressed={isActive}
                               onClick={() => openCoolingGroup(group.type)}
                             >
                               {markerIconUrl ? (
@@ -996,7 +1032,7 @@ export function WhatFitsScreen({
                               ) : (
                                 <Hexagon className="h-[58px] w-[58px] shrink-0" strokeWidth={2.8} aria-hidden="true" />
                               )}
-                              <span>{group.label}</span>
+                              <span className="-ml-[30px]">{group.label}</span>
                             </button>
                           )
                         })}

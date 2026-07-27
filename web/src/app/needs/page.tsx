@@ -55,6 +55,9 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
       catalogDetailPointActiveUrl={content.catalogDetailPointActiveUrl}
       catalogDetailPointDarkUrl={content.catalogDetailPointDarkUrl}
       catalogDetailPointInactiveUrl={content.catalogDetailPointInactiveUrl}
+      modelGroupAirIconUrl={content.modelGroupAirIconUrl}
+      modelGroupImmersionIconUrl={content.modelGroupImmersionIconUrl}
+      modelGroupImmersionDarkIconUrl={content.modelGroupImmersionDarkIconUrl}
     />
   )
 }

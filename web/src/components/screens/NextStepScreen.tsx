@@ -8,7 +8,6 @@ import {
 } from '@/lib/brandingLayout'
 import {
   buildCrmSpreadsheetHtml,
-  bundleToConsultationBundle,
   isValidEmail,
   validateConsultationCustomer,
   type ConsultationState,
@@ -190,7 +189,7 @@ function DocumentCategory({
             initial={{opacity: 0, y: -6}}
             animate={{opacity: 1, y: 0}}
             transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
-            className={`mt-[-1px] w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
+            className={`mt-0 w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
           >
             <div className="px-[32px] pb-[24px] pt-[20px]">
               {category.documents.length > 0 ? (
@@ -255,7 +254,7 @@ export function NextStepScreen({
   salesPerson,
 }: NextStepScreenProps) {
   const consultation = useConsultationStore()
-  const [requestedActiveCategoryKey, setRequestedActiveCategoryKey] = useState(documentCategories[1]?.key || documentCategories[0]?.key || '')
+  const [requestedActiveCategoryKey, setRequestedActiveCategoryKey] = useState('')
   const [selectedDocumentIdsOverride, setSelectedDocumentIdsOverride] = useState<string[] | null>(null)
   const [recipientEmailOverride, setRecipientEmailOverride] = useState<string | null>(null)
   const [documentCategoriesOverride, setDocumentCategoriesOverride] = useState<NextStepDocumentCategory[] | null>(null)
@@ -296,7 +295,7 @@ export function NextStepScreen({
       ? ''
       : visibleDocumentCategories.some((category) => category.key === requestedActiveCategoryKey)
         ? requestedActiveCategoryKey
-        : visibleDocumentCategories[1]?.key || visibleDocumentCategories[0]?.key || ''
+        : ''
   const recipientEmail = recipientEmailOverride ?? consultation.customer?.email ?? ''
   const customerForSending = consultation.customer
     ? {
@@ -414,7 +413,7 @@ export function NextStepScreen({
         },
         body: JSON.stringify({
           recipientEmail: recipientEmail.trim(),
-          customerType: consultation.customerType || customerType,
+          customerType,
           scenarioId,
           selectedSalesDocumentIds: selectedDocumentIds,
           customer: customerForSending,
@@ -443,12 +442,22 @@ export function NextStepScreen({
 
   function handleExportSpreadsheet() {
     const exportCustomer = customerForSending || consultation.customer
+    const exportBundle = displayBundle
+      ? {
+          id: displayBundle.id,
+          title: displayBundle.title,
+          slug: displayBundle.slug,
+          scenarioType: displayBundle.scenarioType,
+          features: displayBundle.features,
+          includedItems: displayBundle.includedItems,
+        }
+      : undefined
     const exportConsultation: ConsultationState = {
       ...consultation,
+      customerType,
       customer: exportCustomer,
-      selectedBundle:
-        consultation.selectedBundle ||
-        (selectedBundle ? bundleToConsultationBundle(selectedBundle) : undefined),
+      selectedBundle: exportBundle,
+      calculationResult: displayResult,
       selectedSalesDocumentIds: selectedDocumentIds,
     }
     const spreadsheet = buildCrmSpreadsheetHtml({

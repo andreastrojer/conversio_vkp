@@ -329,8 +329,34 @@ function formatCustomerType(value: CustomerGroup | undefined) {
   return ''
 }
 
+function resolveBusinessScenarioType(value: string | undefined) {
+  if (value === 'b2c_komplett') {
+    return 'b2b_wachstum_mobilitaet'
+  }
+
+  if (value === 'b2c_pv_speicher') {
+    return 'b2b_autark_abgesichert'
+  }
+
+  if (value === 'b2c_pv') {
+    return 'b2b_einstieg'
+  }
+
+  return value?.replace(/^b2c_/, 'b2b_')
+}
+
+function formatScenarioTypeForExport(consultation: ConsultationState) {
+  const scenarioType = consultation.selectedBundle?.scenarioType
+
+  if (consultation.customerType === 'b2b' && scenarioType?.startsWith('b2c_')) {
+    return resolveBusinessScenarioType(scenarioType)
+  }
+
+  return scenarioType
+}
+
 function exportRow(label: string, value?: string | number, valueClassName = '') {
-  return `<tr><td class="label">${htmlCell(label)}</td><td class="value ${valueClassName}">${htmlCell(value)}</td></tr>`
+  return `<tr><td class="label">${htmlCell(label)}</td><td class="value ${valueClassName}" style="mso-number-format:'\\@'; text-align:left;"><span class="cell-text">${htmlCell(value)}</span></td></tr>`
 }
 
 function exportSection(title: string) {
@@ -423,68 +449,81 @@ export function buildCrmSpreadsheetHtml({
       body {
         background: #ffffff;
         color: #3d4248;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 12px;
+        font-family: Barlow, Aptos, "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
       }
 
       table {
         border-collapse: collapse;
-        min-width: 720px;
+        min-width: 760px;
+        table-layout: fixed;
       }
 
       td {
-        border: 1px solid #d8dde2;
-        padding: 8px 10px;
-        vertical-align: top;
+        border: 1px solid #e1e5e8;
+        padding: 9px 12px;
+        text-align: left;
+        vertical-align: middle;
       }
 
       .title {
-        background: #3d4248;
+        background: #30363b;
         color: #ffffff;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 700;
-        letter-spacing: 0.5px;
-        padding: 14px 12px;
+        letter-spacing: 0.2px;
+        padding: 18px 14px;
       }
 
       .subtitle {
-        background: #f4f5f6;
-        color: #5d646b;
-        font-size: 11px;
-        padding: 7px 10px;
+        background: #eef1f3;
+        color: #59626a;
+        font-size: 12px;
+        padding: 9px 14px;
       }
 
       .section {
-        background: #efb804;
+        background: #f5c20a;
         color: #3d4248;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
+        letter-spacing: 0.6px;
+        padding: 8px 12px;
         text-transform: uppercase;
       }
 
       .label {
-        background: #f7f8f9;
+        background: #f8fafb;
         color: #3d4248;
-        font-weight: 700;
-        width: 230px;
+        font-weight: 600;
+        width: 240px;
       }
 
       .value {
         background: #ffffff;
         color: #1f2428;
-        width: 490px;
+        mso-number-format: "\\@";
+        text-align: left;
+        width: 520px;
       }
 
       .metric {
-        color: #167047;
-        font-size: 14px;
+        color: #3d4248;
+        font-size: 13px;
         font-weight: 700;
+        text-align: left;
       }
 
       .money {
-        color: #167047;
-        font-size: 14px;
+        color: #3d4248;
+        font-size: 13px;
         font-weight: 700;
+        text-align: left;
+      }
+
+      .cell-text {
+        display: inline-block;
+        text-align: left;
       }
     </style>
   </head>
@@ -500,7 +539,7 @@ export function buildCrmSpreadsheetHtml({
       ${exportSection('Beratung')}
       ${exportRow('Bundle', consultation.selectedBundle?.title)}
       ${exportRow('Scenario-ID', consultation.selectedBundle?.id)}
-      ${exportRow('Scenario-Typ', consultation.selectedBundle?.scenarioType)}
+      ${exportRow('Scenario-Typ', formatScenarioTypeForExport(consultation))}
       ${exportRow('Status', 'Unterlagen vorbereitet')}
       ${exportSection('Ergebnis')}
       ${exportRow('Autarkiegrad', consultation.calculationResult ? formatPercentValue(consultation.calculationResult.autarkyPercent) : undefined, 'metric')}

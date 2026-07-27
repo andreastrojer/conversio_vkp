@@ -446,6 +446,49 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`coalesce(
       }
     }
   },
+  "fallbackBundleScenarios": *[
+    _type == "scenario" &&
+    isActive != false &&
+    (!defined(targetGroup) || targetGroup in [$customerType, "both"])
+  ] | order(coalesce(sortOrder, 999999) asc){
+    _id,
+    title,
+    "slug": slug.current,
+    targetGroup,
+    scenarioType,
+    shortDescription,
+    description,
+    resultText,
+    nextStepText,
+    sortOrder,
+    isActive,
+    includedItems[]{
+      _key,
+      amount,
+      label
+    },
+    recommendedCategories[]->{
+      _id,
+      title,
+      "slug": slug.current,
+      navigationLabel
+    },
+    comparisonValues[]{
+      _key,
+      value,
+      note,
+      metric->{
+        _id,
+        title,
+        "metricKey": metricKey.current,
+        metricType,
+        unit,
+        displayType,
+        sortOrder,
+        isActive
+      }
+    }
+  },
   "offerSections": *[
     _type == "appScreen" &&
     screenType == "offer" &&
@@ -1103,14 +1146,25 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
         "Schwarzer Kachel",
         "Schwarze Kachel",
         "Katalogdetailpunktweiß",
-        "Katalogdetailpunktweiss"
+        "Katalogdetailpunktweiss",
+        "Modellgruppe Tauchgekühlt",
+        "Modellgruppe Tauchgekuehlt",
+        "Modellgruppe Luftgekühlt",
+        "Modellgruppe Luftgekuehlt"
       ] ||
       (
         (title match "*Schwarz*" || title match "*schwarz*") &&
         (title match "*Kachel*" || title match "*kachel*")
+      ) ||
+      (
+        title match "*Modellgruppe*" &&
+        (
+          title match "*Tauch*" ||
+          title match "*Luft*"
+        )
       )
     )
-  ]{
+  ] | order(coalesce(sortOrder, 999999) asc, _createdAt asc){
     title,
     image{
       ...,
