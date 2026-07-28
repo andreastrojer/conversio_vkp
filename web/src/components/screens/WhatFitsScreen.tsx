@@ -511,6 +511,7 @@ export function WhatFitsScreen({
   const [view, setView] = useState<ProductView>(initialProduct ? 'detail' : 'catalog')
   const [selectedSlug, setSelectedSlug] = useState(initialProduct?.slug || products[0]?.slug || '')
   const selectedProduct = products.find((product) => product.slug === selectedSlug) || products[0]
+  const hasLongCatalogCta = (selectedProduct?.catalogCtaLabel?.trim().length || 0) >= 19
   const [selectedModelSlug, setSelectedModelSlug] = useState(initialModel?.slug || selectedProduct?.models[0]?.slug || '')
   const selectedModel =
     selectedProduct?.models.find((model) => model.slug === selectedModelSlug || model._id === selectedModelSlug) ||
@@ -830,11 +831,23 @@ export function WhatFitsScreen({
               {selectedProduct?.catalogCtaLabel ? (
                 <button
                   type="button"
-                  className="group absolute bottom-[58px] right-[72px] z-[4] w-[246px] text-left font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
+                  className={`group absolute bottom-[58px] right-[72px] z-[4] w-[246px] text-left font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                    hasLongCatalogCta
+                      ? '[@media(min-width:768px)_and_(max-width:1366px)]:w-[300px]'
+                      : ''
+                  }`}
                   onClick={() => openProduct(selectedProduct.slug)}
                 >
                   <span className="flex items-center justify-between pb-[10px]">
-                    <span>{selectedProduct.catalogCtaLabel}</span>
+                    <span
+                      className={
+                        hasLongCatalogCta
+                          ? '[@media(min-width:768px)_and_(max-width:1366px)]:whitespace-nowrap'
+                          : undefined
+                      }
+                    >
+                      {selectedProduct.catalogCtaLabel}
+                    </span>
                     <ArrowRight className="h-[14px] w-[20px] transition-transform group-hover:translate-x-1" strokeWidth={2.2} aria-hidden="true" />
                   </span>
                   <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />

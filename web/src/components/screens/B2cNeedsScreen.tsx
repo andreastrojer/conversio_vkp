@@ -62,7 +62,11 @@ function BackgroundMedia({media}: {media?: B2cMedia}) {
       <img
         src={media.imageUrl}
         alt={media.alt}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute bottom-0 left-0 w-full object-cover"
+        style={{
+          height: 'calc(100% + var(--presentation-bleed-y, 0px))',
+          top: 'calc(-1 * var(--presentation-bleed-y, 0px))',
+        }}
       />
     )
   }
@@ -72,7 +76,11 @@ function BackgroundMedia({media}: {media?: B2cMedia}) {
       <video
         src={media.mediaUrl}
         aria-label={media.alt || undefined}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute bottom-0 left-0 w-full object-cover"
+        style={{
+          height: 'calc(100% + var(--presentation-bleed-y, 0px))',
+          top: 'calc(-1 * var(--presentation-bleed-y, 0px))',
+        }}
         autoPlay
         loop
         muted
@@ -539,7 +547,9 @@ export function B2cNeedsScreen({
     selectedProduct?.detailTabs.find((tab) => tab.key === activeTabKey) ||
     selectedProduct?.detailTabs[0]
   const contentTopClassName =
-    activeTab?.key === 'overview' ? 'top-[495px]' : 'top-[370px]'
+    activeTab?.key === 'overview'
+      ? 'top-[495px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[520px]'
+      : 'top-[370px]'
   const contentBottomClassName =
     activeTab?.key === 'functions' ? 'bottom-[84px]' : 'bottom-[105px]'
   const contentOverflowClassName =
@@ -569,7 +579,7 @@ export function B2cNeedsScreen({
 
   return (
     <PresentationViewport backgroundClassName="bg-[#34393e]">
-      <main className="relative isolate h-full w-full overflow-hidden bg-[#34393e] font-sans text-white">
+      <main className="relative isolate h-full w-full overflow-visible bg-[#34393e] font-sans text-white">
         <AnimatePresence mode="wait" initial={false}>
           {selectedProduct ? (
             <motion.section
@@ -664,27 +674,67 @@ export function B2cNeedsScreen({
             >
               <BackgroundMedia media={houseConfig?.backgroundMedia} />
 
-              {houseConfig?.hotspots.map((hotspot) => (
-                <button
-                  key={hotspot._key}
-                  type="button"
-                  className="group absolute z-[4] grid h-[48px] w-[48px] -translate-x-1/2 -translate-y-1/2 place-items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804]"
-                  style={{left: `${hotspot.xPercent}%`, top: `${hotspot.yPercent}%`}}
-                  onClick={() => openProduct(hotspot.product)}
-                  aria-label={hotspot.label}
-                  title={hotspot.label}
-                >
-                  <span className="grid h-[48px] w-[48px] place-items-center transition-transform duration-200 group-hover:scale-105">
-                    {hotspot.media ? (
-                      <MarkerMedia media={hotspot.media} className="h-[34px] w-[34px]" />
-                    ) : (
-                      <span className="grid h-[34px] w-[34px] place-items-center bg-[#efb804] text-[#34393e] shadow-[0_6px_24px_rgba(0,0,0,0.3)] [clip-path:polygon(30%_0,70%_0,100%_30%,100%_70%,70%_100%,30%_100%,0_70%,0_30%)]">
-                        <Plus className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-[4] h-[940px] [@media(min-width:768px)_and_(max-width:1366px)]:fixed [@media(min-width:768px)_and_(max-width:1366px)]:top-1/2 [@media(min-width:768px)_and_(max-width:1366px)]:h-auto [@media(min-width:768px)_and_(max-width:1366px)]:aspect-[16/9] [@media(min-width:768px)_and_(max-width:1366px)]:-translate-y-1/2">
+                {houseConfig?.hotspots.map((hotspot) => (
+                  <span
+                    key={hotspot._key}
+                    className={`absolute h-0 w-0 hover:z-[2] focus-within:z-[2] ${
+                      hotspot.yPercent < 50
+                        ? '[@media(min-width:768px)_and_(max-width:1366px)]:translate-x-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:translate-y-[28px]'
+                        : '[@media(min-width:768px)_and_(max-width:1366px)]:-translate-y-[32px]'
+                    }`}
+                    style={{left: `${hotspot.xPercent}%`, top: `${hotspot.yPercent}%`}}
+                  >
+                    <button
+                      type="button"
+                      className="group pointer-events-auto absolute left-[-24px] top-[-24px] h-[49px] w-[48px] appearance-none overflow-visible border-0 bg-transparent p-0 text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804]"
+                      onClick={() => openProduct(hotspot.product)}
+                      aria-label={`${hotspot.label} öffnen`}
+                    >
+                      <span className="absolute left-0 top-0 grid h-[48px] w-[48px] place-items-center opacity-100 blur-0 transition-[opacity,transform,filter] delay-150 duration-200 ease-out group-hover:rotate-45 group-hover:scale-[0.35] group-hover:opacity-0 group-hover:blur-[3px] group-hover:delay-0 group-focus-visible:rotate-45 group-focus-visible:scale-[0.35] group-focus-visible:opacity-0 group-focus-visible:blur-[3px] group-focus-visible:delay-0">
+                        {hotspot.media ? (
+                          <MarkerMedia media={hotspot.media} className="h-[30px] w-[30px]" />
+                        ) : (
+                          <span className="grid h-[30px] w-[30px] place-items-center bg-[#efb804] text-[#34393e] shadow-[0_6px_24px_rgba(0,0,0,0.3)] [clip-path:polygon(30%_0,70%_0,100%_30%,100%_70%,70%_100%,30%_100%,0_70%,0_30%)]">
+                            <Plus className="h-[16px] w-[16px]" strokeWidth={2} aria-hidden="true" />
+                          </span>
+                        )}
                       </span>
-                    )}
+
+                      <span
+                        className="absolute left-0 top-0 h-[49px] w-[48px] overflow-visible bg-transparent"
+                        aria-hidden="true"
+                      >
+                        <span className="grid h-[49px] w-[48px] shrink-0 place-items-center">
+                          {houseConfig.expandedHotspotMedia ? (
+                            <MarkerMedia
+                              media={houseConfig.expandedHotspotMedia}
+                              className="h-[49px] w-[19px] origin-center scale-x-[0.6] scale-y-0 opacity-0 blur-[2px] transition-[opacity,transform,filter] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100 group-hover:scale-y-100 group-hover:opacity-100 group-hover:blur-0 group-focus-visible:scale-x-100 group-focus-visible:scale-y-100 group-focus-visible:opacity-100 group-focus-visible:blur-0"
+                            />
+                          ) : (
+                            <span className="relative h-[49px] w-[19px] origin-center scale-x-[0.6] scale-y-0 opacity-0 blur-[2px] transition-[opacity,transform,filter] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100 group-hover:scale-y-100 group-hover:opacity-100 group-hover:blur-0 group-focus-visible:scale-x-100 group-focus-visible:scale-y-100 group-focus-visible:opacity-100 group-focus-visible:blur-0">
+                              <ChevronUp
+                                className="absolute left-1/2 top-[1px] h-[14px] w-[14px] -translate-x-1/2"
+                                strokeWidth={1.8}
+                              />
+                              <ChevronDown
+                                className="absolute bottom-[1px] left-1/2 h-[14px] w-[14px] -translate-x-1/2"
+                                strokeWidth={1.8}
+                              />
+                            </span>
+                          )}
+                        </span>
+
+                        <span className="absolute left-[15px] top-1/2 flex max-w-0 -translate-x-[8px] -translate-y-1/2 items-center overflow-hidden bg-transparent opacity-0 [clip-path:inset(0_100%_0_0)] transition-[max-width,opacity,transform,clip-path] duration-[360ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:max-w-[340px] group-hover:translate-x-0 group-hover:opacity-100 group-hover:[clip-path:inset(0_0_0_0)] group-hover:delay-75 group-focus-visible:max-w-[340px] group-focus-visible:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:[clip-path:inset(0_0_0_0)] group-focus-visible:delay-75">
+                          <span className="min-w-max whitespace-nowrap bg-transparent pr-[14px] text-left text-[18px] font-semibold uppercase leading-none text-white">
+                            {hotspot.label}
+                          </span>
+                        </span>
+                      </span>
+                    </button>
                   </span>
-                </button>
-              ))}
+                ))}
+              </div>
 
             </motion.section>
           )}

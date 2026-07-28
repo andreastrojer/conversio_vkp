@@ -46,7 +46,7 @@ function ProcessRing({url, isActive}: {url: string; isActive: boolean}) {
     <img
       src={url}
       alt=""
-      className={`pointer-events-none absolute left-0 top-1/2 h-auto w-[340px] -translate-y-1/2 object-contain transition-opacity duration-300 [@media(min-height:940px)]:w-[288px] ${
+      className={`pointer-events-none absolute left-0 top-1/2 h-auto w-[340px] -translate-y-1/2 object-contain transition-opacity duration-300 [@media(min-height:940px)]:w-[288px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[320px] ${
         isActive ? 'opacity-100' : 'opacity-[0.82]'
       }`}
       aria-hidden="true"
@@ -139,7 +139,7 @@ export function ProcessScreen({
         </div>
 
         <p
-          className={`absolute bottom-[165px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+          className={`absolute bottom-[165px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[235px] ${
             isBusiness ? 'text-white/90' : 'text-[#3d4248]/90'
           }`}
         >
@@ -147,7 +147,7 @@ export function ProcessScreen({
         </p>
 
         <section
-          className="absolute left-[175px] top-[252px] z-[3] h-[560px] w-[550px] [--process-step-gap:70px]"
+          className="absolute left-[175px] top-[252px] z-[3] h-[560px] w-[550px] [--process-label-offset:29px] [--process-step-gap:70px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[210px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[588px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:84px]"
           aria-label="Prozessschritte als Ringstapel"
         >
           {sections.map((section, index) => {
@@ -158,7 +158,7 @@ export function ProcessScreen({
               <motion.button
                 key={sectionKey(section, index)}
                 type="button"
-                className="absolute left-0 h-[80px] w-[350px] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
+                className="absolute left-0 h-[80px] w-[350px] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] [@media(min-width:768px)_and_(max-width:1366px)]:h-[84px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[350px]"
                 style={{top: `calc(${index} * var(--process-step-gap))`, zIndex: sections.length - index}}
                 animate={{
                   x: isActive ? 75 : 30,
@@ -192,7 +192,7 @@ export function ProcessScreen({
             <motion.div
               className="absolute left-[405px] flex w-[265px] items-center gap-[10px] transition-[top] duration-[420ms] ease-out [@media(min-height:940px)]:left-[355px]"
               style={{
-                top: `calc(${safeActiveIndex} * var(--process-step-gap) + 29px)`,
+                top: `calc(${safeActiveIndex} * var(--process-step-gap) + var(--process-label-offset))`,
               }}
             >
               <span className="h-px w-[46px] shrink-0 bg-[#efb804]" aria-hidden="true" />
@@ -210,7 +210,7 @@ export function ProcessScreen({
         </section>
 
         <section
-          className="absolute right-[72px] top-[235px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px]"
+          className="absolute right-[72px] top-[235px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[210px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-list-step:84px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-point-center:42px]"
           aria-label="Prozessschritte"
         >
           <span

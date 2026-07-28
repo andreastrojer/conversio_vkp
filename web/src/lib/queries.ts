@@ -227,6 +227,44 @@ export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
       "originalFilename": asset->originalFilename
     }
   },
+  "hotspotExpandedMedia": *[
+    _type == "mediaAsset" &&
+    mediaType == "image" &&
+    isActive != false &&
+    lower(title) match "*aufklapp*pfeil*"
+  ] | order(coalesce(sortOrder, 999999) asc, _createdAt asc)[0]{
+    title,
+    altText,
+    mediaType,
+    externalUrl,
+    "fileUrl": file.asset->url,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    }
+  },
+  "interplayMarkerMedia": *[
+    _type == "mediaAsset" &&
+    mediaType == "image" &&
+    isActive != false &&
+    lower(title) match "stichpunkte pfeil*"
+  ] | order(coalesce(sortOrder, 999999) asc, _createdAt asc)[0]{
+    title,
+    altText,
+    mediaType,
+    externalUrl,
+    "fileUrl": file.asset->url,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    }
+  },
   b2cHouseConfig{
     backgroundMedia->{
       title,

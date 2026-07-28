@@ -143,6 +143,8 @@ type OfferScreenDocument = {
   } | null
   sections?: OfferSection[] | null
   b2cHouseConfig?: B2cHouseConfigDocument
+  hotspotExpandedMedia?: OfferMedia
+  interplayMarkerMedia?: OfferMedia
   productBottomNavigation?: B2cNavigationItemDocument[] | null
   productNavigationAssets?: Array<{
     title?: string | null
@@ -223,6 +225,7 @@ export type B2cHouseHotspot = {
 export type B2cHouseConfig = {
   backgroundMedia: B2cMedia
   defaultHotspotMedia?: B2cMedia
+  expandedHotspotMedia?: B2cMedia
   hotspots: B2cHouseHotspot[]
 }
 
@@ -427,7 +430,10 @@ function normalizeB2cDetailTabs(tabs: B2cDetailTabDocument[] | null | undefined)
   })
 }
 
-function normalizeB2cProduct(product: B2cProductDocument | null | undefined) {
+function normalizeB2cProduct(
+  product: B2cProductDocument | null | undefined,
+  fallbackBenefitMarkerMedia?: B2cMedia,
+) {
   const isB2cProduct = product?.targetGroup === 'b2c' || product?.targetGroup === 'both'
   const detailConfig = product?.b2cDetailConfig
   const backgroundMedia = normalizeB2cMedia(
@@ -484,7 +490,7 @@ function normalizeB2cProduct(product: B2cProductDocument | null | undefined) {
       detailConfig.benefitMarkerMedia,
       product.title,
       320,
-    ),
+    ) || fallbackBenefitMarkerMedia,
     detailTabs,
   } satisfies B2cProduct
 }
@@ -492,6 +498,7 @@ function normalizeB2cProduct(product: B2cProductDocument | null | undefined) {
 function normalizeB2cHouseConfig(
   config: B2cHouseConfigDocument | undefined,
   productsById: Map<string, B2cProduct>,
+  expandedHotspotMediaDocument?: OfferMedia,
 ): B2cHouseConfig | undefined {
   const backgroundMedia = normalizeB2cMedia(config?.backgroundMedia, '')
 
@@ -500,6 +507,11 @@ function normalizeB2cHouseConfig(
   }
 
   const defaultHotspotMedia = normalizeB2cMedia(config.defaultHotspotMedia, '', 320)
+  const expandedHotspotMedia = normalizeB2cMedia(
+    expandedHotspotMediaDocument,
+    '',
+    320,
+  )
   const hotspots = (config.hotspots || []).flatMap<B2cHouseHotspot>((hotspot) => {
     const product = hotspot.product?._id
       ? productsById.get(hotspot.product._id)
@@ -536,6 +548,7 @@ function normalizeB2cHouseConfig(
   return {
     backgroundMedia,
     defaultHotspotMedia,
+    expandedHotspotMedia,
     hotspots,
   }
 }
@@ -623,10 +636,18 @@ export async function getOfferPageData(
             }
           : null,
       }))
+    const fallbackBenefitMarkerMedia = normalizeB2cMedia(
+      screen?.interplayMarkerMedia,
+      '',
+      64,
+    )
     const b2cProducts =
       customerType === 'b2c'
         ? b2cProductDocuments.flatMap<B2cProduct>((product) => {
-            const normalizedProduct = normalizeB2cProduct(product)
+            const normalizedProduct = normalizeB2cProduct(
+              product,
+              fallbackBenefitMarkerMedia,
+            )
 
             return normalizedProduct ? [normalizedProduct] : []
           })
@@ -636,7 +657,11 @@ export async function getOfferPageData(
     )
     const b2cHouseConfig =
       customerType === 'b2c'
-        ? normalizeB2cHouseConfig(screen?.b2cHouseConfig, b2cProductsById)
+        ? normalizeB2cHouseConfig(
+            screen?.b2cHouseConfig,
+            b2cProductsById,
+            screen?.hotspotExpandedMedia,
+          )
         : undefined
     const navigationAssetUrl = (title: string) =>
       resolveImageUrl(

@@ -13,7 +13,7 @@ type AccountMenuClientProps = {
 }
 
 const compactWrapperClassName =
-  'max-[1600px]:right-[64px] max-[1600px]:top-[52px] [@media(max-height:920px)]:right-[64px] [@media(max-height:920px)]:top-[52px]'
+  'max-[1600px]:right-[64px] max-[1600px]:top-[calc(52px-var(--presentation-header-lift-y,0px))] [@media(max-height:920px)]:right-[64px] [@media(max-height:920px)]:top-[calc(52px-var(--presentation-header-lift-y,0px))]'
 const compactTriggerClassName =
   'max-[1600px]:h-[68px] max-[1600px]:w-[68px] [@media(max-height:920px)]:h-[68px] [@media(max-height:920px)]:w-[68px]'
 const compactIconFrameClassName =
@@ -66,7 +66,7 @@ export function AccountMenuClient({
   return (
     <div
       ref={menuRef}
-      className={`absolute right-[72px] top-[60px] z-20 font-sans ${enlargeOnCompactViewport ? compactWrapperClassName : ''}`}
+      className={`absolute right-[72px] top-[calc(60px-var(--presentation-header-lift-y,0px))] z-20 font-sans ${enlargeOnCompactViewport ? compactWrapperClassName : ''}`}
     >
       <button
         ref={triggerRef}

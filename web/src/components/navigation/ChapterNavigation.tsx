@@ -1,7 +1,7 @@
 'use client'
 
 import type {ChapterNavigationItem} from '@/lib/about'
-import {brandLogoImageClassName, brandLogoPanelInsetClassName} from '@/lib/brandingLayout'
+import {brandLogoImageClassName} from '@/lib/brandingLayout'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {ArrowUpRight} from 'lucide-react'
 import Link from 'next/link'
@@ -123,20 +123,22 @@ export function ChapterNavigation({
     dragTranslateX === null ? (isOpen ? 0 : closedNavigationOffsetPx) : dragTranslateX
   const panelWidth = 'w-[510px]'
   const panelSpacing =
-    `rounded-r-[18px] pb-[24px] pr-[54px] ${brandLogoPanelInsetClassName}`
+    'rounded-r-[18px] pb-[24px] pl-[60px] pr-[54px] pt-[43px]'
   const panelOverflow = 'overflow-hidden'
   const navigationSpacing =
-    'mt-[40px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%]'
+    'mt-[40px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[700px] [@media(min-width:768px)_and_(max-width:1366px)]:scale-100 [@media(min-width:768px)_and_(max-width:1366px)]:[width:100%]'
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
-  const itemGap = 'gap-[24px]'
+  const itemGap =
+    'gap-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:gap-[44px]'
   const numberSize = 'h-[42px] w-[42px]'
   const numberTextSize =
     'text-[16px] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
   const titleTextSize =
-    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px]'
-  const ctaOffset = 'ml-[66px] mt-[14px]'
+    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[29px]'
+  const ctaOffset =
+    'ml-[66px] mt-[14px] [@media(min-width:768px)_and_(max-width:1366px)]:ml-[86px]'
   const ctaSize =
-    'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px]'
+    'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[31px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[178px]'
   const ctaIconClassName = 'h-[17px] w-[17px] shrink-0 object-contain'
   const isPrivate = customerType === 'b2c'
   const panelTheme = isPrivate ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
@@ -153,16 +155,14 @@ export function ChapterNavigation({
       }`}
       aria-label="Kapitel-Navigation"
       style={{
-        bottom: 'calc(-1 * var(--presentation-bleed-y, 0px))',
-        top: 'calc(-1 * var(--presentation-bleed-y, 0px))',
+        bottom: 0,
+        top: 0,
         transform: `translateX(${panelTranslateX}px)`,
       }}
     >
       <div
         id="chapter-navigation-panel"
-        className={`absolute inset-0 ${panelOverflow} ${panelSpacing} ${panelTheme} ${
-          isOpen ? 'shadow-[18px_0_52px_rgba(0,0,0,0.18)]' : 'shadow-none'
-        }`}
+        className={`absolute inset-0 ${panelOverflow} ${panelSpacing} ${panelTheme} shadow-none`}
       >
         <div className="h-[72px]">
           {logoUrl ? (

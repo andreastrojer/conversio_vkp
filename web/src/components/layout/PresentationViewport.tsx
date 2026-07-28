@@ -5,12 +5,11 @@ import {useLayoutEffect, useState} from 'react'
 
 const REFERENCE_HEIGHT = 940
 const MIN_REFERENCE_WIDTH = 1440
-const TABLET_MAX_WIDTH = 1366
-const TABLET_MIN_WIDTH = 768
 const SURFACE_OVERSCAN = 4
 
 type ViewportGeometry = {
   bleedY: number
+  height: number
   scale: number
   width: number
 }
@@ -28,18 +27,18 @@ export function PresentationViewport({
 
   useLayoutEffect(() => {
     function updateScale() {
+      const viewportWidth = window.visualViewport?.width ?? window.innerWidth
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight
       const scale = Math.min(
-        window.innerWidth / MIN_REFERENCE_WIDTH,
-        window.innerHeight / REFERENCE_HEIGHT,
+        viewportWidth / MIN_REFERENCE_WIDTH,
+        viewportHeight / REFERENCE_HEIGHT,
       )
-      const width = Math.ceil(Math.max(MIN_REFERENCE_WIDTH, window.innerWidth / scale)) + SURFACE_OVERSCAN
-      const isTabletWidth =
-        window.innerWidth >= TABLET_MIN_WIDTH && window.innerWidth <= TABLET_MAX_WIDTH
-      const bleedY = isTabletWidth
-        ? 0
-        : Math.max(0, (window.innerHeight / scale - REFERENCE_HEIGHT) / 2)
+      const width =
+        Math.ceil(Math.max(MIN_REFERENCE_WIDTH, viewportWidth / scale)) + SURFACE_OVERSCAN
+      const height = Math.ceil(Math.max(REFERENCE_HEIGHT, viewportHeight / scale))
+      const bleedY = Math.max(0, (height - REFERENCE_HEIGHT) / 2)
 
-      setGeometry({bleedY, scale, width})
+      setGeometry({bleedY, height, scale, width})
     }
 
     updateScale()
@@ -55,11 +54,13 @@ export function PresentationViewport({
   return (
     <div className={`fixed inset-0 overflow-hidden ${backgroundClassName}`}>
       <div
-        className="absolute left-1/2 top-1/2 h-[940px] overflow-visible"
+        className="absolute left-1/2 top-1/2 overflow-visible"
         style={
           {
             '--presentation-bleed-y': `${geometry?.bleedY ?? 0}px`,
+            '--presentation-header-lift-y': `${Math.min(geometry?.bleedY ?? 0, 24)}px`,
             containerType: 'size',
+            height: `${geometry?.height ?? REFERENCE_HEIGHT}px`,
             opacity: geometry === null ? 0 : 1,
             transform: `translate(-50%, -50%) scale(${geometry?.scale ?? 1})`,
             transformOrigin: 'center',
@@ -69,7 +70,12 @@ export function PresentationViewport({
           } as CSSProperties
         }
       >
-        {children}
+        <div
+          className="absolute inset-x-0 bottom-0 overflow-visible"
+          style={{top: `${geometry?.bleedY ?? 0}px`}}
+        >
+          {children}
+        </div>
       </div>
     </div>
   )
