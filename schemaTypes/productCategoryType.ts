@@ -92,7 +92,7 @@ export const productCategoryType = defineType({
       group: 'catalog',
       description:
         'Name neben der Nummer. Kann vom normalen Produktnamen abweichen, z. B. „BEG“.',
-      validation: (Rule) => Rule.required(),
+
     }),
 
     defineField({
@@ -130,7 +130,7 @@ export const productCategoryType = defineType({
       type: 'string',
       group: 'catalog',
       description: 'Zum Beispiel „ZU PHOTOVOLTAIK“.',
-      validation: (Rule) => Rule.required(),
+
     }),
 
     // ==================================================
@@ -184,6 +184,45 @@ export const productCategoryType = defineType({
       description:
         'Optionales Video oder eine Animation für die Produktdetailseite.',
       to: [{ type: 'mediaAsset' }],
+    }),
+    defineField({
+      name: 'b2cDetailConfig',
+      title: 'B2C Detail-Konfiguration',
+      type: 'object',
+      group: 'detail',
+      fields: [
+        defineField({
+          name: 'isEnabled',
+          title: 'Aktiv',
+          type: 'boolean',
+          initialValue: false,
+        }),
+        defineField({
+          name: 'backgroundMedia',
+          title: 'Hintergrundmedium',
+          type: 'reference',
+          to: [{ type: 'mediaAsset' }],
+        }),
+        defineField({
+          name: 'overlayOpacity',
+          title: 'Overlay-Deckkraft in Prozent',
+          type: 'number',
+          initialValue: 45,
+          validation: (Rule) => Rule.min(0).max(100),
+        }),
+        defineField({
+          name: 'processMarkerMedia',
+          title: 'Prozess-Marker-Medium optional',
+          type: 'reference',
+          to: [{ type: 'mediaAsset' }],
+        }),
+        defineField({
+          name: 'benefitMarkerMedia',
+          title: 'Nutzen-Marker-Medium optional',
+          type: 'reference',
+          to: [{ type: 'mediaAsset' }],
+        }),
+      ],
     }),
     defineField({
       name: 'models',
@@ -306,6 +345,129 @@ export const productCategoryType = defineType({
                 }),
             }),
             defineField({
+              name: 'functionSteps',
+              title: 'Schritte der Funktionsweise',
+              type: 'array',
+              description:
+                'Nummerierte Schritte für den Tab „FUNKTIONSWEISE“. Die Reihenfolge wird über das Feld Reihenfolge gesteuert.',
+              hidden: ({ parent }) => parent?.key !== 'functions',
+
+              validation: (Rule) =>
+                Rule.custom((value, context) => {
+                  const parent = context.parent as { key?: string }
+
+                  if (parent?.key === 'functions') {
+                    return Array.isArray(value) && value.length > 0
+                      ? true
+                      : 'Bitte mindestens einen Schritt anlegen.'
+                  }
+
+                  return true
+                }),
+
+              of: [
+                defineArrayMember({
+                  name: 'functionStep',
+                  title: 'Funktionsschritt',
+                  type: 'object',
+
+                  fields: [
+                    defineField({
+                      name: 'stepNumber',
+                      title: 'Schrittnummer',
+                      type: 'number',
+                      validation: (Rule) => Rule.required().integer().min(1),
+                    }),
+
+                    defineField({
+                      name: 'title',
+                      title: 'Überschrift',
+                      type: 'string',
+                      validation: (Rule) => Rule.required(),
+                    }),
+
+                    defineField({
+                      name: 'text',
+                      title: 'Beschreibung',
+                      type: 'text',
+                      rows: 4,
+                      validation: (Rule) => Rule.required(),
+                    }),
+
+                    defineField({
+                      name: 'sortOrder',
+                      title: 'Reihenfolge',
+                      type: 'number',
+                      initialValue: 0,
+                      validation: (Rule) => Rule.integer().min(0),
+                    }),
+
+                    defineField({
+                      name: 'isActive',
+                      title: 'Aktiv',
+                      type: 'boolean',
+                      initialValue: true,
+                    }),
+                  ],
+
+                  preview: {
+                    select: {
+                      number: 'stepNumber',
+                      title: 'title',
+                      subtitle: 'text',
+                    },
+
+                    prepare({ number, title, subtitle }) {
+                      return {
+                        title: `${number ?? '?'} – ${title || 'Unbenannter Schritt'}`,
+                        subtitle,
+                      }
+                    },
+                  },
+                }),
+              ],
+            }),
+
+            defineField({
+              name: 'functionNavigation',
+              title: 'Darstellung und Navigation',
+              type: 'object',
+              hidden: ({ parent }) => parent?.key !== 'functions',
+
+              fields: [
+                defineField({
+                  name: 'visibleSteps',
+                  title: 'Gleichzeitig sichtbare Schritte',
+                  type: 'number',
+                  initialValue: 3,
+                  validation: (Rule) => Rule.required().integer().min(1).max(5),
+                }),
+
+                defineField({
+                  name: 'stepMarkerMedia',
+                  title: 'Oktagon-Muster optional',
+                  type: 'reference',
+                  to: [{ type: 'mediaAsset' }],
+                  description:
+                    'Optionales Muster für die nummerierten Oktagone. Falls leer, erzeugt das Frontend das Oktagon.',
+                }),
+
+                defineField({
+                  name: 'upArrowMedia',
+                  title: 'Pfeil nach oben optional',
+                  type: 'reference',
+                  to: [{ type: 'mediaAsset' }],
+                }),
+
+                defineField({
+                  name: 'downArrowMedia',
+                  title: 'Pfeil nach unten optional',
+                  type: 'reference',
+                  to: [{ type: 'mediaAsset' }],
+                }),
+              ],
+            }),
+            defineField({
               name: 'contentItemsTitle',
               title: 'Überschrift der Stichpunkte',
               type: 'string',
@@ -391,14 +553,17 @@ export const productCategoryType = defineType({
               description:
                 'Beim Überblick meist ein Textabschnitt. Bei technischen Daten mehrere aufklappbare Abschnitte.',
               hidden: ({ parent }) =>
-                parent?.key === 'interplay' || parent?.key === 'reference',
+                parent?.key === 'interplay' ||
+                parent?.key === 'reference' ||
+                parent?.key === 'functions',
               validation: (Rule) =>
                 Rule.custom((value, context) => {
                   const parent = context.parent as { key?: string }
 
                   if (
                     parent?.key === 'overview' ||
-                    parent?.key === 'technical'
+                    parent?.key === 'technical' ||
+                    parent?.key === 'functions'
                   ) {
                     return Array.isArray(value) && value.length > 0
                       ? true
@@ -421,6 +586,12 @@ export const productCategoryType = defineType({
                       type: 'string',
                       description:
                         'Zum Beispiel „LEISTUNG & ERTRAG“, „SYSTEMTECHNIK“ oder „GARANTIEN“. Beim Überblick darf das Feld leer bleiben.',
+                    }),
+
+                    defineField({
+                      name: 'stepNumber',
+                      title: 'Schrittnummer optional',
+                      type: 'number',
                     }),
 
                     defineField({
@@ -490,6 +661,13 @@ export const productCategoryType = defineType({
                       title: 'Medium / Animation optional',
                       type: 'reference',
                       to: [{ type: 'mediaAsset' }],
+                    }),
+
+                    defineField({
+                      name: 'sortOrder',
+                      title: 'Reihenfolge',
+                      type: 'number',
+                      initialValue: 0,
                     }),
 
                     defineField({

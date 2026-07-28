@@ -1,6 +1,8 @@
+import {B2cNeedsScreen} from '@/components/screens/B2cNeedsScreen'
 import {WhatFitsScreen} from '@/components/screens/WhatFitsScreen'
 import {auth} from '@/lib/auth'
 import type {CustomerGroup} from '@/lib/customerSelection'
+import {getOfferPageData} from '@/lib/offer'
 import {getWhatFitsPageData} from '@/lib/whatFits'
 import {redirect} from 'next/navigation'
 
@@ -29,6 +31,29 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
   const customerType = resolveCustomerType(type)
   const initialProductSlug = Array.isArray(product) ? product[0] : product
   const initialModelSlug = Array.isArray(model) ? model[0] : model
+
+  if (customerType === 'b2c') {
+    const content = await getOfferPageData(customerType, 'whatfits')
+
+    return (
+      <B2cNeedsScreen
+        initialProductSlug={initialProductSlug}
+        headline={content.headline}
+        houseConfig={content.b2cHouseConfig}
+        products={content.b2cProducts}
+        productNavigationItems={content.b2cNavigationItems}
+        productNavigationLeftArrowUrl={content.productNavigationLeftArrowUrl}
+        productNavigationRightArrowUrl={content.productNavigationRightArrowUrl}
+        productNavigationCatalogIconUrl={content.productNavigationCatalogIconUrl}
+        navigationItems={content.navigationItems}
+        logoUrl={content.logoUrl}
+        inverseLogoUrl={content.inverseLogoUrl}
+        logoAlt={content.logoAlt}
+        navigationArrowUrl={content.navigationArrowUrl}
+      />
+    )
+  }
+
   const content = await getWhatFitsPageData(customerType)
 
   return (

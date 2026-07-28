@@ -165,9 +165,9 @@ export const ABOUT_SCREEN_QUERY = defineQuery(groq`coalesce(
 }`)
 
 export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
-  *[_type == "appScreen" && screenType == "offer" && targetAudience == $customerType && isActive == true][0],
-  *[_type == "appScreen" && screenType == "offer" && targetAudience == "both" && isActive == true][0],
-  *[_type == "appScreen" && screenType == "offer" && isActive == true][0]
+  *[_type == "appScreen" && screenType == $screenType && targetAudience == $customerType && isActive == true][0],
+  *[_type == "appScreen" && screenType == $screenType && targetAudience == "both" && isActive == true][0],
+  *[_type == "appScreen" && screenType == $screenType && isActive == true][0]
 ){
   title,
   "screenKey": screenKey.current,
@@ -192,6 +192,233 @@ export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
     image{
       ...,
       "assetUrl": asset->url
+    }
+  },
+  productBottomNavigation[]{
+    _key,
+    itemType,
+    label,
+    screenKey,
+    product->{
+      _id,
+      title,
+      "slug": slug.current,
+      navigationLabel,
+      targetGroup,
+      isActive
+    }
+  },
+  "productNavigationAssets": *[
+    _type == "mediaAsset" &&
+    mediaType == "image" &&
+    isActive != false &&
+    title in [
+      "Linker Nav Pfeil",
+      "Rechter Nav Pfeil",
+      "Linker Navbutton"
+    ]
+  ] | order(coalesce(sortOrder, 999999) asc, _createdAt asc){
+    title,
+    image{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    }
+  },
+  b2cHouseConfig{
+    backgroundMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    defaultHotspotMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    "hotspots": hotspots[
+      isActive != false &&
+      defined(product._ref)
+    ] | order(coalesce(sortOrder, 999999) asc){
+      _key,
+      label,
+      xPercent,
+      yPercent,
+      sortOrder,
+      isActive,
+      media->{
+        title,
+        altText,
+        mediaType,
+        externalUrl,
+        "fileUrl": file.asset->url,
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      },
+      product->{
+        _id,
+        title,
+        "slug": slug.current,
+        targetGroup,
+        isActive,
+        detailTitle,
+        navigationLabel,
+        b2cDetailConfig{
+          isEnabled,
+          overlayOpacity,
+          backgroundMedia->{
+            title,
+            altText,
+            mediaType,
+            externalUrl,
+            "fileUrl": file.asset->url,
+            image{
+              ...,
+              "assetUrl": asset->url,
+              "mimeType": asset->mimeType,
+              "extension": asset->extension,
+              "originalFilename": asset->originalFilename
+            }
+          },
+          processMarkerMedia->{
+            title,
+            altText,
+            mediaType,
+            externalUrl,
+            "fileUrl": file.asset->url,
+            image{
+              ...,
+              "assetUrl": asset->url,
+              "mimeType": asset->mimeType,
+              "extension": asset->extension,
+              "originalFilename": asset->originalFilename
+            }
+          },
+          benefitMarkerMedia->{
+            title,
+            altText,
+            mediaType,
+            externalUrl,
+            "fileUrl": file.asset->url,
+            image{
+              ...,
+              "assetUrl": asset->url,
+              "mimeType": asset->mimeType,
+              "extension": asset->extension,
+              "originalFilename": asset->originalFilename
+            }
+          }
+        },
+        detailTabs[
+          isActive != false &&
+          key in ["overview", "functions", "interplay"]
+        ]{
+          _key,
+          title,
+          key,
+          isActive,
+          contentTitle,
+          introText,
+          contentItemsTitle,
+          contentItems[isActive != false]{
+            _key,
+            title,
+            text,
+            isActive
+          },
+          "functionSteps": functionSteps[isActive != false] | order(
+            coalesce(sortOrder, 999999) asc,
+            stepNumber asc
+          ){
+            _key,
+            stepNumber,
+            title,
+            text,
+            sortOrder,
+            isActive
+          },
+          functionNavigation{
+            visibleSteps,
+            stepMarkerMedia->{
+              title,
+              altText,
+              mediaType,
+              externalUrl,
+              "fileUrl": file.asset->url,
+              image{
+                ...,
+                "assetUrl": asset->url,
+                "mimeType": asset->mimeType,
+                "extension": asset->extension,
+                "originalFilename": asset->originalFilename
+              }
+            },
+            upArrowMedia->{
+              title,
+              altText,
+              mediaType,
+              externalUrl,
+              "fileUrl": file.asset->url,
+              image{
+                ...,
+                "assetUrl": asset->url,
+                "mimeType": asset->mimeType,
+                "extension": asset->extension,
+                "originalFilename": asset->originalFilename
+              }
+            },
+            downArrowMedia->{
+              title,
+              altText,
+              mediaType,
+              externalUrl,
+              "fileUrl": file.asset->url,
+              image{
+                ...,
+                "assetUrl": asset->url,
+                "mimeType": asset->mimeType,
+                "extension": asset->extension,
+                "originalFilename": asset->originalFilename
+              }
+            }
+          },
+          "sections": sections[isActive != false] | order(
+            coalesce(sortOrder, 999999) asc
+          ){
+            _key,
+            title,
+            stepNumber,
+            text,
+            sortOrder,
+            isActive
+          }
+        }
+      }
     }
   },
   "sections": sections[] | order(coalesce(sortOrder, 999999) asc){
@@ -225,6 +452,151 @@ export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
         ...,
         "assetUrl": asset->url
       }
+    }
+  }
+}`)
+
+export const B2C_PRODUCT_DETAILS_QUERY = defineQuery(groq`*[
+  _type == "productCategory" &&
+  isActive == true &&
+  targetGroup in ["b2c", "both"] &&
+  b2cDetailConfig.isEnabled == true
+]{
+  _id,
+  title,
+  "slug": slug.current,
+  targetGroup,
+  isActive,
+  detailTitle,
+  navigationLabel,
+  b2cDetailConfig{
+    isEnabled,
+    overlayOpacity,
+    backgroundMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    processMarkerMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    benefitMarkerMedia->{
+      title,
+      altText,
+      mediaType,
+      externalUrl,
+      "fileUrl": file.asset->url,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    }
+  },
+  detailTabs[
+    isActive != false &&
+    key in ["overview", "functions", "interplay"]
+  ]{
+    _key,
+    title,
+    key,
+    isActive,
+    contentTitle,
+    introText,
+    contentItemsTitle,
+    contentItems[isActive != false]{
+      _key,
+      title,
+      text,
+      isActive
+    },
+    "functionSteps": functionSteps[isActive != false] | order(
+      coalesce(sortOrder, 999999) asc,
+      stepNumber asc
+    ){
+      _key,
+      stepNumber,
+      title,
+      text,
+      sortOrder,
+      isActive
+    },
+    functionNavigation{
+      visibleSteps,
+      stepMarkerMedia->{
+        title,
+        altText,
+        mediaType,
+        externalUrl,
+        "fileUrl": file.asset->url,
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      },
+      upArrowMedia->{
+        title,
+        altText,
+        mediaType,
+        externalUrl,
+        "fileUrl": file.asset->url,
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      },
+      downArrowMedia->{
+        title,
+        altText,
+        mediaType,
+        externalUrl,
+        "fileUrl": file.asset->url,
+        image{
+          ...,
+          "assetUrl": asset->url,
+          "mimeType": asset->mimeType,
+          "extension": asset->extension,
+          "originalFilename": asset->originalFilename
+        }
+      }
+    },
+    "sections": sections[isActive != false] | order(
+      coalesce(sortOrder, 999999) asc
+    ){
+      _key,
+      title,
+      stepNumber,
+      text,
+      sortOrder,
+      isActive
     }
   }
 }`)

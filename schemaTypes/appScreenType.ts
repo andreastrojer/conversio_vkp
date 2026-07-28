@@ -1,4 +1,4 @@
-import { defineField, defineType } from 'sanity'
+import { defineArrayMember, defineField, defineType } from 'sanity'
 
 const targetAudienceOptions = [
   { title: 'Privatkunden', value: 'b2c' },
@@ -341,6 +341,104 @@ export const appScreenType = defineType({
             },
           },
         },
+      ],
+    }),
+    defineField({
+      name: 'b2cHouseConfig',
+      title: 'B2C Haus-Konfiguration',
+      type: 'object',
+      group: 'content',
+      hidden: ({ document }) => document?.screenType !== 'whatfits',
+      fields: [
+        defineField({
+          name: 'backgroundMedia',
+          title: 'Hintergrundmedium',
+          type: 'reference',
+          to: [{ type: 'mediaAsset' }],
+          validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: 'defaultHotspotMedia',
+          title: 'Standard-Hotspot-Medium optional',
+          type: 'reference',
+          to: [{ type: 'mediaAsset' }],
+        }),
+        defineField({
+          name: 'hotspots',
+          title: 'Hotspots',
+          type: 'array',
+          of: [
+            defineArrayMember({
+              name: 'b2cHouseHotspot',
+              title: 'Hotspot',
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'label',
+                  title: 'Beschriftung',
+                  type: 'string',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'product',
+                  title: 'Produkt',
+                  type: 'reference',
+                  to: [{ type: 'productCategory' }],
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'xPercent',
+                  title: 'X-Position in Prozent',
+                  type: 'number',
+                  validation: (Rule) => Rule.required().min(0).max(100),
+                }),
+                defineField({
+                  name: 'yPercent',
+                  title: 'Y-Position in Prozent',
+                  type: 'number',
+                  validation: (Rule) => Rule.required().min(0).max(100),
+                }),
+                defineField({
+                  name: 'media',
+                  title: 'Eigenes Hotspot-Medium optional',
+                  type: 'reference',
+                  to: [{ type: 'mediaAsset' }],
+                }),
+                defineField({
+                  name: 'sortOrder',
+                  title: 'Reihenfolge',
+                  type: 'number',
+                }),
+                defineField({
+                  name: 'isActive',
+                  title: 'Aktiv',
+                  type: 'boolean',
+                  initialValue: true,
+                }),
+              ],
+              preview: {
+                select: {
+                  label: 'label',
+                  productTitle: 'product.title',
+                  xPercent: 'xPercent',
+                  yPercent: 'yPercent',
+                  media: 'media.image',
+                },
+                prepare({ label, productTitle, xPercent, yPercent, media }) {
+                  const hasPosition = typeof xPercent === 'number' && typeof yPercent === 'number'
+
+                  return {
+                    title: label || productTitle || 'Hotspot',
+                    subtitle: `${productTitle || 'Kein Produkt'} · ${
+                      hasPosition ? `Position: ${xPercent}% / ${yPercent}%` : 'Keine Position'
+                    }`,
+                    media,
+                  }
+                },
+              },
+            }),
+          ],
+        }),
       ],
     }),
     defineField({
