@@ -38,11 +38,55 @@ function assertFiniteNonNegativeEnergy(result: ReturnType<typeof calculateScenar
     if (
       key.endsWith('Kwh') ||
       key.endsWith('Kw') ||
-      key.endsWith('Eur') ||
       key === 'autarkyPercent'
     ) {
       assert.ok(value >= 0, `${key} must not be negative`)
     }
+  }
+
+  assert.ok(result.baselineCostEur >= 0)
+  assert.ok(result.newEnergyCostEur >= 0)
+  assert.ok(result.feedInRevenueEur >= 0)
+}
+
+function assertEnergyBalances(result: ReturnType<typeof calculateScenarioResult>) {
+  const demandBalance =
+    result.directPvConsumptionKwh + result.batteryDischargeKwh + result.gridImportKwh
+  const pvBalance =
+    result.directPvConsumptionKwh + result.batteryChargeKwh + result.exportedPvKwh
+  const expectedSelfConsumedPv =
+    result.directPvConsumptionKwh + result.batteryChargeKwh
+  const expectedSelfSuppliedLoad =
+    result.directPvConsumptionKwh + result.batteryDischargeKwh
+
+  assert.ok(
+    Math.abs(result.totalDemandKwh - demandBalance) <= 3,
+    `demand balance differs by ${result.totalDemandKwh - demandBalance} kWh`,
+  )
+  assert.ok(
+    Math.abs(result.pvGenerationKwh - pvBalance) <= 3,
+    `PV balance differs by ${result.pvGenerationKwh - pvBalance} kWh`,
+  )
+  assert.ok(Math.abs(result.selfConsumedPvKwh - expectedSelfConsumedPv) <= 2)
+  assert.ok(Math.abs(result.selfSuppliedLoadKwh - expectedSelfSuppliedLoad) <= 2)
+
+  if (result.totalDemandKwh > 0) {
+    const expectedAutarkyPercent = Math.round(
+      (result.selfSuppliedLoadKwh / result.totalDemandKwh) * 100,
+    )
+
+    assert.ok(Math.abs(result.autarkyPercent - expectedAutarkyPercent) <= 1)
+  }
+
+  if (result.batteryChargeKwh > 0) {
+    assert.ok(
+      Math.abs(
+        result.batteryChargeKwh -
+          result.batteryDischargeKwh -
+          result.storageLossKwh,
+      ) <= 3,
+      'battery charge, discharge and loss must form a closed annual balance',
+    )
   }
 }
 
@@ -95,6 +139,7 @@ test('passes LASTSPITZE into battery peak coverage calculation', () => {
 test('PV basis has no storage effect', () => {
   const result = calculateScenarioResult('b2c_pv', baseValues, baseParameters)
 
+  assert.equal(result.batteryChargeKwh, 0)
   assert.equal(result.batteryDischargeKwh, 0)
   assert.equal(result.batteryPeakCoverageKw, 0)
   assert.equal(result.usableStorageKwh, 0)
@@ -165,7 +210,10 @@ test('larger storage does not increase autarky when no PV energy is available', 
   )
 
   assert.equal(largeStorage.autarkyPercent, smallStorage.autarkyPercent)
+  assert.equal(largeStorage.batteryChargeKwh, 0)
   assert.equal(largeStorage.batteryDischargeKwh, smallStorage.batteryDischargeKwh)
+  assert.equal(largeStorage.selfConsumedPvKwh, 0)
+  assert.equal(largeStorage.exportedPvKwh, 0)
 })
 
 test('annual savings follow avoided grid import plus feed-in revenue', () => {
@@ -197,4 +245,109 @@ test('calculation is deterministic and contains no invalid numbers', () => {
 
   assert.deepEqual(secondRun, firstRun)
   assertFiniteNonNegativeEnergy(firstRun)
+  assertEnergyBalances(firstRun)
+})
+
+test('storage changes only battery flows, not direct PV consumption', () => {
+  const withoutStorage = calculateScenarioResult(
+    'b2c_pv_speicher',
+    {...baseValues, storageSize: 0},
+    baseParameters,
+  )
+  const withStorage = calculateScenarioResult(
+    'b2c_pv_speicher',
+    {...baseValues, storageSize: 12},
+    baseParameters,
+  )
+
+  assert.equal(withStorage.directPvConsumptionKwh, withoutStorage.directPvConsumptionKwh)
+  assert.ok(withStorage.batteryChargeKwh > 0)
+  assert.ok(withStorage.batteryDischargeKwh > 0)
+  assert.ok(withStorage.gridImportKwh <= withoutStorage.gridImportKwh)
+  assert.ok(withStorage.exportedPvKwh <= withoutStorage.exportedPvKwh)
+})
+
+test('battery round-trip efficiency is applied across charging and discharging', () => {
+  const result = calculateScenarioResult(
+    'b2c_pv_speicher',
+    {...baseValues, storageSize: 12, chargingStations: 0},
+    baseParameters,
+  )
+  const measuredRoundTripEfficiency =
+    result.batteryDischargeKwh / result.batteryChargeKwh
+
+  assert.ok(result.batteryChargeKwh > 0)
+  assert.ok(
+    Math.abs(measuredRoundTripEfficiency - baseParameters.batteryRoundTripEfficiency!) <= 0.01,
+  )
+  assertEnergyBalances(result)
+})
+
+test('larger storage never lowers autarky or annual savings with the configured tariffs', () => {
+  for (const annualConsumption of [2000, 5900, 15000]) {
+    for (const chargingStations of [0, 1, 10, 20]) {
+      let previousResult: ReturnType<typeof calculateScenarioResult> | undefined
+
+      for (const storageSize of [0, 1, 5, 10, 15]) {
+        const result = calculateScenarioResult(
+          'b2c_pv_speicher',
+          {annualConsumption, storageSize, chargingStations, peakLoadKw: 3.2},
+          baseParameters,
+        )
+
+        if (previousResult) {
+          assert.ok(result.autarkyPercent >= previousResult.autarkyPercent)
+          assert.ok(result.annualSavingsEur >= previousResult.annualSavingsEur)
+        }
+
+        previousResult = result
+      }
+    }
+  }
+})
+
+test('smart charging selects no worse result than the storage bundle', () => {
+  for (const annualConsumption of [2000, 5900, 15000]) {
+    for (const chargingStations of [0, 1, 10, 20]) {
+      for (const peakLoadKw of [0.5, 1.5, 3.2, 5]) {
+        const values = {
+          annualConsumption,
+          storageSize: 10,
+          chargingStations,
+          peakLoadKw,
+        }
+        const storage = calculateScenarioResult('b2c_pv_speicher', values, baseParameters)
+        const complete = calculateScenarioResult('b2c_komplett', values, baseParameters)
+
+        assert.ok(complete.autarkyPercent >= storage.autarkyPercent)
+        assert.ok(complete.annualSavingsEur >= storage.annualSavingsEur)
+      }
+    }
+  }
+})
+
+test('representative slider boundaries stay finite and energy-balanced', () => {
+  for (const annualConsumption of [2000, 15000]) {
+    for (const storageSize of [0, 15]) {
+      for (const chargingStations of [0, 10, 20]) {
+        for (const peakLoadKw of [0.5, 2.5, 5]) {
+          for (const scenarioType of [
+            'b2c_pv',
+            'b2c_pv_speicher',
+            'b2c_komplett',
+          ] as const) {
+            const result = calculateScenarioResult(
+              scenarioType,
+              {annualConsumption, storageSize, chargingStations, peakLoadKw},
+              baseParameters,
+            )
+
+            assertFiniteNonNegativeEnergy(result)
+            assertEnergyBalances(result)
+            assert.ok(result.autarkyPercent >= 0 && result.autarkyPercent <= 100)
+          }
+        }
+      }
+    }
+  }
 })

@@ -1,5 +1,3 @@
-import {calculateHtwAutarky} from './htwAutarky'
-
 export type ScenarioType = 'b2c_pv' | 'b2c_pv_speicher' | 'b2c_komplett'
 
 export type CalculatorValues = {
@@ -30,6 +28,7 @@ export type ScenarioCalculationResult = {
   evDemandKwh: number
   pvGenerationKwh: number
   directPvConsumptionKwh: number
+  batteryChargeKwh: number
   batteryDischargeKwh: number
   storageLossKwh: number
   selfConsumedPvKwh: number
@@ -90,6 +89,10 @@ type SimulatedEnergyResult = {
   exportedPvKwh: number
   gridImportKwh: number
   storageLossKwh: number
+}
+
+type SimulatedYearResult = SimulatedEnergyResult & {
+  endingBatterySocKwh: number
 }
 
 const DAYS_PER_YEAR = 365
@@ -282,9 +285,14 @@ function normalizePeakLoadKw({
 }
 
 function scaleProfileToAnnual(profile: Float64Array, annualKwh: number) {
+  if (annualKwh <= 0) {
+    profile.fill(0)
+    return profile
+  }
+
   const sum = profile.reduce((total, value) => total + value, 0)
 
-  if (sum <= 0 || annualKwh <= 0) {
+  if (sum <= 0) {
     return profile
   }
 
@@ -407,17 +415,50 @@ function fitDemandProfileToPeak(
   }
 
   const averageLoadKw = annualDemandKwh / HOURS_PER_YEAR
-  let currentPeakKw = 0
-
-  for (const intervalDemandKwh of profile) {
-    currentPeakKw = Math.max(currentPeakKw, intervalDemandKwh / PROFILE_INTERVAL_HOURS)
-  }
-
-  if (currentPeakKw <= averageLoadKw || peakLoadKw <= averageLoadKw) {
+  if (peakLoadKw <= averageLoadKw) {
     return scaleProfileToAnnual(profile, annualDemandKwh)
   }
 
-  const factor = (peakLoadKw - averageLoadKw) / (currentPeakKw - averageLoadKw)
+  const getPeakForFactor = (factor: number) => {
+    let adjustedEnergyKwh = 0
+    let adjustedPeakKw = 0
+
+    for (const intervalDemandKwh of profile) {
+      const currentLoadKw = intervalDemandKwh / PROFILE_INTERVAL_HOURS
+      const adjustedLoadKw = Math.max(
+        0,
+        averageLoadKw + (currentLoadKw - averageLoadKw) * factor,
+      )
+
+      adjustedEnergyKwh += adjustedLoadKw * PROFILE_INTERVAL_HOURS
+      adjustedPeakKw = Math.max(adjustedPeakKw, adjustedLoadKw)
+    }
+
+    if (adjustedEnergyKwh <= 0) {
+      return 0
+    }
+
+    return adjustedPeakKw * (annualDemandKwh / adjustedEnergyKwh)
+  }
+
+  let lowerFactor = 0
+  let upperFactor = 1
+
+  while (getPeakForFactor(upperFactor) < peakLoadKw && upperFactor < 1024) {
+    upperFactor *= 2
+  }
+
+  for (let iteration = 0; iteration < 40; iteration += 1) {
+    const candidateFactor = (lowerFactor + upperFactor) / 2
+
+    if (getPeakForFactor(candidateFactor) < peakLoadKw) {
+      lowerFactor = candidateFactor
+    } else {
+      upperFactor = candidateFactor
+    }
+  }
+
+  const factor = (lowerFactor + upperFactor) / 2
 
   for (let index = 0; index < profile.length; index += 1) {
     const currentLoadKw = profile[index] / PROFILE_INTERVAL_HOURS
@@ -476,103 +517,79 @@ function simulateEnergyProfile({
   roundTripEfficiency: number
 }): SimulatedEnergyResult {
   const chargeEfficiency = Math.sqrt(roundTripEfficiency)
+  const dischargeEfficiency = Math.sqrt(roundTripEfficiency)
   const maxBatteryEnergyPerIntervalKwh = batteryPowerKw * PROFILE_INTERVAL_HOURS
-  let batterySocKwh = 0
-  let directPvConsumptionKwh = 0
-  let batteryChargeFromPvKwh = 0
-  let batteryDischargeKwh = 0
-  let exportedPvKwh = 0
-  let gridImportKwh = 0
+  const storageIsAvailable =
+    usesStorage &&
+    usableStorageKwh > 0 &&
+    batteryPowerKw > 0 &&
+    roundTripEfficiency > 0
 
-  for (let index = 0; index < PROFILE_INTERVAL_COUNT; index += 1) {
-    const demandKwh = profile.demandKwh[index]
-    const pvKwh = profile.pvKwh[index]
-    const directConsumptionKwh = Math.min(demandKwh, pvKwh)
-    let remainingDemandKwh = demandKwh - directConsumptionKwh
-    let surplusPvKwh = pvKwh - directConsumptionKwh
+  const simulateYear = (startingBatterySocKwh: number): SimulatedYearResult => {
+    let batterySocKwh = clamp(startingBatterySocKwh, 0, usableStorageKwh)
+    let directPvConsumptionKwh = 0
+    let batteryChargeFromPvKwh = 0
+    let batteryDischargeKwh = 0
+    let chargingLossKwh = 0
+    let dischargingLossKwh = 0
+    let exportedPvKwh = 0
+    let gridImportKwh = 0
 
-    directPvConsumptionKwh += directConsumptionKwh
+    for (let index = 0; index < PROFILE_INTERVAL_COUNT; index += 1) {
+      const demandKwh = profile.demandKwh[index]
+      const pvKwh = profile.pvKwh[index]
+      const directConsumptionKwh = Math.min(demandKwh, pvKwh)
+      let remainingDemandKwh = demandKwh - directConsumptionKwh
+      let surplusPvKwh = pvKwh - directConsumptionKwh
 
-    if (
-      usesStorage &&
-      usableStorageKwh > 0 &&
-      batteryPowerKw > 0 &&
-      roundTripEfficiency > 0
-    ) {
-      const chargeFromPvKwh = Math.min(
-        surplusPvKwh,
-        maxBatteryEnergyPerIntervalKwh,
-        (usableStorageKwh - batterySocKwh) / chargeEfficiency,
-      )
+      directPvConsumptionKwh += directConsumptionKwh
 
-      batterySocKwh += chargeFromPvKwh * chargeEfficiency
-      batteryChargeFromPvKwh += chargeFromPvKwh
-      surplusPvKwh -= chargeFromPvKwh
+      if (storageIsAvailable) {
+        const chargeFromPvKwh = Math.min(
+          surplusPvKwh,
+          maxBatteryEnergyPerIntervalKwh,
+          (usableStorageKwh - batterySocKwh) / chargeEfficiency,
+        )
+        const storedEnergyKwh = chargeFromPvKwh * chargeEfficiency
 
-      const dischargeKwh = Math.min(
-        remainingDemandKwh,
-        maxBatteryEnergyPerIntervalKwh,
-        batterySocKwh,
-      )
+        batterySocKwh += storedEnergyKwh
+        batteryChargeFromPvKwh += chargeFromPvKwh
+        chargingLossKwh += chargeFromPvKwh - storedEnergyKwh
+        surplusPvKwh -= chargeFromPvKwh
 
-      batterySocKwh -= dischargeKwh
-      batteryDischargeKwh += dischargeKwh
-      remainingDemandKwh -= dischargeKwh
+        const dischargeKwh = Math.min(
+          remainingDemandKwh,
+          maxBatteryEnergyPerIntervalKwh,
+          batterySocKwh * dischargeEfficiency,
+        )
+        const withdrawnEnergyKwh = dischargeKwh / dischargeEfficiency
+
+        batterySocKwh -= withdrawnEnergyKwh
+        batteryDischargeKwh += dischargeKwh
+        dischargingLossKwh += withdrawnEnergyKwh - dischargeKwh
+        remainingDemandKwh -= dischargeKwh
+      }
+
+      exportedPvKwh += Math.max(0, surplusPvKwh)
+      gridImportKwh += Math.max(0, remainingDemandKwh)
     }
 
-    exportedPvKwh += Math.max(0, surplusPvKwh)
-    gridImportKwh += Math.max(0, remainingDemandKwh)
+    return {
+      directPvConsumptionKwh,
+      batteryChargeFromPvKwh,
+      batteryDischargeKwh,
+      selfSuppliedLoadKwh: directPvConsumptionKwh + batteryDischargeKwh,
+      exportedPvKwh,
+      gridImportKwh,
+      storageLossKwh: chargingLossKwh + dischargingLossKwh,
+      endingBatterySocKwh: batterySocKwh,
+    }
   }
 
-  const storageLossKwh = Math.max(0, batteryChargeFromPvKwh - batteryDischargeKwh)
+  const warmupResult = storageIsAvailable ? simulateYear(0) : null
+  const measuredResult = simulateYear(warmupResult?.endingBatterySocKwh ?? 0)
 
-  return {
-    directPvConsumptionKwh,
-    batteryChargeFromPvKwh,
-    batteryDischargeKwh,
-    selfSuppliedLoadKwh: directPvConsumptionKwh + batteryDischargeKwh,
-    exportedPvKwh,
-    gridImportKwh,
-    storageLossKwh,
-  }
-}
-
-function applyHtwAutarkyLimit({
-  simulated,
-  htwSelfSupplyLimitKwh,
-  pvGenerationKwh,
-  totalDemandKwh,
-}: {
-  simulated: SimulatedEnergyResult
-  htwSelfSupplyLimitKwh: number
-  pvGenerationKwh: number
-  totalDemandKwh: number
-}): SimulatedEnergyResult {
-  if (simulated.selfSuppliedLoadKwh <= htwSelfSupplyLimitKwh) {
-    return simulated
-  }
-
-  const selfSuppliedLoadKwh = htwSelfSupplyLimitKwh
-  const directPvConsumptionKwh = Math.min(simulated.directPvConsumptionKwh, selfSuppliedLoadKwh)
-  const batteryDischargeKwh = Math.max(0, selfSuppliedLoadKwh - directPvConsumptionKwh)
-  const batteryScale =
-    simulated.batteryDischargeKwh > 0
-      ? batteryDischargeKwh / simulated.batteryDischargeKwh
-      : 0
-  const batteryChargeFromPvKwh = simulated.batteryChargeFromPvKwh * batteryScale
-  const storageLossKwh = Math.max(0, batteryChargeFromPvKwh - batteryDischargeKwh)
-  const exportedPvKwh = Math.max(0, pvGenerationKwh - directPvConsumptionKwh - batteryChargeFromPvKwh)
-  const gridImportKwh = Math.max(0, totalDemandKwh - selfSuppliedLoadKwh)
-
-  return {
-    directPvConsumptionKwh,
-    batteryChargeFromPvKwh,
-    batteryDischargeKwh,
-    selfSuppliedLoadKwh,
-    exportedPvKwh,
-    gridImportKwh,
-    storageLossKwh,
-  }
+  return measuredResult
 }
 
 function roundEnergy(value: number) {
@@ -613,39 +630,55 @@ export function calculateScenarioResult(
     chargingStations,
     warnings,
   })
-  const profile = buildEnergyProfile({
-    householdDemandKwh,
-    evDemandKwh,
-    pvGenerationKwh,
-    chargingStations,
-    smartChargingShiftShare: usesSmartCharging
-      ? resolvedParameters.smartChargingShiftShare
-      : 0,
-    peakLoadKw,
-  })
-  const simulatedResult = simulateEnergyProfile({
-    profile,
-    usesStorage,
-    usableStorageKwh,
-    batteryPowerKw: resolvedParameters.batteryPowerKw,
-    roundTripEfficiency: resolvedParameters.roundTripEfficiency,
-  })
-  const htwAutarkyRatio = calculateHtwAutarky({
-    annualDemandKwh: totalDemandKwh,
-    pvSizeKwp: resolvedParameters.pvSizeKwp,
-    usableStorageKwh,
-  })
-  const htwSelfSupplyLimitKwh = Math.min(
-    totalDemandKwh,
-    pvGenerationKwh,
-    totalDemandKwh * htwAutarkyRatio,
-  )
-  const energyResult = applyHtwAutarkyLimit({
-    simulated: simulatedResult,
-    htwSelfSupplyLimitKwh,
-    pvGenerationKwh,
-    totalDemandKwh,
-  })
+  const simulateSmartChargingShare = (smartChargingShiftShare: number) => {
+    const profile = buildEnergyProfile({
+      householdDemandKwh,
+      evDemandKwh,
+      pvGenerationKwh,
+      chargingStations,
+      smartChargingShiftShare,
+      peakLoadKw,
+    })
+
+    return simulateEnergyProfile({
+      profile,
+      usesStorage,
+      usableStorageKwh,
+      batteryPowerKw: resolvedParameters.batteryPowerKw,
+      roundTripEfficiency: resolvedParameters.roundTripEfficiency,
+    })
+  }
+  const shiftCandidates =
+    usesSmartCharging && resolvedParameters.smartChargingShiftShare > 0
+      ? [
+          0,
+          resolvedParameters.smartChargingShiftShare / 2,
+          resolvedParameters.smartChargingShiftShare,
+        ]
+      : [0]
+  const energyResult = shiftCandidates
+    .map(simulateSmartChargingShare)
+    .reduce((bestResult, candidateResult) => {
+      const bestAnnualEnergyValueEur =
+        -bestResult.gridImportKwh * resolvedParameters.electricityPriceEurPerKwh +
+        bestResult.exportedPvKwh * resolvedParameters.feedInTariffEurPerKwh
+      const candidateAnnualEnergyValueEur =
+        -candidateResult.gridImportKwh * resolvedParameters.electricityPriceEurPerKwh +
+        candidateResult.exportedPvKwh * resolvedParameters.feedInTariffEurPerKwh
+
+      if (candidateAnnualEnergyValueEur > bestAnnualEnergyValueEur) {
+        return candidateResult
+      }
+
+      if (
+        candidateAnnualEnergyValueEur === bestAnnualEnergyValueEur &&
+        candidateResult.selfSuppliedLoadKwh > bestResult.selfSuppliedLoadKwh
+      ) {
+        return candidateResult
+      }
+
+      return bestResult
+    })
   const availableBatteryDischargeKw =
     usesStorage && usableStorageKwh > 0
       ? usableStorageKwh / PROFILE_INTERVAL_HOURS
@@ -677,9 +710,12 @@ export function calculateScenarioResult(
     evDemandKwh: roundEnergy(evDemandKwh),
     pvGenerationKwh: roundEnergy(pvGenerationKwh),
     directPvConsumptionKwh: roundEnergy(energyResult.directPvConsumptionKwh),
+    batteryChargeKwh: roundEnergy(energyResult.batteryChargeFromPvKwh),
     batteryDischargeKwh: roundEnergy(energyResult.batteryDischargeKwh),
     storageLossKwh: roundEnergy(energyResult.storageLossKwh),
-    selfConsumedPvKwh: roundEnergy(energyResult.selfSuppliedLoadKwh),
+    selfConsumedPvKwh: roundEnergy(
+      energyResult.directPvConsumptionKwh + energyResult.batteryChargeFromPvKwh,
+    ),
     selfSuppliedLoadKwh: roundEnergy(energyResult.selfSuppliedLoadKwh),
     exportedPvKwh: roundEnergy(energyResult.exportedPvKwh),
     gridImportKwh: roundEnergy(energyResult.gridImportKwh),

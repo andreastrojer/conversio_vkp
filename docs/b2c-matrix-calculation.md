@@ -1,8 +1,8 @@
 # B2C-Matrixberechnung
 
-Diese Dokumentation beschreibt die Berechnungslogik der bestehenden B2C-Scenario-Matrix. Die
-Oberfläche, Komponenten, Navigation und CMS-Struktur bleiben unverändert; korrigiert wurden
-Einheiten, Datenübergabe und Berechnungslogik.
+Diese Dokumentation beschreibt die finale Berechnungslogik der B2C-Scenario-Matrix. Oberfläche,
+Navigation, CMS-Struktur und B2B-Berechnung bleiben unverändert. Das Ergebnis ist eine
+deterministische Jahresprognose auf Basis von 35.040 Viertelstundenintervallen.
 
 ## Eingaben
 
@@ -75,11 +75,26 @@ usableStorageKwh = storageSizeKwh * usableStorageShare
 Autarkie:
 
 ```text
+selfSuppliedLoadKwh = directPvConsumptionKwh + batteryDischargeKwh
+
+autarkyPercent = selfSuppliedLoadKwh / totalDemandKwh * 100
+```
+
+Gleichwertig gilt:
+
+```text
 autarkyPercent =
   (totalDemandKwh - gridImportKwh) / totalDemandKwh * 100
 ```
 
-Der Wert wird auf `0..100 %` begrenzt.
+Der Wert wird auf `0..100 %` begrenzt. Batterie-Ladeverluste zählen nicht als versorgte Last.
+
+PV-Eigenverbrauch und selbst versorgte Last sind bewusst getrennte Größen:
+
+```text
+selfConsumedPvKwh = directPvConsumptionKwh + batteryChargeKwh
+selfSuppliedLoadKwh = directPvConsumptionKwh + batteryDischargeKwh
+```
 
 Jährliche Ersparnis gegenüber dem Zustand ohne PV und Speicher:
 
@@ -94,25 +109,92 @@ annualSavingsEur =
 
 Es werden keine Investitionskosten und kein B2C-Leistungspreis eingerechnet.
 
-## HTW-Autarkie und Prognoseprofil
+## Viertelstunden-Prognose
 
-Die vorhandene HTW-Autarkie-Tabelle bleibt die fachliche Obergrenze für den jährlichen
-Autarkiegrad. Sie wird mit bilinearer Interpolation über PV-Leistung pro MWh Jahresverbrauch und
-nutzbare Speicherkapazität pro MWh Jahresverbrauch ausgewertet.
-
-Da kein echtes 15-Minuten-Messprofil vorhanden ist, erzeugt die Berechnung zusätzlich ein
-deterministisches 15-Minuten-Prognoseprofil:
+Da kein reales Last- und Erzeugungsmessprofil vorliegt, erzeugt die Berechnung ein
+deterministisches Viertelstundenprofil:
 
 - Haushaltslast mit Tages-, Wochenend- und Saisonstruktur
 - PV-Erzeugung mit Tageslicht- und Saisonprofil
 - Ladepunktverbrauch als Abendladung
-- im Komplett-Bundle verschiebbarer Ladepunktanteil zur Tagesmitte
+- im Komplett-Bundle flexibel verschiebbarer Ladepunktanteil zur Tagesmitte
 - Speicher-SOC mit Kapazität, Batterieleistung und Roundtrip-Wirkungsgrad
 
-Das simulierte Ergebnis wird anschließend durch die HTW-Autarkie begrenzt. Dadurch bleibt das
-HTW-Modell erhalten, während Batterieleistung, Lastspitze und Ladepunkt-Zeitverschiebung nicht
-pauschal, sondern als physikalische Einschränkungen wirken. Das Ergebnis ist damit eine belastbare
-Prognose, keine messwertgenaue Abrechnung.
+Jedes Profil wird exakt auf seinen jeweiligen Jahreswert skaliert. Bei `0 kWh` beziehungsweise
+`0 kWp` wird das Profil vollständig geleert. Die Lastform wird iterativ so angepasst, dass die
+plausibilisierte Lastspitze erreicht wird, ohne den Jahresverbrauch zu verändern.
+
+Die frühere HTW-Hartbegrenzung wird nicht mehr auf die Energieflüsse angewendet. Sie konnte den
+direkten PV-Verbrauch abhängig von der Speichergröße verändern und damit die Jahresbilanz
+verletzen. Der HTW-Unabhängigkeitsrechner ist weiterhin eine sinnvolle Referenz für typische
+Haushalte, basiert laut HTW jedoch auf einem Standard-Haushaltsprofil ohne Elektroauto und
+Wärmepumpe. Die B2C-Matrix bildet Ladepunkte und deren zeitliche Verschiebung explizit ab und nutzt
+deshalb die eigene Viertelstundensimulation als maßgebliches Modell.
+
+Quellen:
+
+- [HTW Berlin: FAQ zum Unabhängigkeitsrechner](https://solar.htw-berlin.de/faq-unabhaengigkeitsrechner/)
+- [HTW Berlin: Dimensionierung und Netzintegration von PV-Speichersystemen](https://solar.htw-berlin.de/publikationen/dimensionierung-und-netzintegration-von-pv-speichersystemen/)
+
+## Batterie
+
+Der CMS-Wert für den Roundtrip-Wirkungsgrad wird symmetrisch auf Laden und Entladen verteilt:
+
+```text
+chargeEfficiency = sqrt(roundTripEfficiency)
+dischargeEfficiency = sqrt(roundTripEfficiency)
+
+chargeEfficiency * dischargeEfficiency = roundTripEfficiency
+```
+
+Pro Viertelstunde wird zuerst der gleichzeitige PV-Verbrauch gedeckt. Überschuss lädt die Batterie,
+begrenzt durch freie nutzbare Kapazität und Batterieleistung. Verbleibender Verbrauch wird danach
+aus der Batterie gedeckt, ebenfalls begrenzt durch Ladezustand und Batterieleistung.
+
+Vor dem ausgewerteten Jahr wird ein vollständiges Aufwärmjahr simuliert. Dessen End-Ladezustand
+ist der Start-Ladezustand des Ergebnisjahres. Dadurch entsteht kein künstlicher Vorteil oder
+Nachteil durch eine willkürlich leere oder volle Batterie am 1. Januar.
+
+Die beiden zentralen Jahresbilanzen sind:
+
+```text
+totalDemandKwh =
+  directPvConsumptionKwh + batteryDischargeKwh + gridImportKwh
+
+pvGenerationKwh =
+  directPvConsumptionKwh + batteryChargeKwh + exportedPvKwh
+```
+
+Die Speicherverluste setzen sich aus Lade- und Entladeverlusten zusammen. Bei periodischem
+Jahres-Ladezustand gilt:
+
+```text
+batteryChargeKwh =
+  batteryDischargeKwh + storageLossKwh
+```
+
+## Smart Charging
+
+`smartChargingShiftShare` ist der maximal flexibel verschiebbare Anteil des Ladepunktverbrauchs.
+Für das Komplett-Bundle werden keine pauschalen Boni addiert. Die Simulation vergleicht:
+
+```text
+0 %
+50 % des CMS-Anteils
+100 % des CMS-Anteils
+```
+
+Verwendet wird die Variante mit dem höchsten jährlichen Energiewert:
+
+```text
+annualEnergyValueEur =
+  -gridImportKwh * electricityPriceEurPerKwh
+  + exportedPvKwh * feedInTariffEurPerKwh
+```
+
+Damit erzwingt intelligentes Laden keine ungünstige Verschiebung. Das Komplett-Bundle kann bei
+einer Reglerstellung gleich gut, aber nicht schlechter als dasselbe System ohne Smart Charging
+sein.
 
 ## Bundles
 
@@ -164,3 +246,7 @@ Bei `b2c_pv` ist `batteryPeakCoverageKw = 0`, weil kein Speicher enthalten ist.
 - Fehlende technische CMS-Parameter werden zentral mit benannten Fallbacks behandelt.
 - Die Lastspitze beeinflusst die jährliche Ersparnis nur über das Prognoseprofil und die
   Batterieleistungsbegrenzung, nicht über einen erfundenen Peak-Shaving-Bonus.
+- Strompreis und Einspeisetarif gelten im Modell konstant über das gesamte Jahr.
+- Investition, Finanzierung, Steuern, Degradation und Wartung außerhalb von
+  `annualOperatingCostEur` sind nicht enthalten.
+- Angezeigte Prozent- und Euro-Werte werden erst nach der vollständigen Berechnung gerundet.

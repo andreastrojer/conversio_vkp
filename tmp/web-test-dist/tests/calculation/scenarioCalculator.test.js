@@ -31,10 +31,31 @@ function assertFiniteNonNegativeEnergy(result) {
         strict_1.default.ok(Number.isFinite(value), `${key} must be finite`);
         if (key.endsWith('Kwh') ||
             key.endsWith('Kw') ||
-            key.endsWith('Eur') ||
             key === 'autarkyPercent') {
             strict_1.default.ok(value >= 0, `${key} must not be negative`);
         }
+    }
+    strict_1.default.ok(result.baselineCostEur >= 0);
+    strict_1.default.ok(result.newEnergyCostEur >= 0);
+    strict_1.default.ok(result.feedInRevenueEur >= 0);
+}
+function assertEnergyBalances(result) {
+    const demandBalance = result.directPvConsumptionKwh + result.batteryDischargeKwh + result.gridImportKwh;
+    const pvBalance = result.directPvConsumptionKwh + result.batteryChargeKwh + result.exportedPvKwh;
+    const expectedSelfConsumedPv = result.directPvConsumptionKwh + result.batteryChargeKwh;
+    const expectedSelfSuppliedLoad = result.directPvConsumptionKwh + result.batteryDischargeKwh;
+    strict_1.default.ok(Math.abs(result.totalDemandKwh - demandBalance) <= 3, `demand balance differs by ${result.totalDemandKwh - demandBalance} kWh`);
+    strict_1.default.ok(Math.abs(result.pvGenerationKwh - pvBalance) <= 3, `PV balance differs by ${result.pvGenerationKwh - pvBalance} kWh`);
+    strict_1.default.ok(Math.abs(result.selfConsumedPvKwh - expectedSelfConsumedPv) <= 2);
+    strict_1.default.ok(Math.abs(result.selfSuppliedLoadKwh - expectedSelfSuppliedLoad) <= 2);
+    if (result.totalDemandKwh > 0) {
+        const expectedAutarkyPercent = Math.round((result.selfSuppliedLoadKwh / result.totalDemandKwh) * 100);
+        strict_1.default.ok(Math.abs(result.autarkyPercent - expectedAutarkyPercent) <= 1);
+    }
+    if (result.batteryChargeKwh > 0) {
+        strict_1.default.ok(Math.abs(result.batteryChargeKwh -
+            result.batteryDischargeKwh -
+            result.storageLossKwh) <= 3, 'battery charge, discharge and loss must form a closed annual balance');
     }
 }
 (0, node_test_1.default)('normalizes B2C LASTSPITZE CMS slider values from centi-kW to kW', () => {
@@ -67,6 +88,7 @@ function assertFiniteNonNegativeEnergy(result) {
 });
 (0, node_test_1.default)('PV basis has no storage effect', () => {
     const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv', baseValues, baseParameters);
+    strict_1.default.equal(result.batteryChargeKwh, 0);
     strict_1.default.equal(result.batteryDischargeKwh, 0);
     strict_1.default.equal(result.batteryPeakCoverageKw, 0);
     strict_1.default.equal(result.usableStorageKwh, 0);
@@ -94,7 +116,10 @@ function assertFiniteNonNegativeEnergy(result) {
     const smallStorage = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', { ...baseValues, storageSize: 1 }, noPvParameters);
     const largeStorage = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', { ...baseValues, storageSize: 20 }, noPvParameters);
     strict_1.default.equal(largeStorage.autarkyPercent, smallStorage.autarkyPercent);
+    strict_1.default.equal(largeStorage.batteryChargeKwh, 0);
     strict_1.default.equal(largeStorage.batteryDischargeKwh, smallStorage.batteryDischargeKwh);
+    strict_1.default.equal(largeStorage.selfConsumedPvKwh, 0);
+    strict_1.default.equal(largeStorage.exportedPvKwh, 0);
 });
 (0, node_test_1.default)('annual savings follow avoided grid import plus feed-in revenue', () => {
     const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_komplett', baseValues, baseParameters);
@@ -113,4 +138,74 @@ function assertFiniteNonNegativeEnergy(result) {
     const secondRun = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_komplett', baseValues, baseParameters);
     strict_1.default.deepEqual(secondRun, firstRun);
     assertFiniteNonNegativeEnergy(firstRun);
+    assertEnergyBalances(firstRun);
+});
+(0, node_test_1.default)('storage changes only battery flows, not direct PV consumption', () => {
+    const withoutStorage = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', { ...baseValues, storageSize: 0 }, baseParameters);
+    const withStorage = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', { ...baseValues, storageSize: 12 }, baseParameters);
+    strict_1.default.equal(withStorage.directPvConsumptionKwh, withoutStorage.directPvConsumptionKwh);
+    strict_1.default.ok(withStorage.batteryChargeKwh > 0);
+    strict_1.default.ok(withStorage.batteryDischargeKwh > 0);
+    strict_1.default.ok(withStorage.gridImportKwh <= withoutStorage.gridImportKwh);
+    strict_1.default.ok(withStorage.exportedPvKwh <= withoutStorage.exportedPvKwh);
+});
+(0, node_test_1.default)('battery round-trip efficiency is applied across charging and discharging', () => {
+    const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', { ...baseValues, storageSize: 12, chargingStations: 0 }, baseParameters);
+    const measuredRoundTripEfficiency = result.batteryDischargeKwh / result.batteryChargeKwh;
+    strict_1.default.ok(result.batteryChargeKwh > 0);
+    strict_1.default.ok(Math.abs(measuredRoundTripEfficiency - baseParameters.batteryRoundTripEfficiency) <= 0.01);
+    assertEnergyBalances(result);
+});
+(0, node_test_1.default)('larger storage never lowers autarky or annual savings with the configured tariffs', () => {
+    for (const annualConsumption of [2000, 5900, 15000]) {
+        for (const chargingStations of [0, 1, 10, 20]) {
+            let previousResult;
+            for (const storageSize of [0, 1, 5, 10, 15]) {
+                const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', { annualConsumption, storageSize, chargingStations, peakLoadKw: 3.2 }, baseParameters);
+                if (previousResult) {
+                    strict_1.default.ok(result.autarkyPercent >= previousResult.autarkyPercent);
+                    strict_1.default.ok(result.annualSavingsEur >= previousResult.annualSavingsEur);
+                }
+                previousResult = result;
+            }
+        }
+    }
+});
+(0, node_test_1.default)('smart charging selects no worse result than the storage bundle', () => {
+    for (const annualConsumption of [2000, 5900, 15000]) {
+        for (const chargingStations of [0, 1, 10, 20]) {
+            for (const peakLoadKw of [0.5, 1.5, 3.2, 5]) {
+                const values = {
+                    annualConsumption,
+                    storageSize: 10,
+                    chargingStations,
+                    peakLoadKw,
+                };
+                const storage = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', values, baseParameters);
+                const complete = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_komplett', values, baseParameters);
+                strict_1.default.ok(complete.autarkyPercent >= storage.autarkyPercent);
+                strict_1.default.ok(complete.annualSavingsEur >= storage.annualSavingsEur);
+            }
+        }
+    }
+});
+(0, node_test_1.default)('representative slider boundaries stay finite and energy-balanced', () => {
+    for (const annualConsumption of [2000, 15000]) {
+        for (const storageSize of [0, 15]) {
+            for (const chargingStations of [0, 10, 20]) {
+                for (const peakLoadKw of [0.5, 2.5, 5]) {
+                    for (const scenarioType of [
+                        'b2c_pv',
+                        'b2c_pv_speicher',
+                        'b2c_komplett',
+                    ]) {
+                        const result = (0, scenarioCalculator_1.calculateScenarioResult)(scenarioType, { annualConsumption, storageSize, chargingStations, peakLoadKw }, baseParameters);
+                        assertFiniteNonNegativeEnergy(result);
+                        assertEnergyBalances(result);
+                        strict_1.default.ok(result.autarkyPercent >= 0 && result.autarkyPercent <= 100);
+                    }
+                }
+            }
+        }
+    }
 });
