@@ -19,7 +19,7 @@ import {
 } from '@/lib/consultationStore'
 import type {NextStepDocumentCategory, NextStepPageData} from '@/lib/nextStep'
 import {AnimatePresence, motion} from 'framer-motion'
-import {ArrowRight, Download, Hexagon} from 'lucide-react'
+import {ArrowRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
 import {useEffect, useMemo, useState} from 'react'
 
@@ -623,11 +623,21 @@ export function NextStepScreen({
             </button>
             <button
               type="button"
-              className="group inline-flex h-[30px] min-w-[132px] items-center justify-between rounded-full bg-[#efb804] px-[20px] text-[14px] font-bold uppercase leading-none text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
+              className="group inline-flex h-[30px] min-w-[184px] items-center justify-between rounded-full bg-[#efb804] px-[26px] text-[14px] font-bold uppercase leading-none text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
               onClick={handleExportSpreadsheet}
             >
               <span>EXCEL EXPORT</span>
-              <Download className="h-[14px] w-[14px] transition-transform group-hover:translate-y-0.5" strokeWidth={2.4} aria-hidden="true" />
+              {sendButtonArrowUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={sendButtonArrowUrl}
+                  alt=""
+                  className="block h-[17px] w-[17px] shrink-0 object-contain object-center [filter:brightness(0)] transition-transform group-hover:translate-x-0.5"
+                  aria-hidden="true"
+                />
+              ) : (
+                <ArrowRight className="h-[14px] w-[16px] rotate-[-45deg] transition-transform group-hover:translate-x-0.5" strokeWidth={2.4} aria-hidden="true" />
+              )}
             </button>
           </div>
           {statusMessage ? (
