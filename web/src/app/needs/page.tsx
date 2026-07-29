@@ -20,6 +20,33 @@ function resolveCustomerType(value: string | string[] | undefined): CustomerGrou
   return normalizedValue === 'b2b' ? 'b2b' : 'b2c'
 }
 
+function normalizeProductIdentifier(value?: string | null) {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ü/g, 'u')
+    .replace(/ä/g, 'a')
+    .replace(/ö/g, 'o')
+    .replace(/ß/g, 'ss')
+    .toLowerCase()
+}
+
+function isEnergyCommunityProduct(product: {
+  categoryType?: string | null
+  slug?: string | null
+  title?: string | null
+}) {
+  const value = normalizeProductIdentifier(
+    `${product.categoryType || ''} ${product.slug || ''} ${product.title || ''}`,
+  )
+
+  return (
+    value.includes('energiegemeinschaft') ||
+    value.includes('burgerenergiegemeinschaft') ||
+    value.split(/\s+/).includes('beg')
+  )
+}
+
 export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
   const session = await auth()
 
@@ -34,6 +61,54 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
 
   if (customerType === 'b2c') {
     const content = await getOfferPageData(customerType, 'whatfits')
+    const hasB2cHouseProduct = Boolean(
+      initialProductSlug &&
+        content.b2cProducts.some((product) => product.slug === initialProductSlug),
+    )
+
+    if (initialProductSlug && !hasB2cHouseProduct) {
+      const whatFitsContent = await getWhatFitsPageData(customerType)
+      const requestedProduct =
+        whatFitsContent.products.find((product) => product.slug === initialProductSlug) ||
+        (isEnergyCommunityProduct({slug: initialProductSlug})
+          ? whatFitsContent.products.find(isEnergyCommunityProduct)
+          : undefined)
+
+      if (requestedProduct && isEnergyCommunityProduct(requestedProduct)) {
+        return (
+          <WhatFitsScreen
+            customerType={customerType}
+            initialProductSlug={requestedProduct.slug}
+            initialModelSlug={initialModelSlug}
+            headline={whatFitsContent.headline}
+            subline={whatFitsContent.subline}
+            products={whatFitsContent.products}
+            bottomNavigation={whatFitsContent.bottomNavigation}
+            navigationItems={whatFitsContent.navigationItems}
+            logoUrl={whatFitsContent.logoUrl}
+            inverseLogoUrl={whatFitsContent.inverseLogoUrl}
+            logoAlt={whatFitsContent.logoAlt}
+            patternUrl={whatFitsContent.patternUrl}
+            patternAlt={whatFitsContent.patternAlt}
+            navigationArrowUrl={whatFitsContent.navigationArrowUrl}
+            productNavigationLeftArrowUrl={whatFitsContent.productNavigationLeftArrowUrl}
+            productNavigationRightArrowUrl={whatFitsContent.productNavigationRightArrowUrl}
+            productNavigationCatalogIconUrl={whatFitsContent.productNavigationCatalogIconUrl}
+            productNavigationCatalogActiveIconUrl={
+              whatFitsContent.productNavigationCatalogActiveIconUrl
+            }
+            modelCardActivePatternUrl={whatFitsContent.modelCardActivePatternUrl}
+            modelCardInactivePatternUrl={whatFitsContent.modelCardInactivePatternUrl}
+            catalogDetailPointActiveUrl={whatFitsContent.catalogDetailPointActiveUrl}
+            catalogDetailPointDarkUrl={whatFitsContent.catalogDetailPointDarkUrl}
+            catalogDetailPointInactiveUrl={whatFitsContent.catalogDetailPointInactiveUrl}
+            modelGroupAirIconUrl={whatFitsContent.modelGroupAirIconUrl}
+            modelGroupImmersionIconUrl={whatFitsContent.modelGroupImmersionIconUrl}
+            modelGroupImmersionDarkIconUrl={whatFitsContent.modelGroupImmersionDarkIconUrl}
+          />
+        )
+      }
+    }
 
     return (
       <B2cNeedsScreen

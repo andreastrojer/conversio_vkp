@@ -425,7 +425,7 @@ function ProductBottomNavigation({
         )}
       </button>
 
-      <div className="relative z-[1] flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[12px]">
+      <div className="relative z-[1] flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[42px]">
         {bottomNavigation.map((item) => {
           const isCatalog = item.kind === 'catalog'
           const isActive =
@@ -438,7 +438,7 @@ function ProductBottomNavigation({
             usesActiveCatalogIcon
               ? catalogActiveIconUrl || catalogIconUrl || item.iconUrl
               : catalogIconUrl || item.iconUrl
-          const commonClassName = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+          const commonClassName = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
             isActive ? 'bg-[#efb804] text-[#2a2e33]' : 'text-white'
           } ${
             isCatalog
@@ -606,7 +606,10 @@ export function B2cNeedsScreen({
 
     if (product) {
       openProduct(product)
+      return
     }
+
+    router.push(`/needs?type=b2c&product=${encodeURIComponent(slug)}`)
   }
 
   function handleHotspotClick(hotspot: B2cHouseConfig['hotspots'][number]) {

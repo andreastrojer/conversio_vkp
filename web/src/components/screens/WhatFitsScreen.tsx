@@ -866,14 +866,14 @@ export function WhatFitsScreen({
               {selectedProduct?.catalogCtaLabel ? (
                 <button
                   type="button"
-                  className={`group absolute bottom-[58px] right-[72px] z-[4] w-[246px] text-left font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                  className={`group absolute bottom-[58px] right-[72px] z-[4] w-[246px] text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] ${
                     hasLongCatalogCta
                       ? '[@media(min-width:768px)_and_(max-width:1366px)]:w-[300px]'
                       : ''
                   }`}
                   onClick={() => openProduct(selectedProduct.slug)}
                 >
-                  <span className="flex items-center justify-between pb-[10px]">
+                  <span className="flex items-center justify-between pb-[14px]">
                     <span
                       className={
                         hasLongCatalogCta
@@ -883,7 +883,7 @@ export function WhatFitsScreen({
                     >
                       {selectedProduct.catalogCtaLabel}
                     </span>
-                    <ArrowRight className="h-[14px] w-[20px] transition-transform group-hover:translate-x-1" strokeWidth={2.2} aria-hidden="true" />
+                    <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
                   </span>
                   <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
                 </button>
@@ -1126,7 +1126,7 @@ export function WhatFitsScreen({
                         >
                           <button
                             type="button"
-                            className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans text-[18px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                            className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans ${isEnergyCommunity ? 'text-[22px]' : 'text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                               isActive
                                 ? 'text-[#efb804]'
                                 : isBusiness
@@ -1176,7 +1176,7 @@ export function WhatFitsScreen({
                               <div className="pb-[18px] pt-[28px]">
                                 {section.text ? (
                                   <div
-                                    className={`${isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
+                                    className={`${isEnergyCommunity ? 'text-[22px]' : isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} ${isFunctions && !isEnergyCommunity ? 'w-full max-w-none' : 'max-w-[420px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
                                       isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                                     }`}
                                   >
@@ -1222,7 +1222,7 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : hasStructuredTabContent && activeTab ? (
-                  <div className={detailContentPanelClassName}>
+                  <div className={`${detailContentPanelClassName}${isEnergyCommunityOverview ? ' translate-x-[18px]' : ''}`}>
                     {activeTab.contentTitle?.trim() ? (
                       <h2
                         className={`mb-[28px] uppercase leading-[1.08] tracking-[0.01em] ${
@@ -1272,12 +1272,12 @@ export function WhatFitsScreen({
                     ) : null}
 
                     {(isEnergyCommunityOverview ? energyCommunityOverviewBulletItems.length : activeTab.contentItems.length) > 0 ? (
-                      <div className={`${energyCommunityOverviewIntroText || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px]' : isEnergyCommunityOverview ? 'mt-[28px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isEnergyCommunityOverview ? 'space-y-[5px]' : isCompactSharedTab ? 'space-y-[18px]' : 'space-y-[24px]'}`}>
+                      <div className={`${energyCommunityOverviewIntroText || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px]' : isEnergyCommunityOverview ? 'mt-[28px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isEnergyCommunityOverview ? 'ml-[10px] space-y-[5px]' : isCompactSharedTab ? 'space-y-[18px]' : 'space-y-[24px]'}`}>
                         {(isEnergyCommunityOverview ? energyCommunityOverviewBulletItems : activeTab.contentItems).map((item) => (
                           <div key={item._key} className={`${isEnergyCommunityOverview ? 'grid-cols-[14px_minmax(0,1fr)] gap-[14px]' : isCompactSharedTab ? 'grid-cols-[16px_minmax(0,1fr)] gap-[14px]' : 'grid-cols-[22px_minmax(0,1fr)] gap-[20px]'} grid`}>
                             {isEnergyCommunityOverview ? (
                               <span
-                                className={`mt-[14px] h-[4px] w-[4px] rounded-full ${
+                                className={`mt-[13px] h-[5px] w-[5px] rounded-full ${
                                   isBusiness ? 'bg-white' : 'bg-[#2a2e33]'
                                 }`}
                                 aria-hidden="true"
@@ -1287,12 +1287,12 @@ export function WhatFitsScreen({
                               <img
                                 src={inactiveDetailPointUrl}
                                 alt=""
-                                className={`mt-[5px] h-[13px] w-[13px] shrink-0 object-contain ${inactiveDetailPointImageColorClass}`}
+                                className={`mt-[4px] h-[15px] w-[15px] shrink-0 object-contain ${inactiveDetailPointImageColorClass}`}
                                 aria-hidden="true"
                               />
                             ) : (
                               <Hexagon
-                                className={`${isCompactSharedTab ? 'mt-[5px] h-[13px] w-[13px]' : 'mt-[2px] h-[18px] w-[18px]'} shrink-0 ${
+                                className={`${isCompactSharedTab ? 'mt-[4px] h-[15px] w-[15px]' : 'mt-[2px] h-[18px] w-[18px]'} shrink-0 ${
                                   isBusiness ? 'text-white' : 'text-[#2a2e33]'
                                 }`}
                                 strokeWidth={2.3}
@@ -1301,7 +1301,7 @@ export function WhatFitsScreen({
                             )}
                             <div
                               className={`font-normal tracking-[0.01em] ${
-                                isEnergyCommunityOverview ? 'text-[21px] leading-[1.35]' : isCompactSharedTab ? 'text-[18px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
+                                isEnergyCommunityOverview ? 'text-[22px] leading-[1.35]' : isCompactSharedTab ? 'text-[18px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
                               } ${
                                 isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                               }`}
@@ -1350,8 +1350,11 @@ export function WhatFitsScreen({
                               <span className="relative block min-h-[92px] w-[7px] self-stretch overflow-visible" aria-hidden="true">
                                 {hintLineImageUrl ? (
                                   <span
-                                    className={`absolute bottom-[2px] left-0 top-[2px] block w-[5px] bg-repeat-y bg-top bg-[length:5px_auto] ${hintLineFilterClass}`}
-                                    style={{backgroundImage: `url("${hintLineImageUrl}")`}}
+                                    className={`absolute bottom-[2px] left-0 top-[2px] block w-[7px] bg-repeat-y bg-left-top [image-rendering:crisp-edges] ${hintLineFilterClass}`}
+                                    style={{
+                                      backgroundImage: `url("${hintLineImageUrl}")`,
+                                      backgroundSize: 'auto',
+                                    }}
                                   />
                                 ) : (
                                   <span
@@ -1363,12 +1366,12 @@ export function WhatFitsScreen({
                               </span>
                               <div>
                                 {section.title?.trim() ? (
-                                  <h3 className="text-[21px] font-bold uppercase leading-none tracking-[0.01em]">
+                                  <h3 className="text-[22px] font-bold uppercase leading-none tracking-[0.01em]">
                                     {section.title.trim()}
                                   </h3>
                                 ) : null}
                                 {section.text?.trim() ? (
-                                  <div className={`mt-[16px] space-y-[12px] text-[21px] font-normal leading-[1.28] tracking-[0.01em] ${
+                                  <div className={`mt-[16px] space-y-[12px] text-[22px] font-normal leading-[1.28] tracking-[0.01em] ${
                                     isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                                   }`}>
                                     {splitParagraphs(section.text).map((paragraph, index) => (

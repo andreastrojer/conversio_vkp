@@ -566,15 +566,32 @@ function normalizeB2cNavigationItems(
     if (item.itemType === 'product' && item.product?._id) {
       const product = productsById.get(item.product._id)
 
-      if (!product) {
+      if (product) {
+        return [{
+          key: item._key,
+          label: item.label?.trim() || product.navigationLabel,
+          kind: 'product',
+          slug: product.slug,
+        }]
+      }
+
+      const fallbackSlug = item.product.slug?.trim()
+      const fallbackLabel =
+        item.label?.trim() ||
+        item.product.navigationLabel?.trim() ||
+        item.product.title?.trim()
+      const isB2cProduct =
+        item.product.targetGroup === 'b2c' || item.product.targetGroup === 'both'
+
+      if (!fallbackSlug || !fallbackLabel || item.product.isActive === false || !isB2cProduct) {
         return []
       }
 
       return [{
         key: item._key,
-        label: item.label?.trim() || product.navigationLabel,
+        label: fallbackLabel,
         kind: 'product',
-        slug: product.slug,
+        slug: fallbackSlug,
       }]
     }
 

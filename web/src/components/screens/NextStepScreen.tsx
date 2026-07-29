@@ -510,38 +510,45 @@ export function NextStepScreen({
           {headline}
         </h1>
 
-        <section className="absolute left-[60px] top-[368px] z-[4] h-[500px] w-[316px]" aria-label="Ausgewähltes Bundle">
+        <section
+          className="absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]"
+          aria-label="Ausgewähltes Bundle"
+        >
           {displayBundle ? (
             <>
-              <span className="block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]">
+              <span className="block h-full">
                 <span className="inline-flex h-full min-w-[205px] items-center justify-center bg-[#efb804] px-[24px] text-[18px] font-bold uppercase leading-none text-[#2a2e33] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
                   {displayBundle.title}
                 </span>
               </span>
 
-              {bundleImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={bundleImageUrl}
-                  alt={bundleImageAlt}
-                  className="mt-[14px] h-[214px] w-[316px] object-contain object-center"
-                />
-              ) : null}
+              <span className="flex h-full w-[316px] items-start justify-center pt-[14px]">
+                {bundleImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={bundleImageUrl}
+                    alt={bundleImageAlt}
+                    className="h-[214px] w-[316px] object-contain object-center"
+                  />
+                ) : null}
+              </span>
 
               {displayResult ? (
-                <div className={`mt-[18px] h-[104px] ${metricClassName}`}>
+                <div className={`h-full ${metricClassName}`}>
                   <p className="flex items-baseline gap-[14px] uppercase">
-                    <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">{formatPercent(displayResult.autarkyPercent)}</strong>
+                    <strong className="text-[32px] font-bold leading-none">{formatPercent(displayResult.autarkyPercent)}</strong>
                     <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
                   </p>
                   <p className="mt-[6px] flex items-baseline gap-[14px] uppercase">
-                    <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">{formatEuro(displayResult.annualSavingsEur)}</strong>
+                    <strong className="text-[32px] font-bold leading-none">{formatEuro(displayResult.annualSavingsEur)}</strong>
                     <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
                   </p>
                 </div>
-              ) : null}
+              ) : (
+                <div aria-hidden="true" />
+              )}
 
-              <div className={`mt-0 flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[16px] leading-[1.35] tracking-normal ${isBusiness ? 'border-white' : 'border-[#2a2e33]'}`}>
+              <div className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[18px] leading-[1.35] tracking-normal ${isBusiness ? 'border-white' : 'border-[#2a2e33]'}`}>
                 <span className="shrink-0 font-normal uppercase">Enthalten:</span>
                 {displayBundle.includedItems.length > 0 ? (
                   <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">

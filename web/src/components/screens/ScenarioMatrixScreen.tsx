@@ -249,19 +249,32 @@ function BundleCard({
       : undefined
   const hasPositiveAutarkyDelta = autarkyDelta !== undefined && autarkyDelta > 0
   const hasPositiveSavingsDelta = savingsDelta !== undefined && savingsDelta > 0
+  const cardLayoutClassName = isWireframeLayout
+    ? 'grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]'
+    : 'h-[420px] w-[315px]'
+  const titleSlotClassName = isWireframeLayout
+    ? 'block h-full'
+    : 'block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]'
+  const imageSlotClassName = isWireframeLayout
+    ? 'flex h-full w-[316px] items-start justify-center pt-[14px]'
+    : 'flex w-[315px] items-start justify-center pt-[24px]'
+  const imageClassName = isWireframeLayout
+    ? 'h-[214px] w-[316px]'
+    : 'h-[160px] w-[315px]'
+  const resultClassName = isWireframeLayout
+    ? `h-full ${isBusiness ? 'text-[#efb804]' : 'text-[#2a2e33]'}`
+    : 'mt-[24px] text-[#efb804]'
 
   return (
     <button
       type="button"
-      className={`group relative shrink-0 self-start text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
-        isWireframeLayout ? 'h-[500px] w-[316px]' : 'h-[420px] w-[315px]'
-      } ${
+      className={`group relative shrink-0 self-start text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${cardLayoutClassName} ${
         isBusiness ? 'text-white' : 'text-[#2a2e33]'
       }`}
       aria-pressed={active}
       onClick={onSelect}
     >
-      <span className="block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]">
+      <span className={titleSlotClassName}>
         <span
           className={`inline-flex h-full min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
             active
@@ -277,22 +290,22 @@ function BundleCard({
         </span>
       </span>
 
-      {imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={imageUrl}
-          alt={imageAlt}
-          className={`object-contain object-center transition-transform duration-300 group-hover:scale-[1.015] ${
-            isWireframeLayout ? 'mt-[14px] h-[214px] w-[316px]' : 'mt-[24px] h-[160px] w-[315px]'
-          }`}
-        />
-      ) : null}
+      <span className={imageSlotClassName}>
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            alt={imageAlt}
+            className={`${imageClassName} object-contain object-center transition-transform duration-300 group-hover:scale-[1.015]`}
+          />
+        ) : null}
+      </span>
 
       {hasPositiveAutarkyDelta || hasPositiveSavingsDelta ? (
         <span
-          className={`absolute z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[7px] text-[15px] font-semibold uppercase leading-none ${
+          className={`absolute z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[7px] text-[16px] font-semibold uppercase leading-none ${
             isWireframeLayout
-              ? `left-[-188px] top-[198px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[218px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#2a2e33]'}`
+              ? `left-[-188px] top-[178px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[178px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#2a2e33]'}`
               : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
           }`}
         >
@@ -340,10 +353,10 @@ function BundleCard({
         </span>
       ) : null}
 
-      <div className={`${isWireframeLayout ? `mt-[18px] h-[104px] ${isBusiness ? 'text-[#efb804]' : 'text-[#2a2e33]'}` : 'mt-[18px] text-[#efb804]'}`}>
+      <div className={resultClassName}>
         {result.autarkyPercent !== undefined ? (
           <p className="flex items-baseline gap-[14px] uppercase">
-            <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
+            <strong className="text-[32px] font-bold leading-none">
               {formatPercent(result.autarkyPercent)}
             </strong>
             <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
@@ -351,7 +364,7 @@ function BundleCard({
         ) : null}
         {result.annualSavingsEur !== undefined ? (
           <p className="mt-[6px] flex items-baseline gap-[14px] uppercase">
-            <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
+            <strong className="text-[32px] font-bold leading-none">
               {formatEuro(result.annualSavingsEur)}
             </strong>
             <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
@@ -360,7 +373,7 @@ function BundleCard({
       </div>
 
       <div
-        className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[16px] leading-[1.35] tracking-normal ${
+        className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[18px] leading-[1.35] tracking-normal ${
           isWireframeLayout ? 'mt-0' : 'mt-[18px]'
         } ${
           isBusiness ? 'border-white' : 'border-[#2a2e33]'
@@ -648,7 +661,7 @@ export function ScenarioMatrixScreen({
                 {calculateButtonLabel ? (
                   <button
                     type="button"
-                    className="group inline-flex h-[46px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px]"
+                    className="group inline-flex h-[36px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase leading-none tracking-[0.025em] text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[38px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px]"
                     onClick={handleCalculate}
                   >
                     <span>{calculateButtonLabel}</span>
@@ -666,7 +679,7 @@ export function ScenarioMatrixScreen({
           ) : (
             <motion.section
               key="calculation"
-              className="absolute left-[60px] top-[380px] z-[3] h-[515px] w-[1320px] max-[1600px]:top-[372px] [@media(max-height:920px)]:top-[372px]"
+              className="absolute left-[60px] top-[400px] z-[3] h-[515px] w-[1320px] max-[1600px]:top-[392px] [@media(max-height:920px)]:top-[392px]"
               initial={{opacity: 0, x: 10}}
               animate={{opacity: 1, x: 0}}
               exit={{opacity: 0, x: 10}}
@@ -713,10 +726,10 @@ export function ScenarioMatrixScreen({
                   })
                 }
               }}
-              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
+              className="group flex items-center justify-between pb-[14px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
               <span>{calculationCtaLabel}</span>
-              <ArrowRight className="h-[14px] w-[20px] transition-transform group-hover:translate-x-1" strokeWidth={2.2} aria-hidden="true" />
+              <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
             </Link>
             <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
           </div>

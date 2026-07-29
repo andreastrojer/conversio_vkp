@@ -395,15 +395,15 @@ export function OfferScreen({
           {ctaHref ? (
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
+              className="group flex items-center justify-between pb-[14px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
               <span>{primaryCta.label}</span>
-              <ArrowRight className="h-[14px] w-[20px] transition-transform group-hover:translate-x-1" strokeWidth={2.2} aria-hidden="true" />
+              <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
             </Link>
           ) : (
-            <div className="flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
+            <div className="flex items-center justify-between pb-[14px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
               <span>{primaryCta.label}</span>
-              <ArrowRight className="h-[14px] w-[20px]" strokeWidth={2.2} aria-hidden="true" />
+              <ArrowRight className="h-[16px] w-[22px]" strokeWidth={2.8} aria-hidden="true" />
             </div>
           )}
           <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />

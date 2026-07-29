@@ -231,7 +231,7 @@ function AboutDetailContent({
           {ctaHref ? (
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              className="group flex items-center justify-between pb-[14px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
@@ -239,17 +239,17 @@ function AboutDetailContent({
                 <img
                   src={ctaImageUrl}
                   alt=""
-                  className="h-[14px] w-[20px] object-contain transition-transform group-hover:translate-x-1"
+                  className="h-[16px] w-[22px] object-contain transition-transform group-hover:translate-x-1"
                   aria-hidden="true"
                 />
               ) : null}
             </Link>
           ) : (
-            <span className="flex items-center justify-between pb-[10px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
+            <span className="flex items-center justify-between pb-[14px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={ctaImageUrl} alt="" className="h-[14px] w-[20px] object-contain" aria-hidden="true" />
+                <img src={ctaImageUrl} alt="" className="h-[16px] w-[22px] object-contain" aria-hidden="true" />
               ) : null}
             </span>
           )}
