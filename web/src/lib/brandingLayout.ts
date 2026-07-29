@@ -1,5 +1,5 @@
 export const brandLogoPositionClassName =
-  'absolute left-[60px] top-[calc(43px-var(--presentation-header-lift-y,0px))] z-10'
+  'absolute left-[60px] top-[calc(43px-var(--presentation-header-lift-y,0px))] z-10 [@media(min-width:768px)_and_(max-width:1366px)]:fixed [@media(min-width:768px)_and_(max-width:1366px)]:top-[43px]'
 
 export const brandLogoPanelInsetClassName =
   'pl-[60px] pt-[43px]'

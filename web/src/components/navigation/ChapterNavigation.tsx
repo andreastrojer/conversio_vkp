@@ -5,11 +5,17 @@ import {brandLogoImageClassName} from '@/lib/brandingLayout'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {ArrowUpRight} from 'lucide-react'
 import Link from 'next/link'
-import {type PointerEvent as ReactPointerEvent, useEffect, useRef, useState} from 'react'
+import {
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 
 const navigationPanelWidthPx = 510
-const closedNavigationOffsetPx = -(navigationPanelWidthPx + 2)
-const dragOpenThresholdPx = navigationPanelWidthPx * 0.42
+const tabletNavigationPanelWidthPx = 580
+const tabletViewportQuery = '(min-width: 768px) and (max-width: 1366px)'
 
 type ChapterNavigationProps = {
   customerType: CustomerGroup
@@ -29,11 +35,30 @@ export function ChapterNavigation({
   navigationArrowUrl,
 }: ChapterNavigationProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isTabletViewport, setIsTabletViewport] = useState(false)
   const [dragTranslateX, setDragTranslateX] = useState<number | null>(null)
   const navigationRef = useRef<HTMLElement>(null)
   const dragStartXRef = useRef<number | null>(null)
-  const dragStartTranslateXRef = useRef(closedNavigationOffsetPx)
+  const dragStartTranslateXRef = useRef(-(navigationPanelWidthPx + 2))
   const suppressNextClickRef = useRef(false)
+  const activePanelWidthPx = isTabletViewport
+    ? tabletNavigationPanelWidthPx
+    : navigationPanelWidthPx
+  const closedNavigationOffsetPx = -(activePanelWidthPx + 2)
+  const dragOpenThresholdPx = activePanelWidthPx * 0.42
+
+  useLayoutEffect(() => {
+    const mediaQuery = window.matchMedia(tabletViewportQuery)
+
+    function updateViewportMode() {
+      setIsTabletViewport(mediaQuery.matches)
+    }
+
+    updateViewportMode()
+    mediaQuery.addEventListener('change', updateViewportMode)
+
+    return () => mediaQuery.removeEventListener('change', updateViewportMode)
+  }, [])
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -121,12 +146,13 @@ export function ChapterNavigation({
 
   const panelTranslateX =
     dragTranslateX === null ? (isOpen ? 0 : closedNavigationOffsetPx) : dragTranslateX
-  const panelWidth = 'w-[510px]'
+  const panelWidth =
+    'w-[510px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[580px]'
   const panelSpacing =
     'rounded-r-[18px] pb-[24px] pl-[60px] pr-[54px] pt-[43px]'
   const panelOverflow = 'overflow-hidden'
   const navigationSpacing =
-    'mt-[40px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[700px] [@media(min-width:768px)_and_(max-width:1366px)]:scale-100 [@media(min-width:768px)_and_(max-width:1366px)]:[width:100%]'
+    'mt-[40px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[840px] [@media(min-width:768px)_and_(max-width:1366px)]:scale-100 [@media(min-width:768px)_and_(max-width:1366px)]:[width:100%]'
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
   const itemGap =
     'gap-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:gap-[44px]'
@@ -134,7 +160,7 @@ export function ChapterNavigation({
   const numberTextSize =
     'text-[16px] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
   const titleTextSize =
-    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[29px]'
+    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[31px]'
   const ctaOffset =
     'ml-[66px] mt-[14px] [@media(min-width:768px)_and_(max-width:1366px)]:ml-[86px]'
   const ctaSize =

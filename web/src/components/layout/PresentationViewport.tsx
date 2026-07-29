@@ -58,7 +58,7 @@ export function PresentationViewport({
         style={
           {
             '--presentation-bleed-y': `${geometry?.bleedY ?? 0}px`,
-            '--presentation-header-lift-y': `${Math.min(geometry?.bleedY ?? 0, 24)}px`,
+            '--presentation-header-lift-y': `${geometry?.bleedY ?? 0}px`,
             containerType: 'size',
             height: `${geometry?.height ?? REFERENCE_HEIGHT}px`,
             opacity: geometry === null ? 0 : 1,

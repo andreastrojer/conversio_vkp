@@ -13,7 +13,7 @@ type AccountMenuClientProps = {
 }
 
 const compactWrapperClassName =
-  'max-[1600px]:right-[64px] max-[1600px]:top-[calc(52px-var(--presentation-header-lift-y,0px))] [@media(max-height:920px)]:right-[64px] [@media(max-height:920px)]:top-[calc(52px-var(--presentation-header-lift-y,0px))]'
+  'max-[1600px]:right-[64px] max-[1600px]:top-[calc(52px-var(--presentation-header-lift-y,0px))] [@media(max-height:920px)]:right-[64px] [@media(max-height:920px)]:top-[calc(52px-var(--presentation-header-lift-y,0px))] [@media(min-width:768px)_and_(max-width:1366px)]:top-[52px]'
 const compactTriggerClassName =
   'max-[1600px]:h-[68px] max-[1600px]:w-[68px] [@media(max-height:920px)]:h-[68px] [@media(max-height:920px)]:w-[68px]'
 const compactIconFrameClassName =
@@ -66,7 +66,7 @@ export function AccountMenuClient({
   return (
     <div
       ref={menuRef}
-      className={`absolute right-[72px] top-[calc(60px-var(--presentation-header-lift-y,0px))] z-20 font-sans ${enlargeOnCompactViewport ? compactWrapperClassName : ''}`}
+      className={`absolute right-[72px] top-[calc(60px-var(--presentation-header-lift-y,0px))] z-20 font-sans [@media(min-width:768px)_and_(max-width:1366px)]:fixed [@media(min-width:768px)_and_(max-width:1366px)]:top-[60px] ${enlargeOnCompactViewport ? compactWrapperClassName : ''}`}
     >
       <button
         ref={triggerRef}
@@ -98,30 +98,32 @@ export function AccountMenuClient({
       {isOpen ? (
         <div
           id={popoverId}
-          className="absolute right-0 top-[calc(100%+12px)] w-[312px] overflow-hidden rounded-[14px] border border-[#e1e4e6] bg-white shadow-[0_20px_46px_rgba(61,66,72,0.13)]"
+          className="absolute right-0 top-[calc(100%+12px)] w-[312px] overflow-hidden rounded-[14px] border border-[#e1e4e6] bg-white shadow-[0_20px_46px_rgba(61,66,72,0.13)] [@media(min-width:768px)_and_(max-width:1366px)]:top-[calc(100%+16px)] [@media(min-width:768px)_and_(max-width:1366px)]:w-[380px]"
           role="dialog"
           aria-label="Microsoft-Kontoinformationen"
         >
-          <div className="relative overflow-hidden px-[24px] pb-[22px] pt-[24px]">
+          <div className="relative overflow-hidden px-[24px] pb-[22px] pt-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:px-[30px] [@media(min-width:768px)_and_(max-width:1366px)]:pb-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:pt-[30px]">
             {patternUrl ? (
               <span
-                className="pointer-events-none absolute -right-[18px] -top-[20px] h-[88px] w-[88px] bg-contain bg-center bg-no-repeat opacity-[0.30] [filter:brightness(0)_saturate(100%)_invert(21%)_sepia(7%)_saturate(703%)_hue-rotate(169deg)_brightness(72%)_contrast(96%)]"
+                className="pointer-events-none absolute -right-[18px] -top-[20px] h-[88px] w-[88px] bg-contain bg-center bg-no-repeat opacity-[0.30] [filter:brightness(0)_saturate(100%)_invert(21%)_sepia(7%)_saturate(703%)_hue-rotate(169deg)_brightness(72%)_contrast(96%)] [@media(min-width:768px)_and_(max-width:1366px)]:-right-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:-top-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[112px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[112px]"
                 style={{backgroundImage: `url("${patternUrl}")`}}
                 aria-hidden="true"
               />
             ) : null}
 
             <div className="relative min-w-0">
-              <strong className="block truncate pr-[56px] text-[20px] font-semibold leading-none text-[#3d4248]">
+              <strong className="block truncate pr-[56px] text-[20px] font-semibold leading-none text-[#3d4248] [@media(min-width:768px)_and_(max-width:1366px)]:pr-[72px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[24px]">
                 {displayName}
               </strong>
-              <span className="mt-[8px] block break-words text-[13px] font-normal leading-snug text-[#72787e]">
+              <span className="mt-[8px] block break-words text-[13px] font-normal leading-snug text-[#72787e] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[10px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[16px]">
                 {loginIdentity}
               </span>
             </div>
           </div>
 
-          <div className="border-t border-[#eceeef] px-[22px] py-4">{logoutControl}</div>
+          <div className="border-t border-[#eceeef] px-[22px] py-4 [@media(min-width:768px)_and_(max-width:1366px)]:px-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:py-[20px]">
+            {logoutControl}
+          </div>
         </div>
       ) : null}
     </div>

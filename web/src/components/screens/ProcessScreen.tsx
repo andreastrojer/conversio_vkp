@@ -147,7 +147,7 @@ export function ProcessScreen({
         </p>
 
         <section
-          className="absolute left-[175px] top-[252px] z-[3] h-[560px] w-[550px] [--process-label-offset:29px] [--process-step-gap:70px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[210px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[588px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:84px]"
+          className="absolute left-[175px] top-[252px] z-[3] h-[560px] w-[550px] [--process-label-offset:29px] [--process-step-gap:70px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[237px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[588px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:75px]"
           aria-label="Prozessschritte als Ringstapel"
         >
           {sections.map((section, index) => {

@@ -158,7 +158,7 @@ function AboutDetailContent({
 
   return (
     <section className="relative z-[2] h-full w-full overflow-hidden">
-      <div className="absolute left-[-90px] top-[-200px] z-[1] w-[86%] [@media(min-width:768px)_and_(max-width:1366px)]:top-[-52px]">
+      <div className="absolute left-[-90px] top-[-200px] z-[1] w-[86%] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-78px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[-44px]">
         {mapUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

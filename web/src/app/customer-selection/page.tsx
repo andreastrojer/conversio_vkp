@@ -27,7 +27,7 @@ export default async function CustomerSelectionPage() {
   return (
     <AuthBrandingShell
       {...brandingProps}
-      footerClassName="max-[1600px]:gap-[26px] max-[1600px]:text-[16px] [@media(max-height:920px)]:gap-[26px] [@media(max-height:920px)]:text-[16px]"
+      footerClassName="hidden"
     >
       <AccountMenu
         userName={session.user.name}
