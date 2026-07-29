@@ -183,13 +183,13 @@ function SliderControl({
 
       <div className="group relative h-[26px]">
         <span
-          className={`absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 ${
+          className={`absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full [@media(min-width:768px)_and_(max-width:1366px)]:h-[8px] ${
             isBusiness ? 'bg-white/80' : 'bg-[#3d4248]/55'
           }`}
           aria-hidden="true"
         />
         <span
-          className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 bg-[#efb804]"
+          className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-[#efb804] [@media(min-width:768px)_and_(max-width:1366px)]:h-[8px]"
           style={{width: `${percentage}%`}}
           aria-hidden="true"
         />
@@ -226,7 +226,6 @@ function BundleCard({
   onSelect,
   isBusiness,
   isWireframeLayout,
-  lowerCard,
 }: {
   bundle: ScenarioMatrixBundle
   imageUrl?: string
@@ -239,7 +238,6 @@ function BundleCard({
   onSelect: () => void
   isBusiness: boolean
   isWireframeLayout: boolean
-  lowerCard: boolean
 }) {
   const autarkyDelta =
     result.autarkyPercent !== undefined && previousResult?.autarkyPercent !== undefined
@@ -255,10 +253,8 @@ function BundleCard({
   return (
     <button
       type="button"
-      className={`group relative text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+      className={`group relative shrink-0 self-start text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
         isWireframeLayout ? 'h-[500px] w-[316px]' : 'h-[420px] w-[315px]'
-      } ${
-        lowerCard ? 'translate-y-[12px]' : ''
       } ${
         isBusiness ? 'text-white' : 'text-[#3d4248]'
       }`}
@@ -296,7 +292,7 @@ function BundleCard({
         <span
           className={`absolute z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[7px] text-[15px] font-semibold uppercase leading-none ${
             isWireframeLayout
-              ? `left-[-188px] top-[198px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#3d4248]'}`
+              ? `left-[-188px] top-[198px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[218px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#3d4248]'}`
               : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
           }`}
         >
@@ -613,7 +609,7 @@ export function ScenarioMatrixScreen({
                 />
               ) : null}
 
-              <div className="absolute left-[72px] top-[400px] z-[4] space-y-[28px]">
+              <div className="absolute left-[72px] top-[400px] z-[4] space-y-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[415px]">
                 {visibleSliders.map((slider) => (
                   <SliderControl
                     key={slider.id}
@@ -657,7 +653,7 @@ export function ScenarioMatrixScreen({
             >
               {visibleBundles.length > 0 ? (
                 <div
-                  className="grid h-full grid-cols-[315px_315px_315px] gap-x-[188px] max-[1600px]:gap-x-[175px] [@media(max-height:920px)]:gap-x-[175px]"
+                  className="flex h-full items-start gap-[188px] max-[1600px]:gap-[175px] [@media(max-height:920px)]:gap-[175px]"
                 >
                   {visibleBundles.map((bundle, index) => (
                     <BundleCard
@@ -673,7 +669,6 @@ export function ScenarioMatrixScreen({
                       onSelect={() => setActiveBundleId(bundle.id)}
                       isBusiness={isBusiness}
                       isWireframeLayout
-                      lowerCard={index === 2}
                     />
                   ))}
                 </div>
@@ -683,7 +678,7 @@ export function ScenarioMatrixScreen({
         </AnimatePresence>
 
         {isCalculation && calculationCtaLabel ? (
-          <div className="absolute bottom-[58px] right-[72px] z-[8] w-[262px] max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-auto [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-auto">
+          <div className="absolute bottom-[58px] right-[72px] z-[8] w-[262px] max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-auto [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-auto [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[52px] [@media(min-width:768px)_and_(max-width:1366px)]:left-auto [@media(min-width:768px)_and_(max-width:1366px)]:right-[72px]">
             <Link
               href={calculationCtaHrefWithState}
               onClick={() => {
@@ -707,15 +702,16 @@ export function ScenarioMatrixScreen({
 
         {bottomNavigation.length > 0 && !isCalculation ? (
           <nav
-            className="absolute bottom-[36px] left-[60px] z-[8] flex h-[48px] w-max items-center bg-[#464b50]"
+            className="absolute bottom-[36px] left-[60px] z-[8] isolate flex h-[48px] w-max items-center bg-transparent"
             aria-label="Produktnavigation"
           >
-            <span className="pointer-events-none absolute -left-[25px] top-0 h-full w-[26px] bg-[#464b50] [clip-path:polygon(100%_0,100%_100%,0_50%)]" aria-hidden="true" />
-            <span className="pointer-events-none absolute -right-[25px] top-0 h-full w-[26px] bg-[#464b50] [clip-path:polygon(0_0,0_100%,100%_50%)]" aria-hidden="true" />
-
+            <span
+              className="pointer-events-none absolute inset-0 z-0 bg-[#464b50]"
+              aria-hidden="true"
+            />
             <Link
               href={`/needs?type=${customerType}`}
-              className="absolute -left-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
+              className="absolute -left-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
               aria-label="Zum Katalog"
             >
               {productNavigationLeftArrowUrl ? (
@@ -726,14 +722,14 @@ export function ScenarioMatrixScreen({
               )}
             </Link>
 
-            <div className="flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[12px]">
+            <div className="relative z-[1] flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[12px]">
               {bottomNavigation.map((item) => {
                 const href = bottomNavigationHref(item, customerType)
                 const isMatrix = item.kind === 'screen' && Boolean(item.href?.includes('scenario-matrix'))
                 const isCatalog = item.kind === 'catalog'
                 const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
-                const className = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
-                  isMatrix && !isCatalog ? 'rounded-full bg-[#efb804] text-[#3d4248]' : 'text-white'
+                const className = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+                  isMatrix && !isCatalog ? 'bg-[#efb804] text-[#3d4248]' : 'text-white'
                   } ${
                   isCatalog
                     ? catalogIconUrl
@@ -758,7 +754,7 @@ export function ScenarioMatrixScreen({
               })}
             </div>
 
-            <span className="absolute -right-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804]" aria-hidden="true">
+            <span className="absolute -right-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804]" aria-hidden="true">
               {productNavigationRightArrowUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={productNavigationRightArrowUrl} alt="" className="h-[92px] w-[26px] object-contain" />

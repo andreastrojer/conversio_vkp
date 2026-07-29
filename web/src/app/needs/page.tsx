@@ -45,6 +45,7 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
         productNavigationLeftArrowUrl={content.productNavigationLeftArrowUrl}
         productNavigationRightArrowUrl={content.productNavigationRightArrowUrl}
         productNavigationCatalogIconUrl={content.productNavigationCatalogIconUrl}
+        productNavigationCatalogActiveIconUrl={content.productNavigationCatalogActiveIconUrl}
         navigationItems={content.navigationItems}
         logoUrl={content.logoUrl}
         inverseLogoUrl={content.inverseLogoUrl}
@@ -75,6 +76,7 @@ export default async function WhatFitsPage({searchParams}: WhatFitsPageProps) {
       productNavigationLeftArrowUrl={content.productNavigationLeftArrowUrl}
       productNavigationRightArrowUrl={content.productNavigationRightArrowUrl}
       productNavigationCatalogIconUrl={content.productNavigationCatalogIconUrl}
+      productNavigationCatalogActiveIconUrl={content.productNavigationCatalogActiveIconUrl}
       modelCardActivePatternUrl={content.modelCardActivePatternUrl}
       modelCardInactivePatternUrl={content.modelCardInactivePatternUrl}
       catalogDetailPointActiveUrl={content.catalogDetailPointActiveUrl}

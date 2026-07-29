@@ -215,7 +215,8 @@ export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
     title in [
       "Linker Nav Pfeil",
       "Rechter Nav Pfeil",
-      "Linker Navbutton"
+      "Linker Navbutton",
+      "Linker Navbutton 2"
     ]
   ] | order(coalesce(sortOrder, 999999) asc, _createdAt asc){
     title,
@@ -1549,6 +1550,7 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
         "Linker Nav Pfeil",
         "Rechter Nav Pfeil",
         "Linker Navbutton",
+        "Linker Navbutton 2",
         "Buttonpfeil",
         "orangene card",
         "graue card",

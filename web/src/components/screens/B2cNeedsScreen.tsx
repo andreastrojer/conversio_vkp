@@ -37,6 +37,7 @@ type B2cNeedsScreenProps = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  productNavigationCatalogActiveIconUrl?: string
   navigationItems: ChapterNavigationItem[]
   logoUrl?: string
   inverseLogoUrl?: string
@@ -176,13 +177,13 @@ function ArrowMedia({
   direction: 'up' | 'down'
 }) {
   if (media) {
-    return <MarkerMedia media={media} className="h-[14px] w-[24px]" />
+    return <MarkerMedia media={media} className="h-[12px] w-[12px]" />
   }
 
   return direction === 'up' ? (
-    <ChevronUp className="h-[22px] w-[22px]" strokeWidth={1.7} aria-hidden="true" />
+    <ChevronUp className="h-[14px] w-[14px]" strokeWidth={1.8} aria-hidden="true" />
   ) : (
-    <ChevronDown className="h-[22px] w-[22px]" strokeWidth={1.7} aria-hidden="true" />
+    <ChevronDown className="h-[14px] w-[14px]" strokeWidth={1.8} aria-hidden="true" />
   )
 }
 
@@ -226,19 +227,24 @@ function FunctionContent({
     typeof configuredVisibleSteps === 'number'
       ? Math.min(steps.length, Math.max(1, configuredVisibleSteps))
       : steps.length
-  const maxStartIndex = Math.max(0, steps.length - visibleStepCount)
+  const lastPageStartIndex =
+    steps.length > 0
+      ? Math.floor((steps.length - 1) / visibleStepCount) * visibleStepCount
+      : 0
   const [startIndex, setStartIndex] = useState(0)
-  const safeStartIndex = Math.min(startIndex, maxStartIndex)
+  const safeStartIndex = Math.min(startIndex, lastPageStartIndex)
   const visibleSteps = steps.slice(safeStartIndex, safeStartIndex + visibleStepCount)
   const markerMedia = tab.functionNavigation?.stepMarkerMedia || processMarkerMedia
 
   return (
     <div className="relative w-[500px]">
-      <div className="absolute right-[50px] top-[2px] z-[3] flex w-[34px] flex-col gap-px">
+      <div className="absolute right-[50px] top-[2px] z-[3] flex w-[24px] flex-col gap-[4px]">
         <button
           type="button"
-          className="grid h-[29px] w-[34px] place-items-center bg-white/90 text-[#efb804] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804] disabled:cursor-default disabled:opacity-60"
-          onClick={() => setStartIndex((current) => Math.max(0, current - 1))}
+          className="grid h-[24px] w-[24px] place-items-center rounded-full bg-white text-[#efb804] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804] disabled:cursor-default disabled:bg-white/45 disabled:text-white/80"
+          onClick={() =>
+            setStartIndex((current) => Math.max(0, current - visibleStepCount))
+          }
           disabled={safeStartIndex === 0}
           aria-label="Vorherige Funktionsschritte"
           title="Vorherige Funktionsschritte"
@@ -247,9 +253,13 @@ function FunctionContent({
         </button>
         <button
           type="button"
-          className="grid h-[29px] w-[34px] place-items-center bg-white/90 text-[#efb804] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804] disabled:cursor-default disabled:opacity-60"
-          onClick={() => setStartIndex((current) => Math.min(maxStartIndex, current + 1))}
-          disabled={safeStartIndex === maxStartIndex}
+          className="grid h-[24px] w-[24px] place-items-center rounded-full bg-white text-[#efb804] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804] disabled:cursor-default disabled:bg-white/45 disabled:text-white/80"
+          onClick={() =>
+            setStartIndex((current) =>
+              Math.min(lastPageStartIndex, current + visibleStepCount),
+            )
+          }
+          disabled={safeStartIndex === lastPageStartIndex}
           aria-label="Weitere Funktionsschritte"
           title="Weitere Funktionsschritte"
         >
@@ -258,32 +268,41 @@ function FunctionContent({
       </div>
 
       <ol className="relative flex min-h-[390px] flex-col justify-start">
-        {visibleSteps.map((step, index) => (
-          <li
-            key={step._key}
-            className="relative z-[1] grid min-h-[122px] grid-cols-[46px_minmax(0,1fr)] items-start gap-[44px]"
-          >
-            <span
-              className={`absolute left-[20px] top-[47px] z-0 w-[3px] bg-white ${
-                index === visibleSteps.length - 1 ? '-bottom-[320px]' : '-bottom-[2px]'
-              }`}
-              aria-hidden="true"
-            />
-            <StepMarker number={step.stepNumber} media={markerMedia} />
-            <div className="max-w-[310px] pt-[8px]">
-              <h2 className="text-[20px] font-bold uppercase leading-[1.08] text-white">
-                {step.title}
-              </h2>
-              <div className="mt-[12px] space-y-[10px] text-[18px] leading-[1.35] text-white/95">
-                {splitParagraphs(step.text).map((paragraph, index) => (
-                  <p key={`${step._key}-paragraph-${index}`} className="whitespace-pre-line">
-                    {paragraph}
-                  </p>
-                ))}
+        {visibleSteps.map((step, index) => {
+          const isFinalStep = safeStartIndex + index === steps.length - 1
+
+          return (
+            <li
+              key={step._key}
+              className="relative z-[1] grid min-h-[142px] grid-cols-[46px_minmax(0,1fr)] items-start gap-[44px]"
+            >
+              {!isFinalStep ? (
+                <span
+                  className={`absolute left-[20px] top-[47px] z-0 w-[3px] bg-white ${
+                    index === visibleSteps.length - 1 ? '-bottom-[320px]' : '-bottom-[2px]'
+                  }`}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <StepMarker number={step.stepNumber} media={markerMedia} />
+              <div className="max-w-[310px] pt-[8px]">
+                <h2 className="text-[20px] font-bold uppercase leading-[1.08] text-white">
+                  {step.title}
+                </h2>
+                <div className="mt-[12px] space-y-[10px] text-[18px] leading-[1.35] text-white/95">
+                  {splitParagraphs(step.text).map((paragraph, paragraphIndex) => (
+                    <p
+                      key={`${step._key}-paragraph-${paragraphIndex}`}
+                      className="whitespace-pre-line"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
               </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ol>
     </div>
   )
@@ -351,6 +370,7 @@ function ProductBottomNavigation({
   leftArrowUrl,
   rightArrowUrl,
   catalogIconUrl,
+  catalogActiveIconUrl,
   onOpenCatalog,
   onOpenProduct,
   onOpenScreen,
@@ -361,6 +381,7 @@ function ProductBottomNavigation({
   leftArrowUrl?: string
   rightArrowUrl?: string
   catalogIconUrl?: string
+  catalogActiveIconUrl?: string
   onOpenCatalog: () => void
   onOpenProduct: (slug: string) => void
   onOpenScreen: (href: string) => void
@@ -396,12 +417,14 @@ function ProductBottomNavigation({
       aria-label="Produktnavigation"
     >
       <span
-        className="pointer-events-none absolute -left-[25px] -right-[25px] inset-y-0 z-0 bg-white/20 [clip-path:polygon(25px_0,calc(100%_-_25px)_0,100%_50%,calc(100%_-_25px)_100%,25px_100%,0_50%)]"
+        className={`pointer-events-none absolute inset-0 z-0 ${
+          selectedProductSlug ? 'bg-white/25' : 'bg-[#464b50]/55'
+        }`}
         aria-hidden="true"
       />
       <button
         type="button"
-        className="absolute -left-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:cursor-default"
+        className="absolute -left-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:cursor-default"
         onClick={() => openItem(previousItem)}
         disabled={!previousItem || previousItem.kind === 'screen'}
         aria-label={previousItem?.label || undefined}
@@ -425,8 +448,14 @@ function ProductBottomNavigation({
           const isActive =
             (item.kind === 'product' && item.slug === selectedProductSlug) ||
             (isCatalog && !selectedProductSlug)
-          const itemCatalogIconUrl = catalogIconUrl || item.iconUrl
-          const commonClassName = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
+          const usesActiveCatalogIcon = Boolean(
+            isCatalog && isActive && catalogActiveIconUrl,
+          )
+          const itemCatalogIconUrl =
+            usesActiveCatalogIcon
+              ? catalogActiveIconUrl || catalogIconUrl || item.iconUrl
+              : catalogIconUrl || item.iconUrl
+          const commonClassName = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
             isActive ? 'bg-[#efb804] text-[#3d4248]' : 'text-white'
           } ${
             isCatalog
@@ -444,7 +473,11 @@ function ProductBottomNavigation({
                 <img
                   src={itemCatalogIconUrl}
                   alt=""
-                  className="block h-[26px] w-[66px] shrink-0 object-contain"
+                  className={
+                    usesActiveCatalogIcon
+                      ? 'block h-[16px] w-[16px] shrink-0 object-contain'
+                      : 'block h-[26px] w-[66px] shrink-0 object-contain'
+                  }
                   aria-hidden="true"
                 />
               ) : (
@@ -481,7 +514,7 @@ function ProductBottomNavigation({
       {nextItem?.kind === 'screen' && nextItem.href ? (
         <Link
           href={nextItem.href}
-          className="absolute -right-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
+          className="absolute -right-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
           aria-label={nextItem.label}
         >
           {rightArrowUrl ? (
@@ -499,7 +532,7 @@ function ProductBottomNavigation({
       ) : (
         <button
           type="button"
-          className="absolute -right-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:cursor-default"
+          className="absolute -right-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:cursor-default"
           onClick={() => openItem(nextItem)}
           disabled={!nextItem}
           aria-label={nextItem?.label || undefined}
@@ -530,6 +563,7 @@ export function B2cNeedsScreen({
   productNavigationLeftArrowUrl,
   productNavigationRightArrowUrl,
   productNavigationCatalogIconUrl,
+  productNavigationCatalogActiveIconUrl,
   navigationItems,
   logoUrl,
   inverseLogoUrl,
@@ -549,7 +583,9 @@ export function B2cNeedsScreen({
   const contentTopClassName =
     activeTab?.key === 'overview'
       ? 'top-[495px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[520px]'
-      : 'top-[370px]'
+      : activeTab?.key === 'functions'
+        ? 'top-[390px]'
+        : 'top-[390px]'
   const contentBottomClassName =
     activeTab?.key === 'functions' ? 'bottom-[84px]' : 'bottom-[105px]'
   const contentOverflowClassName =
@@ -681,7 +717,7 @@ export function B2cNeedsScreen({
                     className={`absolute h-0 w-0 hover:z-[2] focus-within:z-[2] ${
                       hotspot.yPercent < 50
                         ? '[@media(min-width:768px)_and_(max-width:1366px)]:translate-x-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:translate-y-[28px]'
-                        : '[@media(min-width:768px)_and_(max-width:1366px)]:-translate-y-[32px]'
+                        : '[@media(min-width:768px)_and_(max-width:1366px)]:-translate-y-[28px]'
                     }`}
                     style={{left: `${hotspot.xPercent}%`, top: `${hotspot.yPercent}%`}}
                   >
@@ -747,6 +783,7 @@ export function B2cNeedsScreen({
           leftArrowUrl={productNavigationLeftArrowUrl}
           rightArrowUrl={productNavigationRightArrowUrl}
           catalogIconUrl={productNavigationCatalogIconUrl}
+          catalogActiveIconUrl={productNavigationCatalogActiveIconUrl}
           onOpenCatalog={closeProduct}
           onOpenProduct={openProductBySlug}
           onOpenScreen={(href) => router.push(href)}

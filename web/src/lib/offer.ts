@@ -264,6 +264,7 @@ export type OfferPageData = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  productNavigationCatalogActiveIconUrl?: string
 }
 
 const offerClient = sanityClient.withConfig({useCdn: false})
@@ -706,6 +707,7 @@ export async function getOfferPageData(
       productNavigationLeftArrowUrl: navigationAssetUrl('Linker Nav Pfeil'),
       productNavigationRightArrowUrl: navigationAssetUrl('Rechter Nav Pfeil'),
       productNavigationCatalogIconUrl: navigationAssetUrl('Linker Navbutton'),
+      productNavigationCatalogActiveIconUrl: navigationAssetUrl('Linker Navbutton 2'),
     }
   } catch {
     const sharedContent = await sharedContentPromise

@@ -40,6 +40,7 @@ type WhatFitsScreenProps = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  productNavigationCatalogActiveIconUrl?: string
   modelCardActivePatternUrl?: string
   modelCardInactivePatternUrl?: string
   catalogDetailPointActiveUrl?: string
@@ -494,6 +495,7 @@ export function WhatFitsScreen({
   productNavigationLeftArrowUrl,
   productNavigationRightArrowUrl,
   productNavigationCatalogIconUrl,
+  productNavigationCatalogActiveIconUrl,
   modelCardActivePatternUrl,
   modelCardInactivePatternUrl,
   catalogDetailPointActiveUrl,
@@ -1360,17 +1362,9 @@ export function WhatFitsScreen({
                   className="absolute bottom-[36px] left-[60px] z-[5] flex h-[48px] w-max items-center bg-[#464b50]"
                   aria-label="Produktnavigation"
                 >
-                  <span
-                    className="pointer-events-none absolute -left-[25px] top-0 h-full w-[26px] bg-[#464b50] [clip-path:polygon(100%_0,100%_100%,0_50%)]"
-                    aria-hidden="true"
-                  />
-                  <span
-                    className="pointer-events-none absolute -right-[25px] top-0 h-full w-[26px] bg-[#464b50] [clip-path:polygon(0_0,0_100%,100%_50%)]"
-                    aria-hidden="true"
-                  />
                   <button
                     type="button"
-                    className="absolute -left-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
+                    className="absolute -left-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
                     onClick={() => previousBottomItem && handleBottomNavigation(previousBottomItem)}
                     disabled={!previousBottomItem || previousBottomItem.kind === 'screen'}
                     aria-label={previousBottomItem?.label || undefined}
@@ -1388,7 +1382,11 @@ export function WhatFitsScreen({
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug
                       const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
-                      const commonClassName = `inline-flex items-center justify-center whitespace-nowrap text-[14px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] max-[1600px]:text-[15px] [@media(max-height:920px)]:text-[15px] ${
+                      const catalogPressedIconUrl =
+                        isBusiness && isCatalog
+                          ? productNavigationCatalogActiveIconUrl
+                          : undefined
+                      const commonClassName = `group/catalog inline-flex items-center justify-center whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
                         isActive && !isCatalog ? 'rounded-full bg-[#efb804] text-[#3d4248]' : 'text-white'
                         } ${
                         isCatalog
@@ -1400,8 +1398,28 @@ export function WhatFitsScreen({
                       const content = isCatalog ? (
                         <>
                           {catalogIconUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={catalogIconUrl} alt="" className="block h-[26px] w-[66px] shrink-0 object-contain" aria-hidden="true" />
+                            <span className="relative block h-[26px] w-[66px] shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={catalogIconUrl}
+                                alt=""
+                                className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-100 ${
+                                  catalogPressedIconUrl
+                                    ? 'group-active/catalog:opacity-0'
+                                    : ''
+                                }`}
+                                aria-hidden="true"
+                              />
+                              {catalogPressedIconUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={catalogPressedIconUrl}
+                                  alt=""
+                                  className="absolute left-1/2 top-1/2 h-[16px] w-[16px] -translate-x-1/2 -translate-y-1/2 object-contain opacity-0 transition-opacity duration-100 group-active/catalog:opacity-100"
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                            </span>
                           ) : (
                             <ListFilter className="h-[17px] w-[17px] text-[#3d4248]" strokeWidth={2.2} aria-hidden="true" />
                           )}
@@ -1430,7 +1448,7 @@ export function WhatFitsScreen({
                   {nextBottomItem?.kind === 'screen' && nextBottomItem.href ? (
                     <Link
                       href={nextBottomItem.href}
-                      className="absolute -right-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
+                      className="absolute -right-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
                       aria-label={nextBottomItem.label}
                     >
                       {productNavigationRightArrowUrl ? (
@@ -1443,7 +1461,7 @@ export function WhatFitsScreen({
                   ) : (
                     <button
                       type="button"
-                      className="absolute -right-[25px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
+                      className="absolute -right-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
                       onClick={() => nextBottomItem && handleBottomNavigation(nextBottomItem)}
                       disabled={!nextBottomItem}
                       aria-label={nextBottomItem?.label || undefined}

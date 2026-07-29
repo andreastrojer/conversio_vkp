@@ -14,7 +14,7 @@ import {
 } from 'react'
 
 const navigationPanelWidthPx = 510
-const tabletNavigationPanelWidthPx = 580
+const tabletNavigationPanelWidthPx = 550
 const tabletViewportQuery = '(min-width: 768px) and (max-width: 1366px)'
 
 type ChapterNavigationProps = {
@@ -144,10 +144,14 @@ export function ChapterNavigation({
     setIsOpen((currentValue) => !currentValue)
   }
 
-  const panelTranslateX =
-    dragTranslateX === null ? (isOpen ? 0 : closedNavigationOffsetPx) : dragTranslateX
+  const panelTransform =
+    dragTranslateX === null
+      ? isOpen
+        ? 'translateX(0)'
+        : 'translateX(calc(-100% - 2px))'
+      : `translateX(${dragTranslateX}px)`
   const panelWidth =
-    'w-[510px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[580px]'
+    'w-[510px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[550px]'
   const panelSpacing =
     'rounded-r-[18px] pb-[24px] pl-[60px] pr-[54px] pt-[43px]'
   const panelOverflow = 'overflow-hidden'
@@ -183,7 +187,7 @@ export function ChapterNavigation({
       style={{
         bottom: 0,
         top: 0,
-        transform: `translateX(${panelTranslateX}px)`,
+        transform: panelTransform,
       }}
     >
       <div

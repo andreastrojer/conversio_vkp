@@ -239,6 +239,7 @@ export type WhatFitsPageData = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  productNavigationCatalogActiveIconUrl?: string
   modelCardActivePatternUrl?: string
   modelCardInactivePatternUrl?: string
   catalogDetailPointActiveUrl?: string
@@ -606,6 +607,7 @@ export async function getWhatFitsPageData(customerType: CustomerGroup): Promise<
       productNavigationLeftArrowUrl: navigationAssetUrl('Linker Nav Pfeil'),
       productNavigationRightArrowUrl: navigationAssetUrl('Rechter Nav Pfeil'),
       productNavigationCatalogIconUrl: navigationAssetUrl('Linker Navbutton'),
+      productNavigationCatalogActiveIconUrl: navigationAssetUrl('Linker Navbutton 2'),
       modelCardActivePatternUrl: navigationAssetUrl('orangene card'),
       modelCardInactivePatternUrl: navigationAssetUrl('graue card'),
       catalogDetailPointActiveUrl: navigationAssetUrl('Katalogdetailpunktorange'),
