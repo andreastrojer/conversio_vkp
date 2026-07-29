@@ -40,14 +40,22 @@ function sectionKey(section: ProcessSection, index: number) {
   return section._key || `process-section-${index}`
 }
 
-function ProcessRing({url, isActive}: {url: string; isActive: boolean}) {
+function ProcessRing({
+  url,
+  isActive,
+  dimInactive,
+}: {
+  url: string
+  isActive: boolean
+  dimInactive: boolean
+}) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={url}
       alt=""
       className={`pointer-events-none absolute left-0 top-1/2 h-auto w-[340px] -translate-y-1/2 object-contain transition-opacity duration-300 [@media(min-height:940px)]:w-[288px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[320px] ${
-        isActive ? 'opacity-100' : 'opacity-[0.82]'
+        isActive || !dimInactive ? 'opacity-100' : 'opacity-[0.82]'
       }`}
       aria-hidden="true"
     />
@@ -170,7 +178,11 @@ export function ProcessScreen({
                 aria-label={`${section.title || `Schritt ${index + 1}`} auswählen`}
               >
                 {currentRingUrl ? (
-                  <ProcessRing url={currentRingUrl} isActive={isActive} />
+                  <ProcessRing
+                    url={currentRingUrl}
+                    isActive={isActive}
+                    dimInactive={isBusiness}
+                  />
                 ) : (
                   <Hexagon
                     className={`pointer-events-none absolute left-[38px] top-1/2 h-[68px] w-[300px] -translate-y-1/2 ${
@@ -214,21 +226,21 @@ export function ProcessScreen({
           aria-label="Prozessschritte"
         >
           <span
-            className="absolute left-[-72px] top-[var(--process-point-center)] w-[2px] bg-[#efb804]"
+            className="absolute left-[-72px] top-[var(--process-point-center)] w-[3px] bg-[#efb804]"
             style={{
               height: `calc(${Math.max(0, sections.length - 1)} * var(--process-list-step))`,
             }}
             aria-hidden="true"
           />
           <span
-            className="absolute left-[-72px] h-[2px] w-[105px] bg-[#efb804]"
+            className="absolute left-[-72px] h-[3px] w-[105px] -translate-y-1/2 bg-[#efb804]"
             style={{
               top: 'calc(3 * var(--process-list-step) + var(--process-point-center))',
             }}
             aria-hidden="true"
           />
           <span
-            className={`absolute bottom-[var(--process-point-center)] left-[31px] top-[var(--process-point-center)] w-[2px] ${
+            className={`absolute bottom-[var(--process-point-center)] left-[31px] top-[var(--process-point-center)] w-[3px] ${
               isBusiness ? 'bg-white/90' : 'bg-[#3d4248]/80'
             }`}
             aria-hidden="true"
@@ -249,7 +261,7 @@ export function ProcessScreen({
                   aria-pressed={isActive}
                 >
                   <span
-                    className={`absolute left-[31px] top-1/2 h-[2px] w-[17px] -translate-y-1/2 transition-colors duration-300 ${
+                    className={`absolute left-[31px] top-1/2 h-[3px] w-[17px] -translate-y-1/2 transition-colors duration-300 ${
                       isActive ? 'bg-[#efb804]' : isBusiness ? 'bg-white' : 'bg-[#3d4248]'
                     }`}
                     aria-hidden="true"
@@ -266,7 +278,7 @@ export function ProcessScreen({
                     />
                     <span className="relative text-[16px] font-medium">{index + 1}</span>
                   </span>
-                  <span className="ml-[22px] max-w-[410px] text-[17px] font-semibold uppercase leading-[1.16] tracking-[0.012em] transition-colors duration-300">
+                  <span className="ml-[22px] max-w-[410px] text-[20px] font-bold uppercase leading-[1.16] tracking-[0.012em] transition-colors duration-300">
                     {section.title || `Schritt ${index + 1}`}
                   </span>
                 </button>

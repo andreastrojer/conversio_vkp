@@ -493,18 +493,15 @@ export function ScenarioMatrixScreen({
   const [values, setValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(sliders.map((slider) => [slider.key, slider.defaultValue])),
   )
+  const [calculatedBundles, setCalculatedBundles] = useState<CalculatedBundle[]>([])
+  const [calculationIsCurrent, setCalculationIsCurrent] = useState(false)
   const isBusiness = customerType === 'b2b'
   const isCalculation = activeTab === 'calculation'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const visibleSliders = useMemo(() => getVisibleSliders(sliders, customerType), [customerType, sliders])
   const visibleBundles = useMemo(() => bundles.slice(0, 3), [bundles])
-  const calculatorValues = useMemo(() => buildCalculatorValues(sliders, values), [sliders, values])
   const calculationParameters = useMemo(() => buildCalculationParameters(parameters), [parameters])
-  const calculatedBundles = useMemo(
-    () => visibleBundles.map((bundle) => calculateBundle(bundle, calculatorValues, calculationParameters)),
-    [calculationParameters, calculatorValues, visibleBundles],
-  )
   const activeBundleIndex = visibleBundles.findIndex((bundle) => bundle.id === activeBundleId)
   const activeBundle = activeBundleIndex >= 0 ? visibleBundles[activeBundleIndex] : undefined
   const activeBundleResult = activeBundleIndex >= 0 ? calculatedBundles[activeBundleIndex] : undefined
@@ -520,6 +517,27 @@ export function ScenarioMatrixScreen({
     : offerImageUrl
       ? offerImageAlt
       : heroImageAlt
+
+  function handleSliderChange(key: string, value: number) {
+    setValues((current) => ({...current, [key]: value}))
+    setCalculationIsCurrent(false)
+  }
+
+  function handleCalculate() {
+    const calculatorValues = buildCalculatorValues(sliders, values)
+    const nextCalculatedBundles = visibleBundles.map((bundle) =>
+      calculateBundle(bundle, calculatorValues, calculationParameters),
+    )
+
+    setCalculatedBundles(nextCalculatedBundles)
+    setCalculationIsCurrent(true)
+    setActiveBundleId((current) =>
+      visibleBundles.some((bundle) => bundle.id === current)
+        ? current
+        : visibleBundles[0]?.id || '',
+    )
+    setActiveTab('calculation')
+  }
 
   return (
     <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
@@ -568,6 +586,7 @@ export function ScenarioMatrixScreen({
             {key: 'calculation' as const, label: bundleTabLabel},
           ]).map((tab) => {
             const isActive = activeTab === tab.key
+            const isDisabled = tab.key === 'calculation' && !calculationIsCurrent
 
             return (
               <button
@@ -575,10 +594,15 @@ export function ScenarioMatrixScreen({
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                className={`relative px-[12px] pb-[10px] text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+                disabled={isDisabled}
+                className={`relative px-[12px] pb-[10px] text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-not-allowed disabled:opacity-55 max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
                   isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
                 }`}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => {
+                  if (!isDisabled) {
+                    setActiveTab(tab.key)
+                  }
+                }}
               >
                 {tab.label}
                 {isActive ? <span className="absolute inset-x-0 bottom-0 h-px bg-[#efb804]" aria-hidden="true" /> : null}
@@ -615,7 +639,7 @@ export function ScenarioMatrixScreen({
                     key={slider.id}
                     slider={slider}
                     value={values[slider.key] ?? slider.defaultValue}
-                    onChange={(value) => setValues((current) => ({...current, [slider.key]: value}))}
+                    onChange={(value) => handleSliderChange(slider.key, value)}
                     isBusiness={isBusiness}
                     compact
                   />
@@ -625,9 +649,7 @@ export function ScenarioMatrixScreen({
                   <button
                     type="button"
                     className="group inline-flex h-[46px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px]"
-                    onClick={() => {
-                      setActiveTab('calculation')
-                    }}
+                    onClick={handleCalculate}
                   >
                     <span>{calculateButtonLabel}</span>
                     {calculateButtonArrowUrl || navigationArrowUrl ? (
@@ -722,7 +744,7 @@ export function ScenarioMatrixScreen({
               )}
             </Link>
 
-            <div className="relative z-[1] flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[12px]">
+            <div className="relative z-[1] flex w-auto items-center justify-start gap-[40px] px-[28px]">
               {bottomNavigation.map((item) => {
                 const href = bottomNavigationHref(item, customerType)
                 const isMatrix = item.kind === 'screen' && Boolean(item.href?.includes('scenario-matrix'))

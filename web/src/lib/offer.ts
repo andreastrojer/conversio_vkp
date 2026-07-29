@@ -462,7 +462,7 @@ function normalizeB2cProduct(
   const hasInterplay = detailTabs.some(
     (tab) =>
       tab.key === 'interplay' &&
-      Boolean(tab.contentTitle && tab.introText && tab.contentItems.length > 0),
+      tab.contentItems.length > 0,
   )
 
   if (!hasOverview || !hasFunctions || !hasInterplay) {

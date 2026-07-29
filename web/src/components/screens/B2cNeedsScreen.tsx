@@ -193,13 +193,13 @@ function OverviewContent({sections}: {sections: B2cDetailSection[]}) {
       {sections.map((section) => (
         <section key={section._key}>
           {section.title ? (
-            <h2 className="text-[21px] font-bold uppercase leading-[1.1] text-white">
+            <h2 className="text-[23px] font-bold uppercase leading-[1.1] text-white max-[1600px]:text-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[25px]">
               {section.title}
             </h2>
           ) : null}
           {section.text ? (
             <div
-              className={`${section.title ? 'mt-[26px]' : ''} space-y-[22px] text-[18px] leading-[1.45] text-white/95`}
+              className={`${section.title ? 'mt-[26px]' : ''} space-y-[22px] text-[20px] leading-[1.45] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]`}
             >
               {splitParagraphs(section.text).map((paragraph, index) => (
                 <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
@@ -286,10 +286,10 @@ function FunctionContent({
               ) : null}
               <StepMarker number={step.stepNumber} media={markerMedia} />
               <div className="max-w-[310px] pt-[8px]">
-                <h2 className="text-[20px] font-bold uppercase leading-[1.08] text-white">
+                <h2 className="text-[22px] font-bold uppercase leading-[1.08] text-white max-[1600px]:text-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[25px]">
                   {step.title}
                 </h2>
-                <div className="mt-[12px] space-y-[10px] text-[18px] leading-[1.35] text-white/95">
+                <div className="mt-[12px] space-y-[10px] text-[20px] leading-[1.35] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]">
                   {splitParagraphs(step.text).map((paragraph, paragraphIndex) => (
                     <p
                       key={`${step._key}-paragraph-${paragraphIndex}`}
@@ -316,38 +316,21 @@ function InterplayContent({
   markerMedia?: B2cMedia
 }) {
   return (
-    <div className="w-[500px]">
+    <div className="w-[680px]">
       <div>
-        {tab.contentTitle ? (
-          <h2 className="text-[21px] font-bold uppercase leading-[1.08] text-white">
-            {tab.contentTitle}
-          </h2>
-        ) : null}
-        {tab.introText ? (
-          <div className="mt-[26px] space-y-[16px] text-[18px] leading-[1.45] text-white/95">
-            {splitParagraphs(tab.introText).map((paragraph, index) => (
-              <p key={`${tab._key}-intro-${index}`} className="whitespace-pre-line">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mt-[42px]">
         {tab.contentItemsTitle ? (
-          <h3 className="mb-[24px] text-[20px] font-bold uppercase leading-[1.1] text-white">
+          <h3 className="mb-[16px] text-[22px] font-bold uppercase leading-[1.1] text-white max-[1600px]:text-[23px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[24px]">
             {tab.contentItemsTitle}
           </h3>
         ) : null}
-        <div className="space-y-[14px]">
+        <div className="space-y-[10px]">
           {tab.contentItems.map((item) => (
             <div
               key={item._key}
-              className="grid grid-cols-[22px_minmax(0,1fr)] items-start gap-[18px]"
+              className="grid grid-cols-[22px_minmax(0,1fr)] items-center gap-[18px]"
             >
-              <PlusMarker media={markerMedia} className="mt-[2px] h-[18px] w-[18px]" />
-              <div className="text-[18px] leading-[1.4] text-white/95">
+              <PlusMarker media={markerMedia} className="h-[18px] w-[18px]" />
+              <div className="text-[20px] leading-[1.4] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]">
                 {item.title ? (
                   <strong className="block font-semibold uppercase text-white">{item.title}</strong>
                 ) : null}
@@ -573,6 +556,7 @@ export function B2cNeedsScreen({
   const router = useRouter()
   const initialProduct = products.find((product) => product.slug === initialProductSlug)
   const [selectedProductSlug, setSelectedProductSlug] = useState(initialProduct?.slug || '')
+  const [expandedHotspotKey, setExpandedHotspotKey] = useState<string | null>(null)
   const selectedProduct = products.find((product) => product.slug === selectedProductSlug)
   const [activeTabKey, setActiveTabKey] = useState(
     initialProduct?.detailTabs[0]?.key || '',
@@ -582,24 +566,36 @@ export function B2cNeedsScreen({
     selectedProduct?.detailTabs[0]
   const contentTopClassName =
     activeTab?.key === 'overview'
-      ? 'top-[495px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[520px]'
+      ? 'top-[400px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[390px]'
       : activeTab?.key === 'functions'
         ? 'top-[390px]'
-        : 'top-[390px]'
+        : 'top-[520px]'
   const contentBottomClassName =
-    activeTab?.key === 'functions' ? 'bottom-[84px]' : 'bottom-[105px]'
+    activeTab?.key === 'functions' || activeTab?.key === 'overview'
+      ? 'bottom-[84px]'
+      : 'bottom-[105px]'
   const contentOverflowClassName =
-    activeTab?.key === 'functions' ? 'overflow-hidden' : 'overflow-y-auto'
+    activeTab?.key === 'functions'
+      ? 'overflow-hidden'
+      : activeTab?.key === 'interplay'
+        ? 'overflow-visible'
+        : 'overflow-y-auto'
+  const contentAlignmentClassName =
+    activeTab?.key === 'overview' ? 'flex items-center' : ''
+  const contentWidthClassName =
+    activeTab?.key === 'interplay' ? 'w-[720px]' : 'w-[560px]'
   const pageLogoUrl = inverseLogoUrl || logoUrl
   const navigationLogoUrl = inverseLogoUrl || logoUrl
 
   function openProduct(product: B2cProduct) {
+    setExpandedHotspotKey(null)
     setSelectedProductSlug(product.slug)
     setActiveTabKey(product.detailTabs[0]?.key || '')
     router.push(`/needs?type=b2c&product=${encodeURIComponent(product.slug)}`, {scroll: false})
   }
 
   function closeProduct() {
+    setExpandedHotspotKey(null)
     setSelectedProductSlug('')
     setActiveTabKey('')
     router.push('/needs?type=b2c', {scroll: false})
@@ -611,6 +607,19 @@ export function B2cNeedsScreen({
     if (product) {
       openProduct(product)
     }
+  }
+
+  function handleHotspotClick(hotspot: B2cHouseConfig['hotspots'][number]) {
+    const isTabletViewport = window.matchMedia(
+      '(min-width: 768px) and (max-width: 1366px)',
+    ).matches
+
+    if (isTabletViewport && expandedHotspotKey !== hotspot._key) {
+      setExpandedHotspotKey(hotspot._key)
+      return
+    }
+
+    openProduct(hotspot.product)
   }
 
   return (
@@ -631,7 +640,7 @@ export function B2cNeedsScreen({
               <div className="absolute left-[60px] top-[220px] z-[3]">
                 <h1
                   id="b2c-product-title"
-                  className="max-w-[560px] text-[48px] font-bold uppercase leading-[0.98] text-white"
+                  className="max-w-[560px] font-sans text-[54px] font-bold uppercase leading-[0.98] text-white"
                 >
                   {selectedProduct.detailTitle}
                 </h1>
@@ -648,7 +657,7 @@ export function B2cNeedsScreen({
                       <button
                         key={tab._key}
                         type="button"
-                        className={`relative pb-[12px] text-[16px] font-medium uppercase leading-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                        className={`relative pb-[12px] text-[18px] font-medium uppercase leading-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
                           isActive ? 'text-[#efb804]' : 'text-white hover:text-[#efb804]'
                         }`}
                         role="tab"
@@ -669,9 +678,9 @@ export function B2cNeedsScreen({
               </div>
 
               <div
-                className={`absolute left-[60px] z-[3] ${contentTopClassName} ${contentBottomClassName} ${contentOverflowClassName}`}
+                className={`absolute left-[60px] z-[3] ${contentTopClassName} ${contentBottomClassName} ${contentOverflowClassName} ${contentAlignmentClassName}`}
               >
-                <div className="relative w-[560px]">
+                <div className={`relative ${contentWidthClassName}`}>
                   <div className="relative z-[1]">
                     {activeTab?.key === 'overview' ? (
                       <OverviewContent sections={activeTab.sections} />
@@ -707,27 +716,43 @@ export function B2cNeedsScreen({
               exit={{opacity: 0}}
               transition={{duration: 0.32}}
               aria-label={headline || undefined}
+              onClick={() => setExpandedHotspotKey(null)}
             >
               <BackgroundMedia media={houseConfig?.backgroundMedia} />
 
               <div className="pointer-events-none absolute inset-x-0 top-0 z-[4] h-[940px] [@media(min-width:768px)_and_(max-width:1366px)]:fixed [@media(min-width:768px)_and_(max-width:1366px)]:top-1/2 [@media(min-width:768px)_and_(max-width:1366px)]:h-auto [@media(min-width:768px)_and_(max-width:1366px)]:aspect-[16/9] [@media(min-width:768px)_and_(max-width:1366px)]:-translate-y-1/2">
-                {houseConfig?.hotspots.map((hotspot) => (
-                  <span
-                    key={hotspot._key}
-                    className={`absolute h-0 w-0 hover:z-[2] focus-within:z-[2] ${
-                      hotspot.yPercent < 50
-                        ? '[@media(min-width:768px)_and_(max-width:1366px)]:translate-x-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:translate-y-[28px]'
-                        : '[@media(min-width:768px)_and_(max-width:1366px)]:-translate-y-[28px]'
-                    }`}
-                    style={{left: `${hotspot.xPercent}%`, top: `${hotspot.yPercent}%`}}
-                  >
-                    <button
-                      type="button"
-                      className="group pointer-events-auto absolute left-[-24px] top-[-24px] h-[49px] w-[48px] appearance-none overflow-visible border-0 bg-transparent p-0 text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804]"
-                      onClick={() => openProduct(hotspot.product)}
-                      aria-label={`${hotspot.label} öffnen`}
+                {houseConfig?.hotspots.map((hotspot) => {
+                  const isExpanded = expandedHotspotKey === hotspot._key
+
+                  return (
+                    <span
+                      key={hotspot._key}
+                      className={`absolute h-0 w-0 hover:z-[2] focus-within:z-[2] ${
+                        isExpanded ? 'z-[2]' : ''
+                      } ${
+                        hotspot.yPercent < 50
+                          ? '[@media(min-width:768px)_and_(max-width:1366px)]:translate-x-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:translate-y-[28px]'
+                          : '[@media(min-width:768px)_and_(max-width:1366px)]:-translate-y-[28px]'
+                      }`}
+                      style={{left: `${hotspot.xPercent}%`, top: `${hotspot.yPercent}%`}}
                     >
-                      <span className="absolute left-0 top-0 grid h-[48px] w-[48px] place-items-center opacity-100 blur-0 transition-[opacity,transform,filter] delay-150 duration-200 ease-out group-hover:rotate-45 group-hover:scale-[0.35] group-hover:opacity-0 group-hover:blur-[3px] group-hover:delay-0 group-focus-visible:rotate-45 group-focus-visible:scale-[0.35] group-focus-visible:opacity-0 group-focus-visible:blur-[3px] group-focus-visible:delay-0">
+                      <button
+                        type="button"
+                        className="group pointer-events-auto absolute left-[-24px] top-[-24px] h-[49px] w-[48px] appearance-none overflow-visible border-0 bg-transparent p-0 text-white transition-transform duration-150 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804]"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          handleHotspotClick(hotspot)
+                        }}
+                        aria-label={`${hotspot.label} öffnen`}
+                        aria-expanded={isExpanded}
+                      >
+                        <span
+                          className={`absolute left-0 top-0 grid h-[48px] w-[48px] place-items-center transition-[opacity,transform,filter] duration-200 ease-out group-hover:rotate-45 group-hover:scale-[0.35] group-hover:opacity-0 group-hover:blur-[3px] group-hover:delay-0 group-focus-visible:rotate-45 group-focus-visible:scale-[0.35] group-focus-visible:opacity-0 group-focus-visible:blur-[3px] group-focus-visible:delay-0 ${
+                            isExpanded
+                              ? 'rotate-45 scale-[0.35] opacity-0 blur-[3px] delay-0'
+                              : 'opacity-100 blur-0 delay-150'
+                          }`}
+                        >
                         {hotspot.media ? (
                           <MarkerMedia media={hotspot.media} className="h-[30px] w-[30px]" />
                         ) : (
@@ -735,20 +760,30 @@ export function B2cNeedsScreen({
                             <Plus className="h-[16px] w-[16px]" strokeWidth={2} aria-hidden="true" />
                           </span>
                         )}
-                      </span>
+                        </span>
 
-                      <span
-                        className="absolute left-0 top-0 h-[49px] w-[48px] overflow-visible bg-transparent"
-                        aria-hidden="true"
-                      >
-                        <span className="grid h-[49px] w-[48px] shrink-0 place-items-center">
+                        <span
+                          className="absolute left-0 top-0 h-[49px] w-[48px] overflow-visible bg-transparent"
+                          aria-hidden="true"
+                        >
+                          <span className="grid h-[49px] w-[48px] shrink-0 place-items-center">
                           {houseConfig.expandedHotspotMedia ? (
                             <MarkerMedia
                               media={houseConfig.expandedHotspotMedia}
-                              className="h-[49px] w-[19px] origin-center scale-x-[0.6] scale-y-0 opacity-0 blur-[2px] transition-[opacity,transform,filter] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100 group-hover:scale-y-100 group-hover:opacity-100 group-hover:blur-0 group-focus-visible:scale-x-100 group-focus-visible:scale-y-100 group-focus-visible:opacity-100 group-focus-visible:blur-0"
+                              className={`h-[49px] w-[19px] origin-center transition-[opacity,transform,filter] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100 group-hover:scale-y-100 group-hover:opacity-100 group-hover:blur-0 group-focus-visible:scale-x-100 group-focus-visible:scale-y-100 group-focus-visible:opacity-100 group-focus-visible:blur-0 ${
+                                isExpanded
+                                  ? 'scale-x-100 scale-y-100 opacity-100 blur-0'
+                                  : 'scale-x-[0.6] scale-y-0 opacity-0 blur-[2px]'
+                              }`}
                             />
                           ) : (
-                            <span className="relative h-[49px] w-[19px] origin-center scale-x-[0.6] scale-y-0 opacity-0 blur-[2px] transition-[opacity,transform,filter] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100 group-hover:scale-y-100 group-hover:opacity-100 group-hover:blur-0 group-focus-visible:scale-x-100 group-focus-visible:scale-y-100 group-focus-visible:opacity-100 group-focus-visible:blur-0">
+                            <span
+                              className={`relative h-[49px] w-[19px] origin-center transition-[opacity,transform,filter] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100 group-hover:scale-y-100 group-hover:opacity-100 group-hover:blur-0 group-focus-visible:scale-x-100 group-focus-visible:scale-y-100 group-focus-visible:opacity-100 group-focus-visible:blur-0 ${
+                                isExpanded
+                                  ? 'scale-x-100 scale-y-100 opacity-100 blur-0'
+                                  : 'scale-x-[0.6] scale-y-0 opacity-0 blur-[2px]'
+                              }`}
+                            >
                               <ChevronUp
                                 className="absolute left-1/2 top-[1px] h-[14px] w-[14px] -translate-x-1/2"
                                 strokeWidth={1.8}
@@ -759,17 +794,24 @@ export function B2cNeedsScreen({
                               />
                             </span>
                           )}
-                        </span>
+                          </span>
 
-                        <span className="absolute left-[15px] top-1/2 flex max-w-0 -translate-x-[8px] -translate-y-1/2 items-center overflow-hidden bg-transparent opacity-0 [clip-path:inset(0_100%_0_0)] transition-[max-width,opacity,transform,clip-path] duration-[360ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:max-w-[340px] group-hover:translate-x-0 group-hover:opacity-100 group-hover:[clip-path:inset(0_0_0_0)] group-hover:delay-75 group-focus-visible:max-w-[340px] group-focus-visible:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:[clip-path:inset(0_0_0_0)] group-focus-visible:delay-75">
+                          <span
+                            className={`absolute left-[15px] top-1/2 flex -translate-y-1/2 items-center overflow-hidden bg-transparent transition-[max-width,opacity,transform,clip-path] duration-[360ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:max-w-[340px] group-hover:translate-x-0 group-hover:opacity-100 group-hover:[clip-path:inset(0_0_0_0)] group-hover:delay-75 group-focus-visible:max-w-[340px] group-focus-visible:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:[clip-path:inset(0_0_0_0)] group-focus-visible:delay-75 ${
+                              isExpanded
+                                ? 'max-w-[340px] translate-x-0 opacity-100 [clip-path:inset(0_0_0_0)] delay-75'
+                                : 'max-w-0 -translate-x-[8px] opacity-0 [clip-path:inset(0_100%_0_0)]'
+                            }`}
+                          >
                           <span className="min-w-max whitespace-nowrap bg-transparent pr-[14px] text-left text-[18px] font-semibold uppercase leading-none text-white">
                             {hotspot.label}
                           </span>
+                          </span>
                         </span>
-                      </span>
-                    </button>
-                  </span>
-                ))}
+                      </button>
+                    </span>
+                  )
+                })}
               </div>
 
             </motion.section>

@@ -195,8 +195,8 @@ function AboutDetailContent({
           <div
             className={`w-full space-y-[2px] font-sans font-normal tracking-[0.006em] ${
               isBusiness
-                ? 'mt-[78px] text-[27px] leading-[1.42] text-white'
-                : 'mt-[78px] text-[27px] leading-[1.42] text-[#3d4248]'
+                ? 'mt-[78px] text-[28px] leading-[1.42] text-white'
+                : 'mt-[78px] text-[28px] leading-[1.42] text-[#3d4248]'
             }`}
           >
             {descriptionBlocks.map((block) => (
@@ -213,8 +213,8 @@ function AboutDetailContent({
           <div
             className={`relative w-full max-w-[560px] font-sans font-semibold uppercase leading-[1.18] tracking-[0.004em] ${
               isBusiness
-                ? 'mt-[76px] text-[19px] text-white'
-                : 'mt-[76px] text-[19px] text-[#3d4248]'
+                ? 'mt-[76px] text-[22px] text-white'
+                : 'mt-[76px] text-[22px] text-[#3d4248]'
             }`}
           >
             <span className="absolute left-0 top-[2px] z-0 flex gap-[2px]" aria-hidden="true">

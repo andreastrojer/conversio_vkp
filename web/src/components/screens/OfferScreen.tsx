@@ -343,7 +343,7 @@ export function OfferScreen({
                           ) : null}
                           {section.text ? (
                               <div
-                                className={`max-w-[420px] space-y-[22px] text-[18px] font-normal leading-[1.42] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                                className={`max-w-[420px] space-y-[22px] text-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
                                   isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
                                 }`}
                               >

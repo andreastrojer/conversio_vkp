@@ -64,6 +64,23 @@ const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
 const detailContentPanelClassName = 'ml-auto w-[470px]'
 
+function formatModelTitle(title: string) {
+  const match = title
+    .trim()
+    .match(/^(.*?)(\s*\((?:\d+\s*[x×]\s*)?\d+\s*A\)|\s+(?:\d+\s*[x×]\s*)?\d+\s*A)$/i)
+
+  if (!match) {
+    return title
+  }
+
+  return (
+    <>
+      {match[1].trim()}
+      <span className="mt-[5px] block">{match[2].trim()}</span>
+    </>
+  )
+}
+
 function isVideo(mediaType?: string | null) {
   return mediaType === 'video' || mediaType === 'droneVideo'
 }
@@ -178,20 +195,31 @@ function MediaLayer({
   className: string
   imageClassName: string
 }) {
+  const isSvgImage =
+    media.kind === 'image' && /\.svg(?:[?#]|$)/i.test(media.url || '')
+
   return (
     <div className={className}>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={media.key}
           className="absolute inset-0"
-          initial={{opacity: 0, x: -10, scale: 0.992}}
-          animate={{opacity: 1, x: 0, scale: 1}}
-          exit={{opacity: 0, x: 8, scale: 0.996}}
+          initial={isSvgImage ? {opacity: 0} : {opacity: 0, x: -10, scale: 0.992}}
+          animate={isSvgImage ? {opacity: 1} : {opacity: 1, x: 0, scale: 1}}
+          exit={isSvgImage ? {opacity: 0} : {opacity: 0, x: 8, scale: 0.996}}
           transition={{duration: 0.38, ease: [0.22, 1, 0.36, 1]}}
         >
           {media.kind === 'image' && media.url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={media.url} alt={media.alt} className={imageClassName} />
+            <img
+              src={media.url}
+              alt={media.alt}
+              className={`${imageClassName} ${
+                isSvgImage ? '[image-rendering:-webkit-optimize-contrast]' : ''
+              }`}
+              decoding="sync"
+              fetchPriority="high"
+            />
           ) : media.kind === 'video' && media.url ? (
             <video
               src={media.url}
@@ -518,6 +546,7 @@ export function WhatFitsScreen({
   const selectedModel =
     selectedProduct?.models.find((model) => model.slug === selectedModelSlug || model._id === selectedModelSlug) ||
     selectedProduct?.models[0]
+  const usesTopModelLabelLayout = selectedModel?.slug === 'bres-2080-1000'
   const firstModelTechnicalTab = selectedProduct?.models.map((model) => findTab(model.detailTabs, 'technical')).find(hasTabSections)
   const visibleTabs = selectedModel
     ? [
@@ -784,7 +813,9 @@ export function WhatFitsScreen({
 
                 <div
                   className={`mt-[44px] grid grid-cols-2 gap-x-[72px] gap-y-[34px] ${
-                    isBusiness ? 'grid-flow-col grid-rows-3' : ''
+                    isBusiness && catalogProducts.length > 3
+                      ? 'grid-flow-col grid-rows-3'
+                      : 'grid-flow-row'
                   }`}
                 >
                   {catalogProducts.map((product, index) => {
@@ -797,7 +828,9 @@ export function WhatFitsScreen({
                       <button
                         key={product._id}
                         type="button"
-                        className={`group flex items-center gap-[28px] text-left text-[17px] font-semibold uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                        className={`group flex items-center gap-[28px] text-left uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                          isBusiness ? 'text-[20px] font-bold' : 'text-[17px] font-semibold'
+                        } ${
                           isSelected
                             ? 'text-[#efb804]'
                             : isBusiness
@@ -907,7 +940,9 @@ export function WhatFitsScreen({
                 media={detailMedia}
                 className={
                   selectedModel && activeTab?.key === 'overview'
-                    ? 'absolute bottom-[48px] left-[150px] h-[420px] w-[420px]'
+                    ? `absolute bottom-[48px] h-[420px] w-[420px] ${
+                        usesTopModelLabelLayout ? 'left-[200px]' : 'left-[150px]'
+                      }`
                     : isTechnicalTab
                       ? 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
                     : 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
@@ -934,21 +969,29 @@ export function WhatFitsScreen({
               {selectedModel && activeTab?.key === 'overview' ? (
                 <>
                   <div
-                    className={`absolute bottom-[118px] left-[42px] z-[4] w-[165px] text-right ${
+                    className={`absolute z-[4] w-[260px] text-right ${
+                      usesTopModelLabelLayout
+                        ? 'left-[60px] top-[390px]'
+                        : 'bottom-[118px] left-[20px]'
+                    } ${
                       isBusiness ? 'text-white' : 'text-[#3d4248]'
                     }`}
                   >
                     {selectedProduct.modelSeriesTitle ? (
-                      <h2 className="text-[24px] font-bold uppercase leading-none tracking-[0.01em]">
+                      <h2 className="whitespace-nowrap text-[30px] font-bold uppercase leading-none tracking-[0.01em]">
                         {selectedProduct.modelSeriesTitle}
                       </h2>
                     ) : null}
-                    <p className="mt-[8px] text-[15px] font-bold uppercase leading-none tracking-[0.01em]">
-                      {selectedModel.title}
+                    <p className="mt-[8px] whitespace-nowrap text-[20px] font-bold uppercase leading-none tracking-[0.01em]">
+                      {formatModelTitle(selectedModel.title)}
                     </p>
                   </div>
 
-                  <div className="absolute bottom-[118px] left-[560px] z-[4] flex h-[450px] items-end gap-[22px]">
+                  <div
+                    className={`absolute bottom-[118px] z-[4] flex h-[450px] items-end gap-[22px] ${
+                      usesTopModelLabelLayout ? 'left-[610px]' : 'left-[560px]'
+                    }`}
+                  >
                     <div className={`flex h-full items-end ${usesCoolingModelGroups ? 'gap-[30px]' : 'gap-[22px]'}`}>
                       {visibleModelGroups.map((group) => (
                         <div
@@ -1032,7 +1075,7 @@ export function WhatFitsScreen({
                             <button
                               key={`cooling-${group.type}`}
                               type="button"
-                              className={`flex items-center text-[14px] font-bold uppercase leading-none tracking-[0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${markerTextClassName}`}
+                              className={`flex items-center text-[18px] font-bold uppercase leading-none tracking-[0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${markerTextClassName}`}
                               aria-pressed={isActive}
                               onClick={() => openCoolingGroup(group.type)}
                             >

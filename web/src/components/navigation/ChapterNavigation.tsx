@@ -164,7 +164,7 @@ export function ChapterNavigation({
   const numberTextSize =
     'text-[16px] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
   const titleTextSize =
-    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[31px]'
+    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[29px]'
   const ctaOffset =
     'ml-[66px] mt-[14px] [@media(min-width:768px)_and_(max-width:1366px)]:ml-[86px]'
   const ctaSize =
