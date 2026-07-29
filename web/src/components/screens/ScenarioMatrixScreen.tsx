@@ -25,7 +25,8 @@ import type {ProductNavigationItem} from '@/lib/whatFits'
 import {AnimatePresence, motion} from 'framer-motion'
 import {ArrowLeft, ArrowRight, ArrowUp, ListFilter} from 'lucide-react'
 import Link from 'next/link'
-import {useMemo, useState} from 'react'
+import {useRouter} from 'next/navigation'
+import {useEffect, useMemo, useState} from 'react'
 
 type ScenarioMatrixScreenProps = ScenarioMatrixPageData & {
   customerType: CustomerGroup
@@ -501,6 +502,7 @@ export function ScenarioMatrixScreen({
   productNavigationCatalogIconUrl,
   calculateButtonArrowUrl,
 }: ScenarioMatrixScreenProps) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<CalculatorTab>('needs')
   const [activeBundleId, setActiveBundleId] = useState(bundles[0]?.id || '')
   const [values, setValues] = useState<Record<string, number>>(() =>
@@ -512,6 +514,23 @@ export function ScenarioMatrixScreen({
   const isCalculation = activeTab === 'calculation'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
+  const productNavigationHrefs = useMemo(() => {
+    if (customerType !== 'b2c') {
+      return []
+    }
+
+    const hrefs = new Set<string>([`/needs?type=${customerType}`])
+
+    for (const item of bottomNavigation) {
+      const href = bottomNavigationHref(item, customerType)
+
+      if (href && !href.includes('/scenario-matrix')) {
+        hrefs.add(href)
+      }
+    }
+
+    return [...hrefs]
+  }, [bottomNavigation, customerType])
   const visibleSliders = useMemo(() => getVisibleSliders(sliders, customerType), [customerType, sliders])
   const visibleBundles = useMemo(() => bundles.slice(0, 3), [bundles])
   const calculationParameters = useMemo(() => buildCalculationParameters(parameters), [parameters])
@@ -530,6 +549,12 @@ export function ScenarioMatrixScreen({
     : offerImageUrl
       ? offerImageAlt
       : heroImageAlt
+
+  useEffect(() => {
+    for (const href of productNavigationHrefs) {
+      router.prefetch(href)
+    }
+  }, [productNavigationHrefs, router])
 
   function handleSliderChange(key: string, value: number) {
     setValues((current) => ({...current, [key]: value}))
@@ -746,6 +771,7 @@ export function ScenarioMatrixScreen({
             />
             <Link
               href={`/needs?type=${customerType}`}
+              scroll={false}
               className="absolute -left-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
               aria-label="Zum Katalog"
             >
@@ -782,7 +808,7 @@ export function ScenarioMatrixScreen({
                 ) : item.label
 
                 return href && !isMatrix ? (
-                  <Link key={item.key} href={href} className={className}>{content}</Link>
+                  <Link key={item.key} href={href} scroll={false} className={className}>{content}</Link>
                 ) : (
                   <span key={item.key} className={className} aria-current={isMatrix ? 'page' : undefined}>{content}</span>
                 )

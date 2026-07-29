@@ -156,7 +156,7 @@ export function ChapterNavigation({
     'rounded-r-[18px] pb-[24px] pl-[60px] pr-[54px] pt-[43px]'
   const panelOverflow = 'overflow-hidden'
   const navigationSpacing =
-    'mt-[40px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[840px] [@media(min-width:768px)_and_(max-width:1366px)]:scale-100 [@media(min-width:768px)_and_(max-width:1366px)]:[width:100%]'
+    'mt-[31px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[13px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[840px] [@media(min-width:768px)_and_(max-width:1366px)]:scale-100 [@media(min-width:768px)_and_(max-width:1366px)]:[width:100%]'
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
   const itemGap =
     'gap-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:gap-[44px]'
@@ -194,7 +194,7 @@ export function ChapterNavigation({
         id="chapter-navigation-panel"
         className={`absolute inset-0 ${panelOverflow} ${panelSpacing} ${panelTheme} shadow-none`}
       >
-        <div className="h-[72px]">
+        <div className="h-[81px] pt-[9px]">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt={logoAlt} className={brandLogoImageClassName} />

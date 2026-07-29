@@ -184,7 +184,7 @@ function AboutDetailContent({
         >
           <h1
             className={`whitespace-nowrap font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-[#2a2e33] ${
-              isBusiness ? 'text-[38px]' : 'text-[42px]'
+              isBusiness ? 'text-[34px]' : 'text-[42px]'
             }`}
           >
             {sectionHeadline}
@@ -217,11 +217,11 @@ function AboutDetailContent({
                 : 'mt-[76px] text-[22px] text-[#2a2e33]'
             }`}
           >
-            <span className="absolute left-0 top-[2px] z-0 flex gap-[2px]" aria-hidden="true">
+            <span className="absolute left-[2px] top-[2px] z-[2] flex gap-[2px]" aria-hidden="true">
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
             </span>
-            <p className="relative z-[1] pl-[10px]">{trustBlock.replace(/^[’‘'"„“]+/, '').trim()}</p>
+            <p className="relative z-[1] pl-[7px]">{trustBlock.replace(/^[’‘'"„“]+/, '').trim()}</p>
           </div>
         ) : null}
       </div>

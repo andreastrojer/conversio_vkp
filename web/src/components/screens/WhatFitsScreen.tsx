@@ -20,7 +20,7 @@ import {AnimatePresence, motion} from 'framer-motion'
 import {ArrowLeft, ArrowRight, Hexagon, ListFilter} from 'lucide-react'
 import Link from 'next/link'
 import {useRouter} from 'next/navigation'
-import {useMemo, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 
 type WhatFitsScreenProps = {
   customerType: CustomerGroup
@@ -541,12 +541,12 @@ export function WhatFitsScreen({
   const [view, setView] = useState<ProductView>(initialProduct ? 'detail' : 'catalog')
   const [selectedSlug, setSelectedSlug] = useState(initialProduct?.slug || products[0]?.slug || '')
   const selectedProduct = products.find((product) => product.slug === selectedSlug) || products[0]
-  const hasLongCatalogCta = (selectedProduct?.catalogCtaLabel?.trim().length || 0) >= 19
+  const hasLongCatalogCta = (selectedProduct?.catalogCtaLabel?.trim().length || 0) >= 18
   const [selectedModelSlug, setSelectedModelSlug] = useState(initialModel?.slug || selectedProduct?.models[0]?.slug || '')
   const selectedModel =
     selectedProduct?.models.find((model) => model.slug === selectedModelSlug || model._id === selectedModelSlug) ||
     selectedProduct?.models[0]
-  const usesTopModelLabelLayout = selectedModel?.slug === 'bres-2080-1000'
+  const usesTopModelLabelLayout = Boolean(selectedModel)
   const firstModelTechnicalTab = selectedProduct?.models.map((model) => findTab(model.detailTabs, 'technical')).find(hasTabSections)
   const visibleTabs = selectedModel
     ? [
@@ -610,6 +610,7 @@ export function WhatFitsScreen({
       ? activeSection || activeTab?.sections[0] || overviewTab?.sections[0]
       : isTechnicalTab || isFunctions || hasStructuredTabContent ? overviewTab?.sections[0] : activeSection
   const isBusiness = customerType === 'b2b'
+  const usesBusinessTechnicalTextSize = isBusiness && (isTechnicalTab || isFunctions)
   const inactiveDetailPointUrl = isBusiness
     ? catalogDetailPointInactiveUrl
     : catalogDetailPointDarkUrl
@@ -642,6 +643,53 @@ export function WhatFitsScreen({
         : products,
     [isBusiness, products],
   )
+  const routedBottomNavigationHrefs = useMemo(() => {
+    const entries: Array<[string, string]> = []
+
+    for (const item of bottomNavigation) {
+      if (item.kind === 'screen' && item.href) {
+        entries.push([item.key, item.href])
+        continue
+      }
+
+      if (customerType !== 'b2c') {
+        continue
+      }
+
+      if (item.kind === 'catalog') {
+        entries.push([item.key, buildNeedsHref(customerType)])
+        continue
+      }
+
+      if (item.kind === 'product' && item.slug) {
+        const product = products.find((candidate) => candidate.slug === item.slug)
+
+        if (!product || !isEnergyCommunityProduct(product)) {
+          entries.push([item.key, buildNeedsHref(customerType, item.slug)])
+        }
+      }
+    }
+
+    return new Map(entries)
+  }, [bottomNavigation, customerType, products])
+
+  useEffect(() => {
+    if (customerType !== 'b2c') {
+      return
+    }
+
+    for (const item of bottomNavigation) {
+      if (item.kind !== 'catalog' && item.kind !== 'product') {
+        continue
+      }
+
+      const href = routedBottomNavigationHrefs.get(item.key)
+
+      if (href) {
+        router.prefetch(href)
+      }
+    }
+  }, [bottomNavigation, customerType, routedBottomNavigationHrefs, router])
 
   function selectProduct(slug: string, nextView: ProductView = view) {
     const product = products.find((item) => item.slug === slug)
@@ -656,6 +704,11 @@ export function WhatFitsScreen({
 
   function openProduct(slug: string) {
     const product = products.find((item) => item.slug === slug)
+
+    if (customerType === 'b2c' && (!product || !isEnergyCommunityProduct(product))) {
+      router.push(buildNeedsHref(customerType, slug), {scroll: false})
+      return
+    }
 
     if (product?.models.length && product.models.length > 1) {
       setSelectedSlug(slug)
@@ -701,6 +754,13 @@ export function WhatFitsScreen({
   }
 
   function handleBottomNavigation(item: ProductNavigationItem) {
+    const routedHref = routedBottomNavigationHrefs.get(item.key)
+
+    if (routedHref) {
+      router.push(routedHref, {scroll: false})
+      return
+    }
+
     if (item.kind === 'catalog') {
       setView('catalog')
       return
@@ -717,10 +777,16 @@ export function WhatFitsScreen({
       : item.kind === 'product' && item.slug === selectedProduct?.slug,
   )
   const previousBottomItem = currentBottomIndex > 0 ? bottomNavigation[currentBottomIndex - 1] : undefined
+  const previousBottomHref = previousBottomItem
+    ? routedBottomNavigationHrefs.get(previousBottomItem.key)
+    : undefined
   const nextBottomItem =
     currentBottomIndex >= 0 && currentBottomIndex < bottomNavigation.length - 1
       ? bottomNavigation[currentBottomIndex + 1]
       : undefined
+  const nextBottomHref = nextBottomItem
+    ? routedBottomNavigationHrefs.get(nextBottomItem.key)
+    : undefined
   const modelCoolingGroups = getModelCoolingGroups(selectedProduct)
   const selectedCoolingType = resolveModelCoolingType(selectedModel)
   const activeCoolingGroup =
@@ -737,9 +803,22 @@ export function WhatFitsScreen({
   const coolingModelCount = visibleModelGroups.reduce((count, group) => count + group.models.length, 0)
   const compactCoolingModelCards = usesCoolingModelGroups && coolingModelCount > 5
   const modelCardClassName = compactCoolingModelCards ? 'h-[450px] w-[72px]' : 'h-[450px] w-[90px]'
-  const modelCardTitleClassName = compactCoolingModelCards
-    ? 'w-[224px] text-[18px]'
-    : 'w-[250px] text-[20px]'
+  const modelCardTitleClassName = 'w-[250px] text-[22px]'
+  const structuredIntroTextClassName = isBusiness
+    ? isReference
+      ? 'text-[22px] font-normal leading-[1.38]'
+      : isEnergyCommunityOverview
+        ? 'text-[22px] font-normal leading-[1.28]'
+        : isCompactSharedTab
+          ? 'text-[22px] font-semibold leading-[1.32]'
+          : 'text-[22px] font-semibold leading-[1.35]'
+    : isReference
+      ? 'text-[18px] font-normal leading-[1.38]'
+      : isEnergyCommunityOverview
+        ? 'text-[22px] font-normal leading-[1.28]'
+        : isCompactSharedTab
+          ? 'text-[22px] font-semibold leading-[1.32]'
+          : 'text-[22px] font-semibold leading-[1.35]'
 
   return (
     <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
@@ -803,8 +882,8 @@ export function WhatFitsScreen({
 
                 {subline ? (
                   <p
-                    className={`mt-[76px] border-b pb-[22px] text-[20px] font-bold uppercase tracking-[0.02em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
-                      isBusiness ? 'border-white/80' : 'border-[#2a2e33]/80'
+                    className={`mt-[76px] pb-[22px] font-bold uppercase tracking-[0.02em] ${
+                      isBusiness ? 'border-b-2 border-white/80 text-[22px]' : 'border-b border-[#2a2e33]/80 text-[20px]'
                     }`}
                   >
                     {subline}
@@ -829,7 +908,7 @@ export function WhatFitsScreen({
                         key={product._id}
                         type="button"
                         className={`group flex items-center gap-[28px] text-left uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
-                          isBusiness ? 'text-[20px] font-bold' : 'text-[17px] font-semibold'
+                          isBusiness ? 'text-[22px] font-bold' : 'text-[17px] font-semibold'
                         } ${
                           isSelected
                             ? 'text-[#efb804]'
@@ -866,19 +945,13 @@ export function WhatFitsScreen({
               {selectedProduct?.catalogCtaLabel ? (
                 <button
                   type="button"
-                  className={`group absolute bottom-[58px] right-[72px] z-[4] w-[246px] text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] ${
-                    hasLongCatalogCta
-                      ? '[@media(min-width:768px)_and_(max-width:1366px)]:w-[300px]'
-                      : ''
-                  }`}
+                  className={`group absolute bottom-[58px] right-[72px] z-[4] ${hasLongCatalogCta ? 'w-[292px]' : 'w-[246px]'} text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]`}
                   onClick={() => openProduct(selectedProduct.slug)}
                 >
                   <span className="flex items-center justify-between pb-[14px]">
                     <span
                       className={
-                        hasLongCatalogCta
-                          ? '[@media(min-width:768px)_and_(max-width:1366px)]:whitespace-nowrap'
-                          : undefined
+                        hasLongCatalogCta ? 'whitespace-nowrap' : undefined
                       }
                     >
                       {selectedProduct.catalogCtaLabel}
@@ -940,7 +1013,7 @@ export function WhatFitsScreen({
                 media={detailMedia}
                 className={
                   selectedModel && activeTab?.key === 'overview'
-                    ? `absolute bottom-[48px] h-[420px] w-[420px] ${
+                    ? `absolute bottom-[88px] h-[420px] w-[420px] ${
                         usesTopModelLabelLayout ? 'left-[200px]' : 'left-[150px]'
                       }`
                     : isTechnicalTab
@@ -969,26 +1042,26 @@ export function WhatFitsScreen({
               {selectedModel && activeTab?.key === 'overview' ? (
                 <>
                   <div
-                    className={`absolute z-[4] w-[260px] text-right ${
+                    className={`absolute z-[4] w-[320px] text-left ${
                       usesTopModelLabelLayout
-                        ? 'left-[60px] top-[390px]'
+                        ? 'left-[60px] top-[410px]'
                         : 'bottom-[118px] left-[20px]'
                     } ${
                       isBusiness ? 'text-white' : 'text-[#2a2e33]'
                     }`}
                   >
                     {selectedProduct.modelSeriesTitle ? (
-                      <h2 className="whitespace-nowrap text-[30px] font-bold uppercase leading-none tracking-[0.01em]">
+                      <h2 className="whitespace-nowrap text-[32px] font-bold uppercase leading-none tracking-[0.01em]">
                         {selectedProduct.modelSeriesTitle}
                       </h2>
                     ) : null}
-                    <p className="mt-[8px] whitespace-nowrap text-[20px] font-bold uppercase leading-none tracking-[0.01em]">
+                    <p className="mt-[8px] whitespace-nowrap text-[22px] font-bold uppercase leading-none tracking-[0.01em]">
                       {formatModelTitle(selectedModel.title)}
                     </p>
                   </div>
 
                   <div
-                    className={`absolute bottom-[118px] z-[4] flex h-[450px] items-end gap-[22px] ${
+                    className={`absolute bottom-[142px] z-[4] flex h-[450px] items-end gap-[22px] ${
                       usesTopModelLabelLayout ? 'left-[610px]' : 'left-[560px]'
                     }`}
                   >
@@ -1075,7 +1148,7 @@ export function WhatFitsScreen({
                             <button
                               key={`cooling-${group.type}`}
                               type="button"
-                              className={`flex items-center text-[18px] font-bold uppercase leading-none tracking-[0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${markerTextClassName}`}
+                              className={`flex items-center text-[20px] font-bold uppercase leading-none tracking-[0.02em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${markerTextClassName}`}
                               aria-pressed={isActive}
                               onClick={() => openCoolingGroup(group.type)}
                             >
@@ -1126,7 +1199,7 @@ export function WhatFitsScreen({
                         >
                           <button
                             type="button"
-                            className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans ${isEnergyCommunity ? 'text-[22px]' : 'text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                            className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans ${isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : 'text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                               isActive
                                 ? 'text-[#efb804]'
                                 : isBusiness
@@ -1143,7 +1216,7 @@ export function WhatFitsScreen({
                               <img
                                 src={catalogDetailPointActiveUrl}
                                 alt=""
-                                className="h-[21px] w-[21px] shrink-0 object-contain"
+                                className="h-[22px] w-[22px] shrink-0 object-contain"
                                 aria-hidden="true"
                               />
                             ) : !isActive && inactiveDetailPointUrl ? (
@@ -1151,12 +1224,12 @@ export function WhatFitsScreen({
                               <img
                                 src={inactiveDetailPointUrl}
                                 alt=""
-                                className={`h-[21px] w-[21px] shrink-0 object-contain ${inactiveDetailPointImageColorClass}`}
+                                className={`h-[22px] w-[22px] shrink-0 object-contain ${inactiveDetailPointImageColorClass}`}
                                 aria-hidden="true"
                               />
                             ) : (
                               <Hexagon
-                                className={`h-[21px] w-[21px] shrink-0 ${
+                                className={`h-[22px] w-[22px] shrink-0 ${
                                   isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#2a2e33]'
                                 }`}
                                 strokeWidth={2.4}
@@ -1176,7 +1249,7 @@ export function WhatFitsScreen({
                               <div className="pb-[18px] pt-[28px]">
                                 {section.text ? (
                                   <div
-                                    className={`${isEnergyCommunity ? 'text-[22px]' : isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} ${isFunctions && !isEnergyCommunity ? 'w-full max-w-none' : 'max-w-[420px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
+                                    className={`${isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} ${isFunctions && !isEnergyCommunity ? 'w-full max-w-none' : 'max-w-[420px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
                                       isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                                     }`}
                                   >
@@ -1199,7 +1272,7 @@ export function WhatFitsScreen({
 
                                 {section.specificationRows.length > 0 ? (
                                   <dl
-                                    className={`space-y-[8px] text-[16px] leading-[1.32] tracking-[0.01em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+                                    className={`space-y-[8px] ${usesBusinessTechnicalTextSize ? 'text-[22px]' : 'text-[16px] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'} leading-[1.32] tracking-[0.01em] ${
                                       section.text ? 'mt-[20px]' : ''
                                     }`}
                                   >
@@ -1227,12 +1300,12 @@ export function WhatFitsScreen({
                       <h2
                         className={`mb-[28px] uppercase leading-[1.08] tracking-[0.01em] ${
                           isReference
-                            ? 'text-[24px] font-semibold'
+                            ? 'text-[22px] font-semibold'
                             : isEnergyCommunityOverview
-                              ? 'text-[24px] font-bold'
+                              ? 'text-[22px] font-bold'
                             : isCompactSharedTab
-                              ? 'text-[24px] font-bold'
-                              : 'text-[24px] font-bold'
+                              ? 'text-[22px] font-bold'
+                              : 'text-[22px] font-bold'
                         } ${
                           isBusiness ? 'text-white' : 'text-[#2a2e33]'
                         }`}
@@ -1243,15 +1316,7 @@ export function WhatFitsScreen({
 
                     {energyCommunityOverviewIntroText ? (
                       <div
-                        className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${
-                          isReference
-                            ? 'text-[21px] font-normal leading-[1.38]'
-                            : isEnergyCommunityOverview
-                              ? 'text-[22px] font-normal leading-[1.28]'
-                            : isCompactSharedTab
-                              ? 'text-[22px] font-semibold leading-[1.32]'
-                              : 'text-[21px] font-semibold leading-[1.35]'
-                        } ${
+                        className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${structuredIntroTextClassName} ${
                           isBusiness ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
@@ -1301,7 +1366,7 @@ export function WhatFitsScreen({
                             )}
                             <div
                               className={`font-normal tracking-[0.01em] ${
-                                isEnergyCommunityOverview ? 'text-[22px] leading-[1.35]' : isCompactSharedTab ? 'text-[18px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
+                                isEnergyCommunityOverview ? 'text-[22px] leading-[1.35]' : isInterplay ? 'text-[18px] leading-[1.34]' : isReference ? 'text-[22px] leading-[1.34]' : 'text-[22px] leading-[1.42]'
                               } ${
                                 isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                               }`}
@@ -1390,7 +1455,7 @@ export function WhatFitsScreen({
                   </div>
                 ) : activeSection?.text ? (
                   <div
-                    className={`${detailContentPanelClassName} space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
+                    className={`${detailContentPanelClassName} space-y-[24px] text-[22px] font-normal leading-[1.45] tracking-[0.025em] ${
                       isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                     }`}
                   >
@@ -1408,25 +1473,42 @@ export function WhatFitsScreen({
                   className="absolute bottom-[36px] left-[60px] z-[5] flex h-[48px] w-max items-center bg-[#464b50]"
                   aria-label="Produktnavigation"
                 >
-                  <button
-                    type="button"
-                    className="absolute -left-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
-                    onClick={() => previousBottomItem && handleBottomNavigation(previousBottomItem)}
-                    disabled={!previousBottomItem || previousBottomItem.kind === 'screen'}
-                    aria-label={previousBottomItem?.label || undefined}
-                  >
-                    {productNavigationLeftArrowUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={productNavigationLeftArrowUrl} alt="" className="h-[92px] w-[26px] object-contain" aria-hidden="true" />
-                    ) : (
-                      <ArrowLeft className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
-                    )}
-                  </button>
+                  {previousBottomHref ? (
+                    <Link
+                      href={previousBottomHref}
+                      scroll={false}
+                      className="absolute -left-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
+                      aria-label={previousBottomItem?.label}
+                    >
+                      {productNavigationLeftArrowUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={productNavigationLeftArrowUrl} alt="" className="h-[92px] w-[26px] object-contain" aria-hidden="true" />
+                      ) : (
+                        <ArrowLeft className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                      )}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      className="absolute -left-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] disabled:opacity-25"
+                      onClick={() => previousBottomItem && handleBottomNavigation(previousBottomItem)}
+                      disabled={!previousBottomItem}
+                      aria-label={previousBottomItem?.label || undefined}
+                    >
+                      {productNavigationLeftArrowUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={productNavigationLeftArrowUrl} alt="" className="h-[92px] w-[26px] object-contain" aria-hidden="true" />
+                      ) : (
+                        <ArrowLeft className="h-[28px] w-[28px]" strokeWidth={2.8} aria-hidden="true" />
+                      )}
+                    </button>
+                  )}
 
-                  <div className="flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[12px]">
+                  <div className="flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[36px]">
                     {bottomNavigation.map((item) => {
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug
+                      const routedHref = routedBottomNavigationHrefs.get(item.key)
                       const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
                       const catalogPressedIconUrl =
                         isBusiness && isCatalog
@@ -1473,8 +1555,13 @@ export function WhatFitsScreen({
                         </>
                       ) : item.label
 
-                      return item.kind === 'screen' && item.href ? (
-                        <Link key={item.key} href={item.href} className={commonClassName}>
+                      return routedHref ? (
+                        <Link
+                          key={item.key}
+                          href={routedHref}
+                          scroll={false}
+                          className={commonClassName}
+                        >
                           {content}
                         </Link>
                       ) : (
@@ -1491,11 +1578,12 @@ export function WhatFitsScreen({
                     })}
                   </div>
 
-                  {nextBottomItem?.kind === 'screen' && nextBottomItem.href ? (
+                  {nextBottomHref ? (
                     <Link
-                      href={nextBottomItem.href}
+                      href={nextBottomHref}
+                      scroll={false}
                       className="absolute -right-[20px] z-[2] grid h-[92px] w-[26px] place-items-center text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804]"
-                      aria-label={nextBottomItem.label}
+                      aria-label={nextBottomItem?.label}
                     >
                       {productNavigationRightArrowUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
