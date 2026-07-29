@@ -53,7 +53,7 @@ const cardActiveClass =
 const cardContentClass =
   'relative z-[1] flex max-w-[350px] flex-col justify-end self-end'
 const cardTitleClass =
-  'text-[38px] font-bold leading-none tracking-[0.02em] max-[1600px]:text-[42px] [@media(max-height:920px)]:text-[42px]'
+  'text-[48px] font-bold leading-none tracking-[0.02em]'
 const cardTextClass =
   'mt-[22px] max-w-[340px] text-[16px] font-normal leading-[1.42] tracking-[0.012em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
 const cardButtonBaseClass =
@@ -433,7 +433,7 @@ export function CustomerSelectionScreen({
               tabIndex={0}
               aria-label={`${card.title}: ${card.ctaLabel}`}
               aria-pressed={isActive}
-              className={`${cardBaseClass} ${card.customerType === 'b2c' ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#3d4248] text-white'
+              className={`${cardBaseClass} ${card.customerType === 'b2c' ? 'bg-[#efb804] text-[#2a2e33]' : 'bg-[#2a2e33] text-white'
                 } ${isActive ? cardActiveClass : ''}`}
               onClick={() => handleCustomerStart(card.customerType)}
               onKeyDown={(event) => {
@@ -459,11 +459,11 @@ export function CustomerSelectionScreen({
                 <p className={cardTextClass}>{card.text}</p>
                 <span
                   data-target={card.ctaTarget}
-                  className={`${cardButtonBaseClass} ${card.customerType === 'b2c' ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+                  className={`${cardButtonBaseClass} ${card.customerType === 'b2c' ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
                     }`}
                   aria-hidden="true"
                 >
-                  <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                  <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-semibold">
                     {card.ctaLabel}
                   </span>
                   {card.ctaIconUrl ? (
@@ -485,10 +485,10 @@ export function CustomerSelectionScreen({
       </div>
 
       <form
-        className="relative z-[1] w-[min(370px,100%)] justify-self-end pt-[14px] text-[#3d4248]"
+        className="relative z-[1] w-[min(370px,100%)] justify-self-end pt-[14px] text-[#2a2e33]"
         aria-label="Kundeninfos"
       >
-        <h2 className={`${customerInfoTranslateClassName} text-[34px] font-bold leading-none tracking-[0.018em] max-[1600px]:text-[38px] [@media(max-height:920px)]:text-[38px]`}>
+        <h2 className={`${customerInfoTranslateClassName} text-[36px] font-bold leading-none tracking-[0.018em]`}>
           KUNDENINFOS
         </h2>
 
@@ -517,7 +517,7 @@ export function CustomerSelectionScreen({
                 className="mb-6 block"
                 htmlFor={fieldId}
               >
-                <span className={`block ${customerInfoTranslateClassName} text-[17px] font-bold leading-[1.2] tracking-[0.02em] max-[1600px]:text-[19px] [@media(max-height:920px)]:text-[19px]`}>
+                <span className={`block ${customerInfoTranslateClassName} text-[18px] font-bold leading-[1.2] tracking-[0.02em]`}>
                   {questionLabel.toLocaleUpperCase('de-AT')}
                   {required ? ' *' : ''}
                 </span>
@@ -529,9 +529,9 @@ export function CustomerSelectionScreen({
                   required={required}
                   aria-invalid={Boolean(error)}
                   aria-describedby={error ? `${fieldId}-error` : undefined}
-                  className={`block h-[38px] ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} border-0 border-b-2 bg-transparent font-sans text-[18px] text-[#3d4248] outline-none placeholder:text-[#aeb3b7] focus:border-b-[#efb804] max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${error
+                  className={`block h-[38px] ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} border-0 border-b-2 bg-transparent font-sans text-[18px] text-[#2a2e33] outline-none placeholder:text-[#aeb3b7] focus:border-b-[#efb804] max-[1600px]:h-[42px] max-[1600px]:text-[20px] [@media(max-height:920px)]:h-[42px] [@media(max-height:920px)]:text-[20px] ${error
                     ? 'border-b-[#efb804] shadow-[0_2px_0_rgba(239,184,4,0.26)]'
-                    : 'border-b-[#3d4248]'
+                    : 'border-b-[#2a2e33]'
                     }`}
                   onChange={(event) => {
                     const nextValue = event.target.value

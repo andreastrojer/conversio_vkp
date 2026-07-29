@@ -169,7 +169,7 @@ function AboutDetailContent({
         ) : (
           <div
             className={`h-[min(38vw,430px)] w-full rounded-[28px] border ${
-              isBusiness ? 'border-white/10' : 'border-[#3d4248]/10'
+              isBusiness ? 'border-white/10' : 'border-[#2a2e33]/10'
             }`}
             aria-hidden="true"
           />
@@ -183,7 +183,7 @@ function AboutDetailContent({
           }`}
         >
           <h1
-            className={`whitespace-nowrap font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-[#3d4248] ${
+            className={`whitespace-nowrap font-sans font-extrabold uppercase leading-[0.92] tracking-[0.006em] text-[#2a2e33] ${
               isBusiness ? 'text-[38px]' : 'text-[42px]'
             }`}
           >
@@ -196,7 +196,7 @@ function AboutDetailContent({
             className={`w-full space-y-[2px] font-sans font-normal tracking-[0.006em] ${
               isBusiness
                 ? 'mt-[78px] text-[28px] leading-[1.42] text-white'
-                : 'mt-[78px] text-[28px] leading-[1.42] text-[#3d4248]'
+                : 'mt-[78px] text-[28px] leading-[1.42] text-[#2a2e33]'
             }`}
           >
             {descriptionBlocks.map((block) => (
@@ -214,7 +214,7 @@ function AboutDetailContent({
             className={`relative w-full max-w-[560px] font-sans font-semibold uppercase leading-[1.18] tracking-[0.004em] ${
               isBusiness
                 ? 'mt-[76px] text-[22px] text-white'
-                : 'mt-[76px] text-[22px] text-[#3d4248]'
+                : 'mt-[76px] text-[22px] text-[#2a2e33]'
             }`}
           >
             <span className="absolute left-0 top-[2px] z-0 flex gap-[2px]" aria-hidden="true">
@@ -231,7 +231,7 @@ function AboutDetailContent({
           {ctaHref ? (
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
+              className="group flex items-center justify-between pb-[10px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
@@ -245,7 +245,7 @@ function AboutDetailContent({
               ) : null}
             </Link>
           ) : (
-            <span className="flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
+            <span className="flex items-center justify-between pb-[10px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -282,10 +282,10 @@ export function AboutScreen({
   const resolvedHeadline = (headline?.trim() || fallbackHeadline).toLocaleUpperCase('de-AT')
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
     <main
       className={`relative isolate h-full w-full overflow-hidden font-sans ${
-        isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+        isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
       }`}
     >
       {patternUrl ? (
@@ -306,12 +306,12 @@ export function AboutScreen({
         >
           <span
             className={`absolute inset-[84px] border-[58px] border-solid ${
-              isBusiness ? 'border-white' : 'border-[#3d4248]'
+              isBusiness ? 'border-white' : 'border-[#2a2e33]'
             } [clip-path:polygon(50%_0,92%_25%,92%_75%,50%_100%,8%_75%,8%_25%)]`}
           />
           <span
             className={`absolute bottom-[18px] left-[30px] right-[30px] h-[58px] ${
-              isBusiness ? 'bg-white' : 'bg-[#3d4248]'
+              isBusiness ? 'bg-white' : 'bg-[#2a2e33]'
             } [box-shadow:-84px_-184px_0_currentColor,122px_-332px_0_currentColor,-22px_-514px_0_currentColor] [transform:skewY(-31deg)]`}
           />
         </span>

@@ -19,13 +19,13 @@ const fallbackCtaLabel = 'MIT MICROSOFT ANMELDEN'
 const mainContentClassName =
   'absolute left-[60px] top-[43.5%] z-10 max-w-[820px] -translate-y-1/2'
 const titleClassName =
-  'max-w-[820px] font-sans text-[54px] font-bold uppercase leading-[0.98] tracking-[0.024em] text-[#3d4248]'
+  'max-w-[820px] font-sans text-[54px] font-bold uppercase leading-[0.98] tracking-[0.024em] text-[#2a2e33]'
 const subtitleClassName =
-  'mt-[22px] max-w-[760px] font-sans text-[24px] font-normal leading-[1.3] tracking-[0.005em] text-[#3d4248]'
+  'mt-[22px] max-w-[760px] font-sans text-[24px] font-normal leading-[1.3] tracking-[0.005em] text-[#2a2e33]'
 const formClassName =
   'mt-[22px]'
 const microsoftButtonClassName =
-  'inline-flex h-[42px] items-center justify-center gap-3 rounded-full bg-[#efb804] px-[26px] font-sans text-[16px] font-semibold uppercase tracking-[0.035em] text-[#3d4248] shadow-none transition hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.24)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3d4248] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#efb804] disabled:hover:shadow-none'
+  'inline-flex h-[42px] items-center justify-center gap-3 rounded-full bg-[#efb804] px-[26px] font-sans text-[16px] font-semibold uppercase tracking-[0.035em] text-[#2a2e33] shadow-none transition hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.24)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2a2e33] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#efb804] disabled:hover:shadow-none'
 
 function MicrosoftGlyph() {
   return (
@@ -33,10 +33,10 @@ function MicrosoftGlyph() {
       className="grid h-5 w-5 shrink-0 grid-cols-2 gap-[2px] overflow-hidden rounded-[1px]"
       aria-hidden="true"
     >
-      <span className="bg-[#3d4248]" />
-      <span className="bg-[#3d4248]" />
-      <span className="bg-[#3d4248]" />
-      <span className="bg-[#3d4248]" />
+      <span className="bg-[#2a2e33]" />
+      <span className="bg-[#2a2e33]" />
+      <span className="bg-[#2a2e33]" />
+      <span className="bg-[#2a2e33]" />
     </span>
   )
 }

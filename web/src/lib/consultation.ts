@@ -448,7 +448,7 @@ export function buildCrmSpreadsheetHtml({
     <style>
       body {
         background: #ffffff;
-        color: #3d4248;
+        color: #2a2e33;
         font-family: Barlow, Aptos, "Segoe UI", Arial, sans-serif;
         font-size: 13px;
       }
@@ -484,7 +484,7 @@ export function buildCrmSpreadsheetHtml({
 
       .section {
         background: #f5c20a;
-        color: #3d4248;
+        color: #2a2e33;
         font-size: 12px;
         font-weight: 700;
         letter-spacing: 0.6px;
@@ -494,7 +494,7 @@ export function buildCrmSpreadsheetHtml({
 
       .label {
         background: #f8fafb;
-        color: #3d4248;
+        color: #2a2e33;
         font-weight: 600;
         width: 240px;
       }
@@ -508,14 +508,14 @@ export function buildCrmSpreadsheetHtml({
       }
 
       .metric {
-        color: #3d4248;
+        color: #2a2e33;
         font-size: 13px;
         font-weight: 700;
         text-align: left;
       }
 
       .money {
-        color: #3d4248;
+        color: #2a2e33;
         font-size: 13px;
         font-weight: 700;
         text-align: left;

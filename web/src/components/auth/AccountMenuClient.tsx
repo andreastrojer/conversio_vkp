@@ -71,7 +71,7 @@ export function AccountMenuClient({
       <button
         ref={triggerRef}
         type="button"
-        className={`group inline-flex h-[56px] w-[56px] items-center justify-center rounded-full border border-[#d8dcdf] bg-white text-[#3d4248] shadow-[0_12px_28px_rgba(61,66,72,0.10)] transition hover:-translate-y-px hover:border-[#c7ccd0] hover:shadow-[0_14px_32px_rgba(61,66,72,0.13)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3d4248] aria-expanded:border-[#efb804] ${enlargeOnCompactViewport ? compactTriggerClassName : ''}`}
+        className={`group inline-flex h-[56px] w-[56px] items-center justify-center rounded-full border border-[#d8dcdf] bg-white text-[#2a2e33] shadow-[0_12px_28px_rgba(61,66,72,0.10)] transition hover:-translate-y-px hover:border-[#c7ccd0] hover:shadow-[0_14px_32px_rgba(61,66,72,0.13)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2a2e33] aria-expanded:border-[#efb804] ${enlargeOnCompactViewport ? compactTriggerClassName : ''}`}
         aria-label={isOpen ? 'Profilmenü schließen' : 'Profilmenü öffnen'}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -112,7 +112,7 @@ export function AccountMenuClient({
             ) : null}
 
             <div className="relative min-w-0">
-              <strong className="block truncate pr-[56px] text-[20px] font-semibold leading-none text-[#3d4248] [@media(min-width:768px)_and_(max-width:1366px)]:pr-[72px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[24px]">
+              <strong className="block truncate pr-[56px] text-[20px] font-semibold leading-none text-[#2a2e33] [@media(min-width:768px)_and_(max-width:1366px)]:pr-[72px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[24px]">
                 {displayName}
               </strong>
               <span className="mt-[8px] block break-words text-[13px] font-normal leading-snug text-[#72787e] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[10px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[16px]">

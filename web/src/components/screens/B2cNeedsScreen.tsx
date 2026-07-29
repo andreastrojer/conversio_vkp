@@ -439,13 +439,13 @@ function ProductBottomNavigation({
               ? catalogActiveIconUrl || catalogIconUrl || item.iconUrl
               : catalogIconUrl || item.iconUrl
           const commonClassName = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
-            isActive ? 'bg-[#efb804] text-[#3d4248]' : 'text-white'
+            isActive ? 'bg-[#efb804] text-[#2a2e33]' : 'text-white'
           } ${
             isCatalog
               ? itemCatalogIconUrl
                 ? 'h-[26px] w-[66px] p-0 leading-none'
                 : `h-[26px] min-w-[66px] px-[12px] ${
-                    isActive ? '' : 'bg-white text-[#3d4248]'
+                    isActive ? '' : 'bg-white text-[#2a2e33]'
                   }`
               : 'h-[26px] px-[12px]'
           }`
@@ -465,7 +465,7 @@ function ProductBottomNavigation({
                 />
               ) : (
                 <ListFilter
-                  className="h-[17px] w-[17px] text-[#3d4248]"
+                  className="h-[17px] w-[17px] text-[#2a2e33]"
                   strokeWidth={2.2}
                   aria-hidden="true"
                 />

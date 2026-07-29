@@ -168,14 +168,14 @@ function SliderControl({
         <label
           htmlFor={`scenario-slider-${slider.id}`}
           className={`text-[20px] font-semibold uppercase leading-none tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
-            isBusiness ? 'text-white' : 'text-[#3d4248]'
+            isBusiness ? 'text-white' : 'text-[#2a2e33]'
           }`}
         >
           {slider.label}
         </label>
         <output
           htmlFor={`scenario-slider-${slider.id}`}
-          className="inline-flex h-[26px] min-w-[38px] items-center justify-center rounded-full bg-[#efb804] px-[12px] text-[14px] font-semibold uppercase leading-none text-[#3d4248] max-[1600px]:h-[30px] max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[30px] [@media(max-height:920px)]:text-[16px]"
+          className="inline-flex h-[26px] min-w-[38px] items-center justify-center rounded-full bg-[#efb804] px-[12px] text-[14px] font-semibold uppercase leading-none text-[#2a2e33] max-[1600px]:h-[30px] max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[30px] [@media(max-height:920px)]:text-[16px]"
         >
           {formatNumber(value, slider.unit)}
         </output>
@@ -184,7 +184,7 @@ function SliderControl({
       <div className="group relative h-[26px]">
         <span
           className={`absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full [@media(min-width:768px)_and_(max-width:1366px)]:h-[8px] ${
-            isBusiness ? 'bg-white/80' : 'bg-[#3d4248]/55'
+            isBusiness ? 'bg-white/80' : 'bg-[#2a2e33]/55'
           }`}
           aria-hidden="true"
         />
@@ -256,7 +256,7 @@ function BundleCard({
       className={`group relative shrink-0 self-start text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
         isWireframeLayout ? 'h-[500px] w-[316px]' : 'h-[420px] w-[315px]'
       } ${
-        isBusiness ? 'text-white' : 'text-[#3d4248]'
+        isBusiness ? 'text-white' : 'text-[#2a2e33]'
       }`}
       aria-pressed={active}
       onClick={onSelect}
@@ -265,12 +265,12 @@ function BundleCard({
         <span
           className={`inline-flex h-full min-w-[205px] items-center justify-center px-[24px] text-[18px] font-bold uppercase leading-none transition-colors duration-200 max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
             active
-              ? 'bg-[#efb804] text-[#3d4248]'
+              ? 'bg-[#efb804] text-[#2a2e33]'
               : isBusiness
                 ? 'bg-[#4a4f54] text-white'
                 : isWireframeLayout
-                  ? 'bg-[#3d4248] text-white'
-                  : 'bg-[#eceeef] text-[#3d4248]'
+                  ? 'bg-[#2a2e33] text-white'
+                  : 'bg-[#eceeef] text-[#2a2e33]'
           }`}
         >
           {bundle.title}
@@ -292,7 +292,7 @@ function BundleCard({
         <span
           className={`absolute z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[7px] text-[15px] font-semibold uppercase leading-none ${
             isWireframeLayout
-              ? `left-[-188px] top-[198px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[218px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#3d4248]'}`
+              ? `left-[-188px] top-[198px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[218px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#2a2e33]'}`
               : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
           }`}
         >
@@ -340,7 +340,7 @@ function BundleCard({
         </span>
       ) : null}
 
-      <div className={`${isWireframeLayout ? `mt-[18px] h-[104px] ${isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'}` : 'mt-[18px] text-[#efb804]'}`}>
+      <div className={`${isWireframeLayout ? `mt-[18px] h-[104px] ${isBusiness ? 'text-[#efb804]' : 'text-[#2a2e33]'}` : 'mt-[18px] text-[#efb804]'}`}>
         {result.autarkyPercent !== undefined ? (
           <p className="flex items-baseline gap-[14px] uppercase">
             <strong className="text-[30px] font-bold leading-none max-[1600px]:text-[34px] [@media(max-height:920px)]:text-[34px]">
@@ -363,7 +363,7 @@ function BundleCard({
         className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[16px] leading-[1.35] tracking-normal ${
           isWireframeLayout ? 'mt-0' : 'mt-[18px]'
         } ${
-          isBusiness ? 'border-white' : 'border-[#3d4248]'
+          isBusiness ? 'border-white' : 'border-[#2a2e33]'
         }`}
       >
         <span className="shrink-0 font-normal uppercase">Enthalten:</span>
@@ -540,10 +540,10 @@ export function ScenarioMatrixScreen({
   }
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
       <main
         className={`relative isolate h-full w-full overflow-hidden font-sans ${
-          isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
         }`}
       >
         {patternUrl ? (
@@ -573,7 +573,7 @@ export function ScenarioMatrixScreen({
         {headline ? (
           <h1
             className={`absolute left-[60px] top-[220px] z-[3] font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em] ${
-              isBusiness ? 'text-white' : 'text-[#3d4248]'
+              isBusiness ? 'text-white' : 'text-[#2a2e33]'
             }`}
           >
             {headline}
@@ -596,7 +596,7 @@ export function ScenarioMatrixScreen({
                 aria-selected={isActive}
                 disabled={isDisabled}
                 className={`relative px-[12px] pb-[10px] text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] disabled:cursor-not-allowed disabled:opacity-55 max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
-                  isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
+                  isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#2a2e33]'
                 }`}
                 onClick={() => {
                   if (!isDisabled) {
@@ -648,7 +648,7 @@ export function ScenarioMatrixScreen({
                 {calculateButtonLabel ? (
                   <button
                     type="button"
-                    className="group inline-flex h-[46px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px]"
+                    className="group inline-flex h-[46px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase tracking-[0.025em] text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[50px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px]"
                     onClick={handleCalculate}
                   >
                     <span>{calculateButtonLabel}</span>
@@ -751,12 +751,12 @@ export function ScenarioMatrixScreen({
                 const isCatalog = item.kind === 'catalog'
                 const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
                 const className = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
-                  isMatrix && !isCatalog ? 'bg-[#efb804] text-[#3d4248]' : 'text-white'
+                  isMatrix && !isCatalog ? 'bg-[#efb804] text-[#2a2e33]' : 'text-white'
                   } ${
                   isCatalog
                     ? catalogIconUrl
                       ? 'h-[26px] w-[66px] p-0 leading-none'
-                      : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#3d4248]'
+                      : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#2a2e33]'
                     : 'h-[26px] px-[12px]'
                 }`
                 const content = isCatalog ? (
@@ -764,7 +764,7 @@ export function ScenarioMatrixScreen({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={catalogIconUrl} alt={item.label} className="block h-[26px] w-[66px] shrink-0 object-contain" />
                   ) : (
-                    <><ListFilter className="h-[17px] w-[17px] text-[#3d4248]" strokeWidth={2.2} aria-hidden="true" /><span className="sr-only">{item.label}</span></>
+                    <><ListFilter className="h-[17px] w-[17px] text-[#2a2e33]" strokeWidth={2.2} aria-hidden="true" /><span className="sr-only">{item.label}</span></>
                   )
                 ) : item.label
 

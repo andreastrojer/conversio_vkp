@@ -167,17 +167,17 @@ function DocumentCategory({
         className={`flex h-[46px] w-[348px] items-center justify-between rounded-[8px] border-2 px-[30px] text-left text-[18px] font-medium uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${active
           ? isBusiness
             ? 'rounded-b-none border-white bg-[#4a4f54] text-white'
-            : 'rounded-b-none border-[#3d4248] bg-[#3d4248] text-white'
+            : 'rounded-b-none border-[#2a2e33] bg-[#2a2e33] text-white'
           : isBusiness
             ? 'border-white bg-transparent text-white'
-            : 'border-[#3d4248] bg-transparent text-[#3d4248]'
+            : 'border-[#2a2e33] bg-transparent text-[#2a2e33]'
           }`}
         aria-expanded={active}
         onClick={onSelect}
       >
         <span>{category.title}</span>
         <Hexagon
-          className={`h-[21px] w-[21px] shrink-0 ${active ? 'fill-white text-white' : isBusiness ? 'text-white' : 'text-[#3d4248]'}`}
+          className={`h-[21px] w-[21px] shrink-0 ${active ? 'fill-white text-white' : isBusiness ? 'text-white' : 'text-[#2a2e33]'}`}
           strokeWidth={2.4}
           aria-hidden="true"
         />
@@ -189,7 +189,7 @@ function DocumentCategory({
             initial={{opacity: 0, y: -6}}
             animate={{opacity: 1, y: 0}}
             transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
-            className={`mt-0 w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#3d4248]'}`}
+            className={`mt-0 w-[348px] overflow-hidden rounded-b-[8px] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#2a2e33]'}`}
           >
             <div className="px-[32px] pb-[24px] pt-[20px]">
               {category.documents.length > 0 ? (
@@ -263,8 +263,8 @@ export function NextStepScreen({
   const isBusiness = customerType === 'b2b'
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
-  const foregroundClassName = isBusiness ? 'text-white' : 'text-[#3d4248]'
-  const metricClassName = isBusiness ? 'text-[#efb804]' : 'text-[#3d4248]'
+  const foregroundClassName = isBusiness ? 'text-white' : 'text-[#2a2e33]'
+  const metricClassName = isBusiness ? 'text-[#efb804]' : 'text-[#2a2e33]'
   const displayBundle =
     consultation.customerType === customerType && consultation.selectedBundle
       ? consultation.selectedBundle
@@ -481,7 +481,7 @@ export function NextStepScreen({
 
   return (
     <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2b3036]' : 'bg-white'}>
-      <main className={`relative isolate h-full w-full overflow-hidden font-sans ${isBusiness ? 'bg-[#2b3036] text-white' : 'bg-white text-[#3d4248]'}`}>
+      <main className={`relative isolate h-full w-full overflow-hidden font-sans ${isBusiness ? 'bg-[#2b3036] text-white' : 'bg-white text-[#2a2e33]'}`}>
         {patternUrl ? (
           <span
             className={`${patternClassName} ${
@@ -514,7 +514,7 @@ export function NextStepScreen({
           {displayBundle ? (
             <>
               <span className="block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]">
-                <span className="inline-flex h-full min-w-[205px] items-center justify-center bg-[#efb804] px-[24px] text-[18px] font-bold uppercase leading-none text-[#3d4248] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
+                <span className="inline-flex h-full min-w-[205px] items-center justify-center bg-[#efb804] px-[24px] text-[18px] font-bold uppercase leading-none text-[#2a2e33] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]">
                   {displayBundle.title}
                 </span>
               </span>
@@ -541,7 +541,7 @@ export function NextStepScreen({
                 </div>
               ) : null}
 
-              <div className={`mt-0 flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[16px] leading-[1.35] tracking-normal ${isBusiness ? 'border-white' : 'border-[#3d4248]'}`}>
+              <div className={`mt-0 flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[16px] leading-[1.35] tracking-normal ${isBusiness ? 'border-white' : 'border-[#2a2e33]'}`}>
                 <span className="shrink-0 font-normal uppercase">Enthalten:</span>
                 {displayBundle.includedItems.length > 0 ? (
                   <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
@@ -595,7 +595,7 @@ export function NextStepScreen({
                 ? 'border-b-[#efb804]'
                 : isBusiness
                   ? 'border-b-white text-white placeholder:text-white/45'
-                  : 'border-b-[#3d4248] text-[#3d4248] placeholder:text-[#aeb3b7]'
+                  : 'border-b-[#2a2e33] text-[#2a2e33] placeholder:text-[#aeb3b7]'
             }`}
             onChange={(event) => handleEmailChange(event.target.value)}
           />
@@ -623,7 +623,7 @@ export function NextStepScreen({
             </button>
             <button
               type="button"
-              className="group inline-flex h-[30px] min-w-[184px] items-center justify-between rounded-full bg-[#efb804] px-[26px] text-[14px] font-bold uppercase leading-none text-[#3d4248] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
+              className="group inline-flex h-[30px] min-w-[184px] items-center justify-between rounded-full bg-[#efb804] px-[26px] text-[14px] font-bold uppercase leading-none text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
               onClick={handleExportSpreadsheet}
             >
               <span>EXCEL EXPORT</span>

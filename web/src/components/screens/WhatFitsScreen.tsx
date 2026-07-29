@@ -742,10 +742,10 @@ export function WhatFitsScreen({
     : 'w-[250px] text-[20px]'
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
       <main
         className={`relative isolate h-full w-full overflow-hidden font-sans ${
-          isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
         }`}
       >
         {patternUrl ? (
@@ -804,7 +804,7 @@ export function WhatFitsScreen({
                 {subline ? (
                   <p
                     className={`mt-[76px] border-b pb-[22px] text-[20px] font-bold uppercase tracking-[0.02em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px] ${
-                      isBusiness ? 'border-white/80' : 'border-[#3d4248]/80'
+                      isBusiness ? 'border-white/80' : 'border-[#2a2e33]/80'
                     }`}
                   >
                     {subline}
@@ -835,7 +835,7 @@ export function WhatFitsScreen({
                             ? 'text-[#efb804]'
                             : isBusiness
                               ? 'text-white'
-                              : 'text-[#3d4248]'
+                              : 'text-[#2a2e33]'
                         }`}
                         aria-pressed={isSelected}
                         onClick={() => selectProduct(product.slug, 'catalog')}
@@ -922,7 +922,7 @@ export function WhatFitsScreen({
                             ? 'text-[#efb804]'
                             : isBusiness
                               ? 'text-white'
-                              : 'text-[#3d4248]'
+                              : 'text-[#2a2e33]'
                         }`}
                         onClick={() => selectTab(tab.key)}
                       >
@@ -974,7 +974,7 @@ export function WhatFitsScreen({
                         ? 'left-[60px] top-[390px]'
                         : 'bottom-[118px] left-[20px]'
                     } ${
-                      isBusiness ? 'text-white' : 'text-[#3d4248]'
+                      isBusiness ? 'text-white' : 'text-[#2a2e33]'
                     }`}
                   >
                     {selectedProduct.modelSeriesTitle ? (
@@ -1011,7 +1011,7 @@ export function WhatFitsScreen({
                                 key={model._id}
                                 type="button"
                                 className={`relative ${modelCardClassName} overflow-hidden rounded-[12px] text-left transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
-                                  isActive ? 'bg-[#efb804] text-[#3d4248]' : 'bg-[#464b50] text-white'
+                                  isActive ? 'bg-[#efb804] text-[#2a2e33]' : 'bg-[#464b50] text-white'
                                 }`}
                                 aria-pressed={isActive}
                                 onClick={() => openModel(selectedProduct, model)}
@@ -1032,7 +1032,7 @@ export function WhatFitsScreen({
                                 ) : (
                                   <span
                                     className={`absolute bottom-0 right-0 z-[1] h-[78px] w-[58px] ${
-                                      isActive ? 'bg-[#3d4248]' : 'bg-white'
+                                      isActive ? 'bg-[#2a2e33]' : 'bg-white'
                                     } [clip-path:polygon(100%_0,100%_100%,0_100%,0_48%)]`}
                                     aria-hidden="true"
                                   />
@@ -1061,7 +1061,7 @@ export function WhatFitsScreen({
                             ? 'text-[#efb804]'
                             : isBusiness
                               ? 'text-white'
-                              : 'text-[#3d4248]'
+                              : 'text-[#2a2e33]'
                           const markerIconClassName =
                             isActive && isImmersion
                               ? modelGroupActiveIconColorClass
@@ -1121,7 +1121,7 @@ export function WhatFitsScreen({
                           className={
                             isActive
                               ? 'pb-[34px]'
-                              : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#3d4248]/80'}`
+                              : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#2a2e33]/80'}`
                           }
                         >
                           <button
@@ -1131,7 +1131,7 @@ export function WhatFitsScreen({
                                 ? 'text-[#efb804]'
                                 : isBusiness
                                   ? 'text-white'
-                                  : 'text-[#3d4248]'
+                                  : 'text-[#2a2e33]'
                             }`}
                             aria-expanded={isActive}
                             aria-controls={contentId}
@@ -1157,7 +1157,7 @@ export function WhatFitsScreen({
                             ) : (
                               <Hexagon
                                 className={`h-[21px] w-[21px] shrink-0 ${
-                                  isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
+                                  isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#2a2e33]'
                                 }`}
                                 strokeWidth={2.4}
                                 aria-hidden="true"
@@ -1177,7 +1177,7 @@ export function WhatFitsScreen({
                                 {section.text ? (
                                   <div
                                     className={`${isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
-                                      isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                      isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                                     }`}
                                   >
                                     {isFunctions ? (
@@ -1234,7 +1234,7 @@ export function WhatFitsScreen({
                               ? 'text-[24px] font-bold'
                               : 'text-[24px] font-bold'
                         } ${
-                          isBusiness ? 'text-white' : 'text-[#3d4248]'
+                          isBusiness ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
                         {activeTab.contentTitle.trim()}
@@ -1252,7 +1252,7 @@ export function WhatFitsScreen({
                               ? 'text-[22px] font-semibold leading-[1.32]'
                               : 'text-[21px] font-semibold leading-[1.35]'
                         } ${
-                          isBusiness ? 'text-white' : 'text-[#3d4248]'
+                          isBusiness ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
                         {energyCommunityOverviewIntroText}
@@ -1264,7 +1264,7 @@ export function WhatFitsScreen({
                         className={`${isReference ? 'mt-[38px]' : 'mt-[44px]'} font-bold uppercase leading-none tracking-[0.01em] ${
                           isEnergyCommunityOverview ? 'text-[22px]' : isCompactSharedTab ? 'text-[22px]' : 'text-[22px]'
                         } ${
-                          isBusiness ? 'text-white' : 'text-[#3d4248]'
+                          isBusiness ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
                         {activeTab.contentItemsTitle.trim()}
@@ -1278,7 +1278,7 @@ export function WhatFitsScreen({
                             {isEnergyCommunityOverview ? (
                               <span
                                 className={`mt-[14px] h-[4px] w-[4px] rounded-full ${
-                                  isBusiness ? 'bg-white' : 'bg-[#3d4248]'
+                                  isBusiness ? 'bg-white' : 'bg-[#2a2e33]'
                                 }`}
                                 aria-hidden="true"
                               />
@@ -1293,7 +1293,7 @@ export function WhatFitsScreen({
                             ) : (
                               <Hexagon
                                 className={`${isCompactSharedTab ? 'mt-[5px] h-[13px] w-[13px]' : 'mt-[2px] h-[18px] w-[18px]'} shrink-0 ${
-                                  isBusiness ? 'text-white' : 'text-[#3d4248]'
+                                  isBusiness ? 'text-white' : 'text-[#2a2e33]'
                                 }`}
                                 strokeWidth={2.3}
                                 aria-hidden="true"
@@ -1303,7 +1303,7 @@ export function WhatFitsScreen({
                               className={`font-normal tracking-[0.01em] ${
                                 isEnergyCommunityOverview ? 'text-[21px] leading-[1.35]' : isCompactSharedTab ? 'text-[18px] leading-[1.34]' : 'text-[18px] leading-[1.42]'
                               } ${
-                                isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                               }`}
                             >
                               {isReference ? (
@@ -1369,7 +1369,7 @@ export function WhatFitsScreen({
                                 ) : null}
                                 {section.text?.trim() ? (
                                   <div className={`mt-[16px] space-y-[12px] text-[21px] font-normal leading-[1.28] tracking-[0.01em] ${
-                                    isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                    isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                                   }`}>
                                     {splitParagraphs(section.text).map((paragraph, index) => (
                                       <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
@@ -1388,7 +1388,7 @@ export function WhatFitsScreen({
                 ) : activeSection?.text ? (
                   <div
                     className={`${detailContentPanelClassName} space-y-[24px] text-[18px] font-normal leading-[1.45] tracking-[0.025em] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px] ${
-                      isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                      isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                     }`}
                   >
                     {splitParagraphs(activeSection.text).map((paragraph, index) => (
@@ -1430,12 +1430,12 @@ export function WhatFitsScreen({
                           ? productNavigationCatalogActiveIconUrl
                           : undefined
                       const commonClassName = `group/catalog inline-flex items-center justify-center whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
-                        isActive && !isCatalog ? 'rounded-full bg-[#efb804] text-[#3d4248]' : 'text-white'
+                        isActive && !isCatalog ? 'rounded-full bg-[#efb804] text-[#2a2e33]' : 'text-white'
                         } ${
                         isCatalog
                           ? catalogIconUrl
                             ? 'h-[26px] w-[66px] p-0 leading-none'
-                            : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#3d4248]'
+                            : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#2a2e33]'
                           : 'h-[26px] px-[12px]'
                       }`
                       const content = isCatalog ? (
@@ -1464,7 +1464,7 @@ export function WhatFitsScreen({
                               ) : null}
                             </span>
                           ) : (
-                            <ListFilter className="h-[17px] w-[17px] text-[#3d4248]" strokeWidth={2.2} aria-hidden="true" />
+                            <ListFilter className="h-[17px] w-[17px] text-[#2a2e33]" strokeWidth={2.2} aria-hidden="true" />
                           )}
                           <span className="sr-only">{item.label}</span>
                         </>

@@ -216,10 +216,10 @@ export function OfferScreen({
   const ctaHref = resolveTarget(primaryCta?.target, customerType)
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
     <main
       className={`relative isolate h-full w-full overflow-hidden font-sans ${
-        isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+        isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
       }`}
     >
       {patternUrl ? (
@@ -281,7 +281,7 @@ export function OfferScreen({
                   className={`h-[72%] w-[88%] border ${
                     isBusiness
                       ? 'border-white/5 bg-white/[0.015]'
-                      : 'border-[#3d4248]/5 bg-[#3d4248]/[0.015]'
+                      : 'border-[#2a2e33]/5 bg-[#2a2e33]/[0.015]'
                   }`}
                   aria-hidden="true"
                 />
@@ -304,17 +304,17 @@ export function OfferScreen({
                     className={
                       isActive
                         ? 'pb-[26px]'
-                        : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#3d4248]/80'}`
+                        : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#2a2e33]/80'}`
                     }
                   >
                     <button
                       type="button"
-                      className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[24px] [@media(max-height:920px)]:text-[24px] ${
+                      className={`flex w-full items-center justify-between gap-6 py-[20px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                         isActive
                           ? 'text-[#efb804]'
                           : isBusiness
                             ? 'text-white'
-                            : 'text-[#3d4248]'
+                            : 'text-[#2a2e33]'
                       }`}
                       aria-expanded={isActive}
                       aria-controls={contentId}
@@ -344,7 +344,7 @@ export function OfferScreen({
                           {section.text ? (
                               <div
                                 className={`max-w-[420px] space-y-[22px] text-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
-                                  isBusiness ? 'text-white/95' : 'text-[#3d4248]/95'
+                                  isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
                                 }`}
                               >
                                 {parseOfferText(section.text).map((block, blockIndex) =>
@@ -382,7 +382,7 @@ export function OfferScreen({
           ) : (
             <div
               className={`min-h-[340px] border-y ${
-                isBusiness ? 'border-white/20' : 'border-[#3d4248]/20'
+                isBusiness ? 'border-white/20' : 'border-[#2a2e33]/20'
               }`}
               aria-label="Keine Angebote vorhanden"
             />

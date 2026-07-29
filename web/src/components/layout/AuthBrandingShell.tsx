@@ -22,19 +22,19 @@ type AuthBrandingShellProps = {
 const fallbackFooterAddress = 'KOSCHATSTRASSE 24, 9800 SPITTAL/DRAU'
 
 const screenClassName =
-  'relative isolate h-full w-full overflow-hidden bg-white text-[#3d4248]'
+  'relative isolate h-full w-full overflow-hidden bg-white text-[#2a2e33]'
 const patternFrameClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 block h-[850px] w-[850px]'
 const patternImageClassName =
   `${patternFrameClassName} bg-contain bg-center bg-no-repeat opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]`
 const patternFallbackClassName = `${patternFrameClassName} opacity-[0.08] [transform:rotate(30deg)]`
 const baseFooterClassName =
-  'absolute bottom-[30px] left-[60px] z-10 flex items-center gap-[22px] font-sans text-[14px] font-normal uppercase tracking-[0.02em] text-[#3d4248]'
+  'absolute bottom-[30px] left-[60px] z-10 flex items-center gap-[22px] font-sans text-[14px] font-normal uppercase tracking-[0.02em] text-[#2a2e33]'
 
 function ConversioLogo() {
   return (
     <div
-      className="flex items-center gap-3 font-[Arial,Helvetica,sans-serif] text-[#3d4248]"
+      className="flex items-center gap-3 font-[Arial,Helvetica,sans-serif] text-[#2a2e33]"
       aria-label="Conversio Energie"
     >
       <div className="relative grid h-10 w-10 place-items-center text-[#efb804]">
@@ -108,8 +108,8 @@ export function AuthBrandingShell({
             aria-hidden="true"
             className={patternFallbackClassName}
           >
-            <span className="absolute inset-[84px] border-[58px] border-solid border-[#3d4248] [clip-path:polygon(50%_0,92%_25%,92%_75%,50%_100%,8%_75%,8%_25%)]" />
-            <span className="absolute bottom-[18px] left-[30px] right-[30px] h-[58px] bg-[#3d4248] [box-shadow:-84px_-184px_0_#3d4248,122px_-332px_0_#3d4248,-22px_-514px_0_#3d4248] [transform:skewY(-31deg)]" />
+            <span className="absolute inset-[84px] border-[58px] border-solid border-[#2a2e33] [clip-path:polygon(50%_0,92%_25%,92%_75%,50%_100%,8%_75%,8%_25%)]" />
+            <span className="absolute bottom-[18px] left-[30px] right-[30px] h-[58px] bg-[#2a2e33] [box-shadow:-84px_-184px_0_#2a2e33,122px_-332px_0_#2a2e33,-22px_-514px_0_#2a2e33] [transform:skewY(-31deg)]" />
           </span>
         )}
 

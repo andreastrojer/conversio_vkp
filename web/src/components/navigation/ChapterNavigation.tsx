@@ -171,11 +171,11 @@ export function ChapterNavigation({
     'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[31px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[178px]'
   const ctaIconClassName = 'h-[17px] w-[17px] shrink-0 object-contain'
   const isPrivate = customerType === 'b2c'
-  const panelTheme = isPrivate ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
-  const dividerColor = isPrivate ? 'border-white/80' : 'border-[#3d4248]'
+  const panelTheme = isPrivate ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
+  const dividerColor = isPrivate ? 'border-white/80' : 'border-[#2a2e33]'
   const inactiveButtonTheme = isPrivate
-    ? 'bg-white text-[#3d4248]'
-    : 'bg-[#3d4248] text-white'
+    ? 'bg-white text-[#2a2e33]'
+    : 'bg-[#2a2e33] text-white'
 
   return (
     <aside
@@ -209,7 +209,7 @@ export function ChapterNavigation({
           {items.map((item) => {
             const isActive = item.key === currentKey
             const titleColor = isActive ? 'text-[#efb804]' : ''
-            const buttonTheme = isActive ? 'bg-[#efb804] text-[#3d4248]' : inactiveButtonTheme
+            const buttonTheme = isActive ? 'bg-[#efb804] text-[#2a2e33]' : inactiveButtonTheme
             const arrowNeedsInvert = Boolean(navigationArrowUrl && !isActive && !isPrivate)
 
             return (

@@ -114,10 +114,10 @@ export function ProcessScreen({
   }
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#3d4248]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
       <main
         className={`relative isolate h-full w-full overflow-hidden font-sans ${
-          isBusiness ? 'bg-[#3d4248] text-white' : 'bg-white text-[#3d4248]'
+          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
         }`}
       >
         {patternUrl ? (
@@ -147,15 +147,15 @@ export function ProcessScreen({
         </div>
 
         <p
-          className={`absolute bottom-[165px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[235px] ${
-            isBusiness ? 'text-white/90' : 'text-[#3d4248]/90'
+          className={`absolute bottom-[155px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[225px] ${
+            isBusiness ? 'text-white/90' : 'text-[#2a2e33]/90'
           }`}
         >
           {subline?.trim() || 'DER ABLAUF'}
         </p>
 
         <section
-          className="absolute left-[175px] top-[252px] z-[3] h-[560px] w-[550px] [--process-label-offset:29px] [--process-step-gap:70px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[237px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[588px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:75px]"
+          className="absolute left-[175px] top-[262px] z-[3] h-[560px] w-[550px] [--process-label-offset:29px] [--process-step-gap:70px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[247px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[588px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:75px]"
           aria-label="Prozessschritte als Ringstapel"
         >
           {sections.map((section, index) => {
@@ -190,7 +190,7 @@ export function ProcessScreen({
                         ? 'text-[#efb804]'
                         : isBusiness
                           ? 'text-white/60'
-                          : 'text-[#3d4248]/60'
+                          : 'text-[#2a2e33]/60'
                     }`}
                     strokeWidth={1.2}
                     aria-hidden="true"
@@ -222,7 +222,7 @@ export function ProcessScreen({
         </section>
 
         <section
-          className="absolute right-[72px] top-[235px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[210px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-list-step:84px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-point-center:42px]"
+          className="absolute right-[72px] top-[245px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[220px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-list-step:84px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-point-center:42px]"
           aria-label="Prozessschritte"
         >
           <span
@@ -241,7 +241,7 @@ export function ProcessScreen({
           />
           <span
             className={`absolute bottom-[var(--process-point-center)] left-[31px] top-[var(--process-point-center)] w-[3px] ${
-              isBusiness ? 'bg-white/90' : 'bg-[#3d4248]/80'
+              isBusiness ? 'bg-white/90' : 'bg-[#2a2e33]/80'
             }`}
             aria-hidden="true"
           />
@@ -255,14 +255,14 @@ export function ProcessScreen({
                   key={sectionKey(section, index)}
                   type="button"
                   className={`group relative flex h-[var(--process-list-step)] w-full items-center text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
-                    isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#3d4248]'
+                    isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#2a2e33]'
                   }`}
                   onClick={() => selectStep(index)}
                   aria-pressed={isActive}
                 >
                   <span
                     className={`absolute left-[31px] top-1/2 h-[3px] w-[17px] -translate-y-1/2 transition-colors duration-300 ${
-                      isActive ? 'bg-[#efb804]' : isBusiness ? 'bg-white' : 'bg-[#3d4248]'
+                      isActive ? 'bg-[#efb804]' : isBusiness ? 'bg-white' : 'bg-[#2a2e33]'
                     }`}
                     aria-hidden="true"
                   />
@@ -278,7 +278,7 @@ export function ProcessScreen({
                     />
                     <span className="relative text-[16px] font-medium">{index + 1}</span>
                   </span>
-                  <span className="ml-[22px] max-w-[410px] text-[20px] font-bold uppercase leading-[1.16] tracking-[0.012em] transition-colors duration-300">
+                  <span className="ml-[22px] max-w-[410px] text-[22px] font-bold uppercase leading-[1.16] tracking-[0.012em] transition-colors duration-300">
                     {section.title || `Schritt ${index + 1}`}
                   </span>
                 </button>
@@ -291,7 +291,7 @@ export function ProcessScreen({
           <div className="absolute bottom-[58px] right-[72px] z-[4] w-[276px]">
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[10px] font-sans text-[18px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]"
+              className="group flex items-center justify-between pb-[10px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
               <span>{primaryCta.label}</span>
               <ArrowRight

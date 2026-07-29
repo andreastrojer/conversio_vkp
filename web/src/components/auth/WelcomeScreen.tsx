@@ -32,13 +32,13 @@ const fallbackLogoutLabel = 'Abmelden'
 const mainContentClassName =
   'absolute left-[60px] top-[47%] z-10 max-w-[520px] -translate-y-1/2'
 const titleClassName =
-  'font-sans text-[54px] font-bold uppercase leading-[1.02] tracking-[0.024em] text-[#3d4248]'
+  'font-sans text-[72px] font-bold uppercase leading-[1.02] tracking-[0.024em] text-[#2a2e33]'
 const actionAreaClassName =
   'mt-[30px] block max-w-[380px] font-sans'
 const sublineClassName =
-  'm-0 max-w-[390px] font-sans text-[19px] font-normal leading-[1.28] tracking-[0.006em] text-[#3d4248] max-[1600px]:max-w-[440px] max-[1600px]:text-[24px] [@media(max-height:920px)]:max-w-[440px] [@media(max-height:920px)]:text-[24px]'
+  'm-0 max-w-[440px] font-sans text-[28px] font-normal leading-[1.28] tracking-[0.006em] text-[#2a2e33]'
 const nextButtonClassName =
-  'inline-flex h-[46px] min-w-[244px] items-center justify-between gap-[18px] rounded-full bg-[#efb804] px-[25px] text-[13px] font-bold uppercase tracking-[0.04em] text-[#3d4248] transition-[background-color,box-shadow] duration-[160ms] ease-[ease] hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.22)] max-[1600px]:h-[50px] max-[1600px]:min-w-[264px] max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:min-w-[264px] [@media(max-height:920px)]:text-[16px]'
+  'inline-flex h-[46px] min-w-[244px] items-center justify-between gap-[18px] rounded-full bg-[#efb804] px-[25px] text-[13px] font-bold uppercase tracking-[0.04em] text-[#2a2e33] transition-[background-color,box-shadow] duration-[160ms] ease-[ease] hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.22)] max-[1600px]:h-[50px] max-[1600px]:min-w-[264px] max-[1600px]:text-[16px] [@media(max-height:920px)]:h-[50px] [@media(max-height:920px)]:min-w-[264px] [@media(max-height:920px)]:text-[16px]'
 const compactFooterClassName =
   'max-[1600px]:gap-[26px] max-[1600px]:text-[16px] [@media(max-height:920px)]:gap-[26px] [@media(max-height:920px)]:text-[16px]'
 
