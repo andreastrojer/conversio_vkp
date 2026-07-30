@@ -958,8 +958,10 @@ export function WhatFitsScreen({
 
                 <div
                   className={`mt-[44px] grid grid-cols-2 gap-x-[72px] gap-y-[34px] ${
-                    isBusiness && catalogProducts.length > 3
-                      ? 'grid-flow-col grid-rows-3'
+                    isBusiness
+                      ? catalogProducts.length > 3
+                        ? 'grid-flow-col grid-rows-3'
+                        : 'grid-flow-col grid-rows-2'
                       : 'grid-flow-row'
                   }`}
                 >
@@ -968,13 +970,12 @@ export function WhatFitsScreen({
                     const catalogLabel = isBusiness
                       ? getBusinessCatalogLabel(product.catalogLabel)
                       : product.catalogLabel
-                    const nudgeCatalogLabelLeft = isBusiness && isBusinessCatalogInfrastructure(product)
 
                     return (
                       <button
                         key={product._id}
                         type="button"
-                        className={`group flex items-center gap-[28px] text-left uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${nudgeCatalogLabelLeft ? '-translate-x-[10px]' : ''} ${
+                        className={`group flex items-center gap-[28px] text-left uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
                           isBusiness ? 'text-[22px] font-bold' : 'text-[17px] font-semibold'
                         } ${
                           isSelected

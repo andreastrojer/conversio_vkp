@@ -674,43 +674,18 @@ function BundleCard({
     isBusiness,
   )
   const cardLayoutClassName = isWireframeLayout
-    ? isBusiness
-      ? 'grid h-[500px] w-[316px] grid-rows-[42px_224px_148px_minmax(0,1fr)]'
-      : 'grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]'
+    ? 'grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]'
     : 'h-[420px] w-[315px]'
   const titleSlotClassName = isWireframeLayout
     ? 'block h-full'
     : 'block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]'
   const imageSlotClassName = isWireframeLayout
-    ? `flex h-full w-[316px] items-start justify-center overflow-visible ${
-        isBusiness ? 'pt-[6px]' : 'pt-[14px]'
-      }`
+    ? 'flex h-full w-[316px] items-start justify-center pt-[14px]'
     : 'flex w-[315px] items-start justify-center pt-[24px]'
   const imageClassName = isWireframeLayout
-    ? isBusiness
-      ? 'h-[230px] w-[390px] max-w-none'
-      : 'h-[214px] w-[316px]'
+    ? 'h-[214px] w-[316px]'
     : 'h-[160px] w-[315px]'
-  const imageFitClassName = isWireframeLayout && isBusiness
-    ? 'object-contain object-center'
-    : 'object-contain object-center'
-  const businessBundleImageClassName = (() => {
-    if (!isWireframeLayout || !isBusiness) {
-      return ''
-    }
-
-    const scenarioIdentity = `${bundle.scenarioType || ''} ${bundle.title || ''}`.toLowerCase()
-
-    if (scenarioIdentity.includes('einstieg')) {
-      return 'translate-y-[-48px] scale-[1.34]'
-    }
-
-    if (scenarioIdentity.includes('autark') || scenarioIdentity.includes('abgesichert')) {
-      return 'translate-y-[-25px] scale-[1.22]'
-    }
-
-    return 'scale-100'
-  })()
+  const imageFitClassName = 'object-contain object-center'
   const resultClassName = isWireframeLayout
     ? `h-full ${isBusiness ? 'pt-[2px] text-[#efb804]' : 'text-[#2a2e33]'}`
     : 'mt-[24px] text-[#efb804]'
@@ -747,7 +722,7 @@ function BundleCard({
           <img
             src={imageUrl}
             alt={imageAlt}
-            className={`relative z-[4] ${imageClassName} ${imageFitClassName} ${businessBundleImageClassName} transition-transform duration-300 ${
+            className={`${imageClassName} ${imageFitClassName} transition-transform duration-300 ${
               isBusiness ? '' : 'group-hover:scale-[1.015]'
             }`}
           />
@@ -758,13 +733,13 @@ function BundleCard({
         <span
           className={`absolute z-[3] flex flex-col items-center justify-center font-semibold uppercase leading-none ${
             isBusiness
-              ? 'h-[106px] w-[200px] gap-[10px] px-[12px] text-[16px]'
+              ? 'h-[84px] w-[184px] gap-[7px] px-[10px] text-[14px]'
               : 'h-[72px] w-[156px] gap-[7px] text-[16px]'
           } ${
             isWireframeLayout
               ? `${
                   isBusiness
-                    ? 'left-[-220px] top-[146px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-208px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[146px]'
+                    ? 'left-[-188px] top-[178px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[178px]'
                     : 'left-[-188px] top-[178px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[178px]'
                 } ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#2a2e33]'}`
               : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
@@ -1157,7 +1132,7 @@ export function ScenarioMatrixScreen({
                     className={`pointer-events-none absolute z-0 object-contain object-right-bottom ${
                       isBusiness
                         ? 'bottom-[-142px] right-[-130px] h-[840px] w-[1100px]'
-                        : 'bottom-[-92px] right-[-42px] h-[840px] w-[1100px] brightness-0 opacity-30'
+                        : 'bottom-[-84px] right-[-84px] h-[830px] w-[1090px] opacity-68 contrast-[1.45] brightness-[0.86]'
                     }`}
                 />
               ) : null}
