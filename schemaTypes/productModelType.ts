@@ -181,7 +181,7 @@ export const productModelType = defineType({
         ],
         layout: 'radio',
       },
-      validation: (Rule) => Rule.required(),
+
     }),
     defineField({
       name: 'cardTitle',

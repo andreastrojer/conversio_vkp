@@ -114,10 +114,10 @@ export function ProcessScreen({
   }
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-[#f5f5f7]'}>
       <main
         className={`relative isolate h-full w-full overflow-hidden font-sans ${
-          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
+          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'
         }`}
       >
         {patternUrl ? (
@@ -147,7 +147,7 @@ export function ProcessScreen({
         </div>
 
         <p
-          className={`absolute bottom-[155px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[225px] ${
+          className={`absolute bottom-[198px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
             isBusiness ? 'text-white/90' : 'text-[#2a2e33]/90'
           }`}
         >
@@ -155,7 +155,7 @@ export function ProcessScreen({
         </p>
 
         <section
-          className="absolute left-[175px] top-[262px] z-[3] h-[560px] w-[550px] [--process-label-offset:29px] [--process-step-gap:70px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[247px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[588px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:75px]"
+          className="absolute left-[175px] top-[272px] z-[3] h-[570px] w-[550px] [--process-label-offset:29px] [--process-step-gap:71px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[257px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[598px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:76px]"
           aria-label="Prozessschritte als Ringstapel"
         >
           {sections.map((section, index) => {
@@ -222,7 +222,7 @@ export function ProcessScreen({
         </section>
 
         <section
-          className="absolute right-[72px] top-[245px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[220px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-list-step:84px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-point-center:42px]"
+          className="absolute right-[72px] top-[255px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[230px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-list-step:84px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-point-center:42px]"
           aria-label="Prozessschritte"
         >
           <span

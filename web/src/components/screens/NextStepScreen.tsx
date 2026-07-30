@@ -642,8 +642,8 @@ export function NextStepScreen({
   }
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2b3036]' : 'bg-white'}>
-      <main className={`relative isolate h-full w-full overflow-hidden font-sans ${isBusiness ? 'bg-[#2b3036] text-white' : 'bg-white text-[#2a2e33]'}`}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2b3036]' : 'bg-[#f5f5f7]'}>
+      <main className={`relative isolate h-full w-full overflow-hidden font-sans ${isBusiness ? 'bg-[#2b3036] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'}`}>
         {patternUrl ? (
           <span
             className={`${patternClassName} ${
@@ -688,14 +688,14 @@ export function NextStepScreen({
                 </span>
               </span>
 
-              <span className={`flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[18px]' : 'pt-[14px]'}`}>
+              <span className={`flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[10px]' : 'pt-[14px]'}`}>
                 {bundleImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={bundleImageUrl}
                     alt={bundleImageAlt}
                     className={`object-contain object-center ${
-                      isBusiness ? 'h-[176px] w-[224px]' : 'h-[214px] w-[316px]'
+                      isBusiness ? 'h-[196px] w-[280px]' : 'h-[214px] w-[316px]'
                     }`}
                   />
                 ) : null}
@@ -800,7 +800,7 @@ export function NextStepScreen({
             <button
               type="button"
               disabled={sendDisabled}
-              className={`group inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full bg-[#4a4f54] px-[26px] text-[15px] font-bold uppercase leading-none text-white transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+              className={`group inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full bg-[#4a4f54] px-[26px] text-[16px] font-bold uppercase leading-none text-white transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                 sendDisabled ? 'cursor-not-allowed bg-[#a7aaad]' : 'hover:-translate-y-px'
               }`}
               onClick={handleSendDocuments}
@@ -820,7 +820,7 @@ export function NextStepScreen({
             </button>
             <button
               type="button"
-              className="group inline-flex h-[30px] min-w-[184px] items-center justify-between rounded-full bg-[#efb804] px-[26px] text-[14px] font-bold uppercase leading-none text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
+              className="group inline-flex h-[30px] min-w-[184px] items-center justify-between rounded-full bg-[#efb804] px-[26px] text-[16px] font-bold uppercase leading-none text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
               onClick={handleExportSpreadsheet}
             >
               <span>EXCEL EXPORT</span>

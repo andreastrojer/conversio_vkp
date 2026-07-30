@@ -251,6 +251,40 @@ function normalizeTabValue(value?: string | null) {
     .toLowerCase()
 }
 
+function getB2cBottomNavigationSlotClassName(item: ProductNavigationItem) {
+  const label = normalizeTabValue(item.label)
+
+  if (item.kind === 'catalog') {
+    return 'w-[54px]'
+  }
+
+  if (label.includes('photovoltaik')) {
+    return 'w-[122px]'
+  }
+
+  if (label.includes('batteriespeicher')) {
+    return 'w-[168px]'
+  }
+
+  if (label.includes('warmepumpe')) {
+    return 'w-[128px]'
+  }
+
+  if (label.includes('ladestation')) {
+    return 'w-[132px]'
+  }
+
+  if (label.includes('energiegemeinschaft')) {
+    return 'w-[198px]'
+  }
+
+  if (label.includes('matrix')) {
+    return 'w-[76px]'
+  }
+
+  return 'w-[132px]'
+}
+
 function isOverviewDetailTab(tab?: ProductDetailTab) {
   const value = `${normalizeTabValue(tab?.key)} ${normalizeTabValue(tab?.title)}`
 
@@ -299,6 +333,12 @@ function isStorageProduct(product?: WhatFitsProduct) {
   const value = `${normalizeTabValue(product?.categoryType)} ${normalizeTabValue(product?.slug)} ${normalizeTabValue(product?.title)}`
 
   return value.includes('gewerbespeicher') || value.includes('batteriespeicher') || value.includes('speicher')
+}
+
+function isHydrogenStorageProduct(product?: WhatFitsProduct) {
+  const value = `${normalizeTabValue(product?.categoryType)} ${normalizeTabValue(product?.slug)} ${normalizeTabValue(product?.title)}`
+
+  return value.includes('wasserstoffspeicher') || value.includes('hydrogen')
 }
 
 type ModelCoolingType = 'air' | 'immersion'
@@ -473,6 +513,12 @@ function getBusinessCatalogLabel(label: string) {
   return label
 }
 
+function isBusinessCatalogInfrastructure(product: WhatFitsProduct) {
+  const value = normalizeTabValue(`${product.slug} ${product.catalogLabel} ${product.title}`)
+
+  return value.includes('ladeinfrastruktur') || value.includes('laden')
+}
+
 function getModelDisplayOrder(model: ProductModel) {
   const value = normalizeTabValue(`${model.cardTitle || ''} ${model.title}`)
   const bresMatch = value.match(/bres[-\s]*(\d+)[-\s]*(\d+)/)
@@ -566,6 +612,13 @@ export function WhatFitsScreen({
   const isReference = isReferenceTab(activeTab)
   const isCompactSharedTab = isInterplay || isReference
   const isEnergyCommunity = isEnergyCommunityProduct(selectedProduct)
+  const isHydrogenStorage = isHydrogenStorageProduct(selectedProduct)
+  const isHydrogenStorageReference =
+    isReference &&
+    (isHydrogenStorage ||
+      normalizeTabValue(
+        `${activeTab?.contentTitle || ''} ${activeTab?.introText || ''} ${activeTab?.title || ''}`,
+      ).includes('wasserstoffspeicher'))
   const isEnergyCommunityOverview = isEnergyCommunity && isOverviewDetailTab(activeTab || visibleTabs[0])
   const overviewTab = visibleTabs.find(isOverviewDetailTab) || visibleTabs[0]
   const [activeSectionKey, setActiveSectionKey] = useState(activeTab?.sections[0]?._key || '')
@@ -797,6 +850,11 @@ export function WhatFitsScreen({
       isStorageProduct(selectedProduct) &&
       modelCoolingGroups.length > 1,
   )
+  const emphasizesBusinessDetailImage =
+    isBusiness &&
+    activeTab?.key === 'overview' &&
+    Boolean(selectedProduct) &&
+    (isStorageProduct(selectedProduct) || isBusinessCatalogInfrastructure(selectedProduct))
   const visibleModelGroups = usesCoolingModelGroups && activeCoolingGroup
     ? [activeCoolingGroup]
     : [{type: 'air' as const, label: '', order: 0, models: selectedProduct?.models || []}]
@@ -806,7 +864,9 @@ export function WhatFitsScreen({
   const modelCardTitleClassName = 'w-[250px] text-[22px]'
   const structuredIntroTextClassName = isBusiness
     ? isReference
-      ? 'text-[22px] font-normal leading-[1.38]'
+      ? isHydrogenStorageReference
+        ? 'text-[18px] font-normal leading-[1.38]'
+        : 'text-[22px] font-normal leading-[1.38]'
       : isEnergyCommunityOverview
         ? 'text-[22px] font-normal leading-[1.28]'
         : isCompactSharedTab
@@ -821,10 +881,10 @@ export function WhatFitsScreen({
           : 'text-[22px] font-semibold leading-[1.35]'
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-[#f5f5f7]'}>
       <main
         className={`relative isolate h-full w-full overflow-hidden font-sans ${
-          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
+          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'
         }`}
       >
         {patternUrl ? (
@@ -902,12 +962,13 @@ export function WhatFitsScreen({
                     const catalogLabel = isBusiness
                       ? getBusinessCatalogLabel(product.catalogLabel)
                       : product.catalogLabel
+                    const nudgeCatalogLabelLeft = isBusiness && isBusinessCatalogInfrastructure(product)
 
                     return (
                       <button
                         key={product._id}
                         type="button"
-                        className={`group flex items-center gap-[28px] text-left uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                        className={`group flex items-center gap-[28px] text-left uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${nudgeCatalogLabelLeft ? '-translate-x-[10px]' : ''} ${
                           isBusiness ? 'text-[22px] font-bold' : 'text-[17px] font-semibold'
                         } ${
                           isSelected
@@ -1013,9 +1074,13 @@ export function WhatFitsScreen({
                 media={detailMedia}
                 className={
                   selectedModel && activeTab?.key === 'overview'
-                    ? `absolute bottom-[88px] h-[420px] w-[420px] ${
-                        usesTopModelLabelLayout ? 'left-[200px]' : 'left-[150px]'
-                      }`
+                    ? emphasizesBusinessDetailImage
+                      ? 'absolute bottom-[48px] left-[64px] h-[540px] w-[540px]'
+                      : `absolute bottom-[88px] h-[420px] w-[420px] ${
+                          usesTopModelLabelLayout ? 'left-[200px]' : 'left-[150px]'
+                        }`
+                    : emphasizesBusinessDetailImage
+                      ? 'absolute bottom-[-34px] left-[-100px] h-[740px] w-[68cqw]'
                     : isTechnicalTab
                       ? 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
                     : 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
@@ -1034,8 +1099,8 @@ export function WhatFitsScreen({
                   aria-hidden="true"
                   className="pointer-events-none absolute bottom-0 left-0 z-[2] h-[650px] w-[62cqw]"
                 >
-                  <span className="absolute inset-x-0 top-0 h-[2px] bg-white" />
-                  <span className="absolute inset-y-0 right-0 w-[4cqw] bg-white" />
+                  <span className="absolute inset-x-0 top-0 h-[2px] bg-[#f5f5f7]" />
+                  <span className="absolute inset-y-0 right-0 w-[4cqw] bg-[#f5f5f7]" />
                 </div>
               ) : null}
 
@@ -1504,11 +1569,12 @@ export function WhatFitsScreen({
                     </button>
                   )}
 
-                  <div className="flex w-auto items-center justify-start gap-[40px] pl-[10px] pr-[36px]">
+                  <div className={`flex w-auto items-center justify-start gap-[40px] pl-[10px] ${isBusiness ? 'pr-[36px]' : 'pr-[42px]'}`}>
                     {bottomNavigation.map((item) => {
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug
                       const routedHref = routedBottomNavigationHrefs.get(item.key)
+                      const slotClassName = getB2cBottomNavigationSlotClassName(item)
                       const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
                       const catalogPressedIconUrl =
                         isBusiness && isCatalog
@@ -1521,7 +1587,9 @@ export function WhatFitsScreen({
                           ? catalogIconUrl
                             ? 'h-[26px] w-[66px] p-0 leading-none'
                             : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#2a2e33]'
-                          : 'h-[26px] px-[12px]'
+                          : isActive
+                            ? 'h-[32px] px-[26px]'
+                            : 'h-[26px] px-[12px]'
                       }`
                       const content = isCatalog ? (
                         <>
@@ -1556,24 +1624,50 @@ export function WhatFitsScreen({
                       ) : item.label
 
                       return routedHref ? (
-                        <Link
-                          key={item.key}
-                          href={routedHref}
-                          scroll={false}
-                          className={commonClassName}
-                        >
-                          {content}
-                        </Link>
+                        isBusiness ? (
+                          <Link
+                            key={item.key}
+                            href={routedHref}
+                            scroll={false}
+                            className={commonClassName}
+                          >
+                            {content}
+                          </Link>
+                        ) : (
+                          <span key={item.key} className={`flex h-[48px] shrink-0 items-center justify-center ${slotClassName}`}>
+                            <button
+                              type="button"
+                              className={commonClassName}
+                              aria-current={isActive ? 'page' : undefined}
+                              onClick={() => handleBottomNavigation(item)}
+                            >
+                              {content}
+                            </button>
+                          </span>
+                        )
                       ) : (
-                        <button
-                          key={item.key}
-                          type="button"
-                          className={commonClassName}
-                          aria-current={isActive ? 'page' : undefined}
-                          onClick={() => handleBottomNavigation(item)}
-                        >
-                          {content}
-                        </button>
+                        isBusiness ? (
+                          <button
+                            key={item.key}
+                            type="button"
+                            className={commonClassName}
+                            aria-current={isActive ? 'page' : undefined}
+                            onClick={() => handleBottomNavigation(item)}
+                          >
+                            {content}
+                          </button>
+                        ) : (
+                          <span key={item.key} className={`flex h-[48px] shrink-0 items-center justify-center ${slotClassName}`}>
+                            <button
+                              type="button"
+                              className={commonClassName}
+                              aria-current={isActive ? 'page' : undefined}
+                              onClick={() => handleBottomNavigation(item)}
+                            >
+                              {content}
+                            </button>
+                          </span>
+                        )
                       )
                     })}
                   </div>

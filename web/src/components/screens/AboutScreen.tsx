@@ -221,7 +221,7 @@ function AboutDetailContent({
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
               <span className="block h-[10px] w-[4px] -skew-x-[12deg] bg-[#efb804]" />
             </span>
-            <p className="relative z-[1] pl-[7px]">{trustBlock.replace(/^[’‘'"„“]+/, '').trim()}</p>
+            <p className="relative z-[3] pl-[7px]">{trustBlock.replace(/^[’‘'"„“]+/, '').trim()}</p>
           </div>
         ) : null}
       </div>
@@ -282,10 +282,10 @@ export function AboutScreen({
   const resolvedHeadline = (headline?.trim() || fallbackHeadline).toLocaleUpperCase('de-AT')
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-[#f5f5f7]'}>
     <main
       className={`relative isolate h-full w-full overflow-hidden font-sans ${
-        isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
+        isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'
       }`}
     >
       {patternUrl ? (

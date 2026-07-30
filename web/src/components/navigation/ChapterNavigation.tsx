@@ -15,7 +15,7 @@ import {
 
 const navigationPanelWidthPx = 510
 const tabletNavigationPanelWidthPx = 550
-const tabletViewportQuery = '(min-width: 768px) and (max-width: 1366px)'
+const tabletViewportQuery = '(min-width: 768px) and (max-width: 1600px)'
 
 type ChapterNavigationProps = {
   customerType: CustomerGroup
@@ -151,27 +151,27 @@ export function ChapterNavigation({
         : 'translateX(calc(-100% - 2px))'
       : `translateX(${dragTranslateX}px)`
   const panelWidth =
-    'w-[510px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[550px]'
+    'w-[510px] [@media(min-width:768px)_and_(max-width:1600px)]:w-[550px]'
   const panelSpacing =
     'rounded-r-[18px] pb-[24px] pl-[60px] pr-[54px] pt-[43px]'
   const panelOverflow = 'overflow-hidden'
   const navigationSpacing =
-    'mt-[31px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[13px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[840px] [@media(min-width:768px)_and_(max-width:1366px)]:scale-100 [@media(min-width:768px)_and_(max-width:1366px)]:[width:100%]'
+    'mt-[31px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1600px)]:mt-[13px] [@media(min-width:768px)_and_(max-width:1600px)]:h-[840px] [@media(min-width:768px)_and_(max-width:1600px)]:scale-100 [@media(min-width:768px)_and_(max-width:1600px)]:[width:100%] [@media(min-width:1367px)_and_(max-width:1600px)]:mt-[24px] [@media(min-width:1367px)_and_(max-width:1600px)]:h-[700px]'
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
   const itemGap =
-    'gap-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:gap-[44px]'
+    'gap-[24px] [@media(min-width:768px)_and_(max-width:1600px)]:gap-[44px] [@media(min-width:1367px)_and_(max-width:1600px)]:gap-[28px]'
   const numberSize = 'h-[42px] w-[42px]'
   const numberTextSize =
     'text-[16px] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
   const titleTextSize =
-    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[29px]'
+    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1600px)]:text-[29px]'
   const ctaOffset =
-    'ml-[66px] mt-[14px] [@media(min-width:768px)_and_(max-width:1366px)]:ml-[86px]'
+    'ml-[66px] mt-[14px] [@media(min-width:768px)_and_(max-width:1600px)]:ml-[86px]'
   const ctaSize =
-    'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[31px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[178px]'
+    'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px] [@media(min-width:768px)_and_(max-width:1600px)]:h-[31px] [@media(min-width:768px)_and_(max-width:1600px)]:w-[178px]'
   const ctaIconClassName = 'h-[17px] w-[17px] shrink-0 object-contain'
   const isPrivate = customerType === 'b2c'
-  const panelTheme = isPrivate ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
+  const panelTheme = isPrivate ? 'bg-[#2a2e33] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'
   const dividerColor = isPrivate ? 'border-white/80' : 'border-[#2a2e33]'
   const inactiveButtonTheme = isPrivate
     ? 'bg-white text-[#2a2e33]'

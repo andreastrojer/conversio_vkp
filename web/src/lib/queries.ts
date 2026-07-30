@@ -1144,6 +1144,7 @@ export const NEXT_STEP_SCENARIO_DOCUMENT_CATEGORIES_QUERY = defineQuery(groq`*[
     title,
     navigationLabel,
     "slug": slug.current,
+    categoryType,
     targetGroup,
     isActive,
     sortOrder,

@@ -24,7 +24,7 @@ type AuthBrandingShellProps = {
 const fallbackFooterAddress = 'KOSCHATSTRASSE 24, 9800 SPITTAL/DRAU'
 
 const screenClassName =
-  'relative isolate h-full w-full overflow-hidden bg-white text-[#2a2e33]'
+  'relative isolate h-full w-full overflow-hidden bg-[#f5f5f7] text-[#2a2e33]'
 const patternFrameClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 block h-[850px] w-[850px]'
 const patternImageClassName =
@@ -98,7 +98,7 @@ export function AuthBrandingShell({
     : undefined
 
   return (
-    <PresentationViewport backgroundClassName="bg-white">
+    <PresentationViewport backgroundClassName="bg-[#f5f5f7]">
       <main className={screenClassName}>
         {rightPatternUrl ? (
           <span

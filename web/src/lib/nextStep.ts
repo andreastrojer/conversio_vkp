@@ -140,6 +140,10 @@ function normalizeFeatureTitleForCustomer(title: string, customerType: CustomerG
   return customerType === 'b2b' ? 'Gewerbespeicher' : 'Batteriespeicher'
 }
 
+function isExcludedNextStepCategoryTitle(title: string, customerType: CustomerGroup) {
+  return customerType === 'b2b' && compactCmsKey(title).includes('energiegemeinschaft')
+}
+
 function resolveImageUrl(image: SanityImage | undefined, width = 1800) {
   return buildImageUrl(image, width, undefined, 100) || buildLogoUrl(image)
 }
@@ -169,11 +173,13 @@ function buildFallbackDocumentCategories(
   selectedBundle: ScenarioMatrixBundle | undefined,
   customerType: CustomerGroup,
 ) {
-  return (selectedBundle?.features || []).map((title, index) => ({
-    key: `${normalizeCmsKey(title) || 'category'}-${index}`,
-    title: normalizeFeatureTitleForCustomer(title, customerType),
-    documents: [],
-  }))
+  return (selectedBundle?.features || [])
+    .filter((title) => !isExcludedNextStepCategoryTitle(title, customerType))
+    .map((title, index) => ({
+      key: `${normalizeCmsKey(title) || 'category'}-${index}`,
+      title: normalizeFeatureTitleForCustomer(title, customerType),
+      documents: [],
+    }))
 }
 
 function normalizeDocumentCategories(
@@ -189,7 +195,7 @@ function normalizeDocumentCategories(
       title: document.title,
       description: document.description,
     })),
-  }))
+  })).filter((category) => !isExcludedNextStepCategoryTitle(category.title, customerType))
 
   return categories.length > 0
     ? categories

@@ -216,10 +216,10 @@ export function OfferScreen({
   const ctaHref = resolveTarget(primaryCta?.target, customerType)
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-[#f5f5f7]'}>
     <main
       className={`relative isolate h-full w-full overflow-hidden font-sans ${
-        isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
+        isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'
       }`}
     >
       {patternUrl ? (

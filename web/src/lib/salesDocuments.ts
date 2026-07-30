@@ -59,6 +59,7 @@ type RawDocumentCategory = {
   title?: string | null
   navigationLabel?: string | null
   slug?: string | null
+  categoryType?: string | null
   targetGroup?: string | null
   isActive?: boolean | null
   documents?: RawSalesDocument[] | null
@@ -99,6 +100,38 @@ function matchesAudience(value: string | null | undefined, customerType: Custome
 
 function normalizeCategoryKey(category: RawDocumentCategory, index: number) {
   return normalizeText(category.slug) || normalizeText(category._id) || `category-${index}`
+}
+
+function normalizeCmsKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .toLowerCase()
+}
+
+function compactCmsKey(value: string) {
+  return normalizeCmsKey(value).replace(/[\s_-]+/g, '')
+}
+
+function isExcludedNextStepCategory(
+  category: RawDocumentCategory,
+  customerType: CustomerGroup,
+) {
+  if (customerType !== 'b2b') {
+    return false
+  }
+
+  const categoryIdentity = compactCmsKey(
+    [
+      category.categoryType,
+      category.slug,
+      category.navigationLabel,
+      category.title,
+    ].map((value) => normalizeText(value)).join(' '),
+  )
+
+  return categoryIdentity.includes('energiegemeinschaft')
 }
 
 function normalizeDocument(
@@ -153,6 +186,7 @@ function normalizeScenarioDocuments(
       !category ||
       !categoryTitle ||
       category.isActive === false ||
+      isExcludedNextStepCategory(category, customerType) ||
       !matchesAudience(category.targetGroup, customerType)
     ) {
       return []

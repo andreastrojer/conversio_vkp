@@ -56,6 +56,50 @@ function splitParagraphs(text?: string | null) {
     .filter(Boolean)
 }
 
+function normalizeNavigationLabel(value?: string | null) {
+  return (value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/ä/g, 'a')
+    .replace(/ö/g, 'o')
+    .replace(/ü/g, 'u')
+    .replace(/ß/g, 'ss')
+}
+
+function getBottomNavigationSlotClassName(item: B2cNavigationItem) {
+  const label = normalizeNavigationLabel(item.label)
+
+  if (item.kind === 'catalog') {
+    return 'w-[54px]'
+  }
+
+  if (label.includes('photovoltaik')) {
+    return 'w-[122px]'
+  }
+
+  if (label.includes('batteriespeicher')) {
+    return 'w-[168px]'
+  }
+
+  if (label.includes('warmepumpe')) {
+    return 'w-[128px]'
+  }
+
+  if (label.includes('ladestation')) {
+    return 'w-[132px]'
+  }
+
+  if (label.includes('energiegemeinschaft')) {
+    return 'w-[198px]'
+  }
+
+  if (label.includes('matrix')) {
+    return 'w-[76px]'
+  }
+
+  return 'w-[132px]'
+}
+
 function BackgroundMedia({media}: {media?: B2cMedia}) {
   if (media?.imageUrl) {
     return (
@@ -431,6 +475,7 @@ function ProductBottomNavigation({
           const isActive =
             (item.kind === 'product' && item.slug === selectedProductSlug) ||
             (isCatalog && !selectedProductSlug)
+          const slotClassName = getBottomNavigationSlotClassName(item)
           const usesActiveCatalogIcon = Boolean(
             isCatalog && isActive && catalogActiveIconUrl,
           )
@@ -447,7 +492,9 @@ function ProductBottomNavigation({
                 : `h-[26px] min-w-[66px] px-[12px] ${
                     isActive ? '' : 'bg-white text-[#2a2e33]'
                   }`
-              : 'h-[26px] px-[12px]'
+              : isActive
+                ? 'h-[32px] px-[26px]'
+                : 'h-[26px] px-[12px]'
           }`
           const content = isCatalog ? (
             <>
@@ -476,20 +523,17 @@ function ProductBottomNavigation({
             item.label
           )
 
-          return item.kind === 'screen' && item.href ? (
-            <Link key={item.key} href={item.href} className={commonClassName}>
-              {content}
-            </Link>
-          ) : (
-            <button
-              key={item.key}
-              type="button"
-              className={commonClassName}
-              aria-current={isActive || (isCatalog && !selectedProductSlug) ? 'page' : undefined}
-              onClick={() => openItem(item)}
-            >
-              {content}
-            </button>
+          return (
+            <span key={item.key} className={`flex h-[48px] shrink-0 items-center justify-center ${slotClassName}`}>
+              <button
+                type="button"
+                className={commonClassName}
+                aria-current={isActive || (isCatalog && !selectedProductSlug) ? 'page' : undefined}
+                onClick={() => openItem(item)}
+              >
+                {content}
+              </button>
+            </span>
           )
         })}
       </div>

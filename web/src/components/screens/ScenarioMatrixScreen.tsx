@@ -101,6 +101,40 @@ function normalizeCmsKey(value: string) {
     .toLowerCase()
 }
 
+function getB2cBottomNavigationSlotClassName(item: ProductNavigationItem) {
+  const label = normalizeCmsKey(item.label)
+
+  if (item.kind === 'catalog') {
+    return 'w-[54px]'
+  }
+
+  if (label.includes('photovoltaik')) {
+    return 'w-[122px]'
+  }
+
+  if (label.includes('batteriespeicher')) {
+    return 'w-[168px]'
+  }
+
+  if (label.includes('warmepumpe')) {
+    return 'w-[128px]'
+  }
+
+  if (label.includes('ladestation')) {
+    return 'w-[132px]'
+  }
+
+  if (label.includes('energiegemeinschaft')) {
+    return 'w-[198px]'
+  }
+
+  if (label.includes('matrix')) {
+    return 'w-[76px]'
+  }
+
+  return 'w-[132px]'
+}
+
 function findExactSliderValue(
   sliders: ScenarioMatrixSlider[],
   values: Record<string, number>,
@@ -648,11 +682,11 @@ function BundleCard({
     ? 'block h-full'
     : 'block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]'
   const imageSlotClassName = isWireframeLayout
-    ? `flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[18px]' : 'pt-[14px]'}`
+    ? `flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[10px]' : 'pt-[14px]'}`
     : 'flex w-[315px] items-start justify-center pt-[24px]'
   const imageClassName = isWireframeLayout
     ? isBusiness
-      ? 'h-[176px] w-[224px]'
+      ? 'h-[196px] w-[280px]'
       : 'h-[214px] w-[316px]'
     : 'h-[160px] w-[315px]'
   const resultClassName = isWireframeLayout
@@ -700,13 +734,13 @@ function BundleCard({
         <span
           className={`absolute z-[3] flex flex-col items-center justify-center font-semibold uppercase leading-none ${
             isBusiness
-              ? 'h-[90px] w-[200px] gap-[7px] px-[12px] text-[16px]'
+              ? 'h-[106px] w-[200px] gap-[10px] px-[12px] text-[16px]'
               : 'h-[72px] w-[156px] gap-[7px] text-[16px]'
           } ${
             isWireframeLayout
               ? `${
                   isBusiness
-                    ? 'left-[-220px] top-[154px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-208px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[154px]'
+                    ? 'left-[-220px] top-[146px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-208px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[146px]'
                     : 'left-[-188px] top-[178px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[178px]'
                 } ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#2a2e33]'}`
               : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
@@ -1009,10 +1043,10 @@ export function ScenarioMatrixScreen({
   }
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-white'}>
+    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-[#f5f5f7]'}>
       <main
         className={`relative isolate h-full w-full overflow-hidden font-sans ${
-          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-white text-[#2a2e33]'
+          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'
         }`}
       >
         {patternUrl ? (
@@ -1220,11 +1254,12 @@ export function ScenarioMatrixScreen({
               )}
             </Link>
 
-            <div className="relative z-[1] flex w-auto items-center justify-start gap-[40px] px-[28px]">
+            <div className={`relative z-[1] flex w-auto items-center justify-start gap-[40px] ${isBusiness ? 'px-[28px]' : 'pl-[10px] pr-[42px]'}`}>
               {bottomNavigation.map((item) => {
                 const href = bottomNavigationHref(item, customerType)
                 const isMatrix = item.kind === 'screen' && Boolean(item.href?.includes('scenario-matrix'))
                 const isCatalog = item.kind === 'catalog'
+                const slotClassName = getB2cBottomNavigationSlotClassName(item)
                 const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
                 const className = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
                   isMatrix && !isCatalog ? 'bg-[#efb804] text-[#2a2e33]' : 'text-white'
@@ -1233,7 +1268,9 @@ export function ScenarioMatrixScreen({
                     ? catalogIconUrl
                       ? 'h-[26px] w-[66px] p-0 leading-none'
                       : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#2a2e33]'
-                    : 'h-[26px] px-[12px]'
+                    : isMatrix && !isCatalog
+                      ? 'h-[32px] px-[26px]'
+                      : 'h-[26px] px-[12px]'
                 }`
                 const content = isCatalog ? (
                   catalogIconUrl ? (
@@ -1244,10 +1281,27 @@ export function ScenarioMatrixScreen({
                   )
                 ) : item.label
 
-                return href && !isMatrix ? (
-                  <Link key={item.key} href={href} scroll={false} className={className}>{content}</Link>
+                const itemElement = href && !isMatrix ? (
+                  isBusiness ? (
+                    <Link key={item.key} href={href} scroll={false} className={className}>{content}</Link>
+                  ) : (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={className}
+                      onClick={() => router.push(href, {scroll: false})}
+                    >
+                      {content}
+                    </button>
+                  )
                 ) : (
                   <span key={item.key} className={className} aria-current={isMatrix ? 'page' : undefined}>{content}</span>
+                )
+
+                return isBusiness ? itemElement : (
+                  <span key={`${item.key}-slot`} className={`flex h-[48px] shrink-0 items-center justify-center ${slotClassName}`}>
+                    {itemElement}
+                  </span>
                 )
               })}
             </div>
