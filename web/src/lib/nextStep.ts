@@ -245,8 +245,13 @@ export async function getNextStepPageData({
     emailSubject: emailTemplate?.subject?.trim() || undefined,
     emailBody: emailTemplate?.body?.trim() || undefined,
     selectedBundle,
-    bundleImageUrl: scenarioMatrix.b2cBundleImageUrl || scenarioMatrix.offerImageUrl || scenarioMatrix.heroImageUrl,
+    bundleImageUrl:
+      selectedBundle?.imageUrl ||
+      scenarioMatrix.b2cBundleImageUrl ||
+      scenarioMatrix.offerImageUrl ||
+      scenarioMatrix.heroImageUrl,
     bundleImageAlt:
+      selectedBundle?.imageAlt ||
       scenarioMatrix.b2cBundleImageAlt ||
       scenarioMatrix.offerImageAlt ||
       scenarioMatrix.heroImageAlt,

@@ -360,7 +360,10 @@ function normalizeBundles(
       }
 
       const categories = (bundle.recommendedCategories || []).filter((category) => category.title?.trim())
-      const bundleImageUrl = resolveRasterImageUrl(bundle.bundleImage, 2200, 1300) || undefined
+      const bundleImageUrl =
+        customerType === 'b2c'
+          ? resolveRasterImageUrl(bundle.bundleImage, 3200) || undefined
+          : resolveRasterImageUrl(bundle.bundleImage, 3200) || undefined
 
       return [{
         id: bundle._id?.trim() || `bundle-${index}`,

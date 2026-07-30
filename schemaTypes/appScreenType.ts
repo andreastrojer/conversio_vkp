@@ -473,7 +473,7 @@ export const appScreenType = defineType({
           name: 'sliders',
           title: 'Eingabe-Regler',
           type: 'array',
-          validation: (Rule) => Rule.max(5),
+          validation: (Rule) => Rule.max(7),
           of: [
             {
               name: 'calculatorSlider',

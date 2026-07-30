@@ -92,6 +92,7 @@ const b2cSliderKeys = new Set([
   'ladepunkte',
   'lastspitze',
 ])
+const matrixContentShiftClassName = 'translate-y-[-88px] max-[1600px]:translate-y-[-72px] [@media(max-height:920px)]:translate-y-[-72px] [@media(min-width:768px)_and_(max-width:1366px)]:translate-y-[-60px]'
 
 function normalizeCmsKey(value: string) {
   return value
@@ -680,12 +681,16 @@ function BundleCard({
     ? 'block h-full'
     : 'block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]'
   const imageSlotClassName = isWireframeLayout
-    ? 'flex h-full w-[316px] items-start justify-center pt-[14px]'
+    ? 'flex h-full w-[316px] items-start justify-center pt-0 -translate-y-[54px]'
     : 'flex w-[315px] items-start justify-center pt-[24px]'
   const imageClassName = isWireframeLayout
-    ? 'h-[214px] w-[316px]'
+    ? 'h-[326px] w-[480px] max-w-none'
     : 'h-[160px] w-[315px]'
   const imageFitClassName = 'object-contain object-center'
+  const bundleImageNudgeClassName =
+    isWireframeLayout && (bundle.scenarioType === 'b2c_pv' || bundle.scenarioType === 'b2b_einstieg')
+      ? 'translate-y-[-18px] scale-[1.08]'
+      : ''
   const resultClassName = isWireframeLayout
     ? `h-full ${isBusiness ? 'pt-[2px] text-[#efb804]' : 'text-[#2a2e33]'}`
     : 'mt-[24px] text-[#efb804]'
@@ -722,7 +727,7 @@ function BundleCard({
           <img
             src={imageUrl}
             alt={imageAlt}
-            className={`${imageClassName} ${imageFitClassName} transition-transform duration-300 ${
+            className={`${imageClassName} ${imageFitClassName} ${bundleImageNudgeClassName} transition-transform duration-300 ${
               isBusiness ? '' : 'group-hover:scale-[1.015]'
             }`}
           />
@@ -818,7 +823,7 @@ function BundleCard({
 
       <div
         className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[18px] leading-[1.35] tracking-normal ${
-          isWireframeLayout ? 'mt-0' : 'mt-[18px]'
+          isWireframeLayout ? isBusiness ? 'mt-[36px]' : 'mt-0' : 'mt-[18px]'
         } ${
           isBusiness ? 'border-white' : 'border-[#2a2e33]'
         }`}
@@ -1074,7 +1079,7 @@ export function ScenarioMatrixScreen({
 
         {headline ? (
           <h1
-            className={`absolute left-[60px] top-[220px] z-[3] font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em] ${
+            className={`absolute left-[60px] top-[220px] z-[3] ${matrixContentShiftClassName} font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em] ${
               isBusiness ? 'text-white' : 'text-[#2a2e33]'
             }`}
           >
@@ -1082,7 +1087,7 @@ export function ScenarioMatrixScreen({
           </h1>
         ) : null}
 
-        <div className="absolute left-[60px] top-[320px] z-[5] flex items-start gap-[16px]" role="tablist" aria-label={headline || undefined}>
+        <div className={`absolute left-[60px] top-[320px] z-[5] flex items-start gap-[16px] ${matrixContentShiftClassName}`} role="tablist" aria-label={headline || undefined}>
           {([
             {key: 'needs' as const, label: calculatorTabLabel},
             {key: 'calculation' as const, label: bundleTabLabel},
@@ -1140,9 +1145,9 @@ export function ScenarioMatrixScreen({
               <div
                 className={`absolute left-[72px] z-[4] space-y-[28px] ${
                   isBusiness
-                    ? 'top-[380px]'
+                    ? 'top-[404px]'
                     : 'top-[400px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[415px]'
-                }`}
+                } ${matrixContentShiftClassName}`}
               >
                 {visibleSliders.map((slider) => (
                   <SliderControl
@@ -1176,7 +1181,7 @@ export function ScenarioMatrixScreen({
           ) : (
             <motion.section
               key="calculation"
-              className="absolute left-[60px] top-[400px] z-[3] h-[515px] w-[1320px] max-[1600px]:top-[392px] [@media(max-height:920px)]:top-[392px]"
+              className={`absolute left-[60px] top-[400px] z-[3] h-[515px] w-[1320px] max-[1600px]:top-[392px] [@media(max-height:920px)]:top-[392px] ${matrixContentShiftClassName}`}
               initial={{opacity: 0, x: 10}}
               animate={{opacity: 1, x: 0}}
               exit={{opacity: 0, x: 10}}

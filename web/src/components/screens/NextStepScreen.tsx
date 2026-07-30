@@ -435,6 +435,10 @@ export function NextStepScreen({
     () => buildIncludedItemDisplays(displayBundle, displayResult),
     [displayBundle, displayResult],
   )
+  const bundleImageNudgeClassName =
+    displayBundle?.scenarioType === 'b2c_pv' || displayBundle?.scenarioType === 'b2b_einstieg'
+      ? 'translate-y-[-18px] scale-[1.08]'
+      : ''
   const scenarioId = displayBundle?.id
   const visibleDocumentCategories = documentCategoriesOverride || documentCategories
   const documentTitleById = useMemo(
@@ -673,11 +677,7 @@ export function NextStepScreen({
         </h1>
 
         <section
-          className={`absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] ${
-            isBusiness
-              ? 'grid-rows-[42px_224px_148px_minmax(0,1fr)]'
-              : 'grid-rows-[42px_252px_118px_minmax(0,1fr)]'
-          }`}
+          className="absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]"
           aria-label="Ausgewähltes Bundle"
         >
           {displayBundle ? (
@@ -688,15 +688,13 @@ export function NextStepScreen({
                 </span>
               </span>
 
-              <span className={`flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[10px]' : 'pt-[14px]'}`}>
+              <span className="flex h-full w-[316px] -translate-y-[54px] items-start justify-center pt-0">
                 {bundleImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={bundleImageUrl}
                     alt={bundleImageAlt}
-                    className={`object-contain object-center ${
-                      isBusiness ? 'h-[196px] w-[280px]' : 'h-[214px] w-[316px]'
-                    }`}
+                    className={`h-[326px] w-[480px] max-w-none object-contain object-center ${bundleImageNudgeClassName}`}
                   />
                 ) : null}
               </span>
@@ -738,7 +736,7 @@ export function NextStepScreen({
                 <div aria-hidden="true" />
               )}
 
-              <div className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[18px] leading-[1.35] tracking-normal ${isBusiness ? 'border-white' : 'border-[#2a2e33]'}`}>
+              <div className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[18px] leading-[1.35] tracking-normal ${isBusiness ? 'mt-[36px] border-white' : 'border-[#2a2e33]'}`}>
                 <span className="shrink-0 font-normal uppercase">Enthalten:</span>
                 {includedItemDisplays.length > 0 ? (
                   <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
@@ -800,30 +798,18 @@ export function NextStepScreen({
             <button
               type="button"
               disabled={sendDisabled}
-              className={`group inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full bg-[#4a4f54] px-[26px] text-[16px] font-bold uppercase leading-none text-white transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
-                sendDisabled ? 'cursor-not-allowed bg-[#a7aaad]' : 'hover:-translate-y-px'
+              className={`group inline-flex h-[30px] min-w-[146px] items-center justify-between rounded-full px-[26px] text-[16px] font-bold uppercase leading-none transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                sendDisabled
+                  ? isBusiness
+                    ? 'cursor-not-allowed bg-[#4a4f54] text-white/45'
+                    : 'cursor-not-allowed bg-[#d4d7da] text-[#2a2e33]/45'
+                  : isBusiness
+                    ? 'bg-[#efb804] text-[#2a2e33] hover:-translate-y-px'
+                    : 'bg-[#efb804] text-[#2a2e33] hover:-translate-y-px'
               }`}
               onClick={handleSendDocuments}
             >
               <span>{getSendButtonText(sendStatus, sendButtonLabel)}</span>
-              {sendButtonArrowUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={sendButtonArrowUrl}
-                  alt=""
-                  className="block h-[17px] w-[17px] shrink-0 object-contain object-center [filter:brightness(0)] transition-transform group-hover:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              ) : (
-                <ArrowRight className="h-[14px] w-[16px] rotate-[-45deg] transition-transform group-hover:translate-x-0.5" strokeWidth={2.4} aria-hidden="true" />
-              )}
-            </button>
-            <button
-              type="button"
-              className="group inline-flex h-[30px] min-w-[184px] items-center justify-between rounded-full bg-[#efb804] px-[26px] text-[16px] font-bold uppercase leading-none text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804]"
-              onClick={handleExportSpreadsheet}
-            >
-              <span>EXCEL EXPORT</span>
               {sendButtonArrowUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
