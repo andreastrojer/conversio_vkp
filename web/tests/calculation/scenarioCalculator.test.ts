@@ -27,6 +27,26 @@ const baseParameters: CalculationParameters = {
   usableStorageShare: 0.9,
 }
 
+const b2bValues: CalculatorValues = {
+  annualConsumption: 50_000,
+  storageSize: 20,
+  chargingStations: 10,
+  peakLoadKw: 150,
+  expectedGrowthPercent: 15,
+}
+
+const b2bParameters: CalculationParameters = {
+  usableStorageShare: 0.9,
+  batteryRoundTripEfficiency: 0.9,
+  batteryPowerKw: 50,
+  annualOperatingCostEur: 0,
+  smartChargingShiftShare: 0.35,
+  backupReserveShare: 0.2,
+  evDemandPerChargingStationKwh: 5000,
+  demandChargeEurPerKwYear: 112.32,
+  growthDemandShare: 0.15,
+}
+
 function assertFiniteNonNegativeEnergy(result: ReturnType<typeof calculateScenarioResult>) {
   for (const [key, value] of Object.entries(result)) {
     if (typeof value !== 'number') {
@@ -350,4 +370,122 @@ test('representative slider boundaries stay finite and energy-balanced', () => {
       }
     }
   }
+})
+
+test('B2B keeps the CMS LASTSPITZE in real kW', () => {
+  const result = calculateScenarioResult(
+    'b2b_einstieg',
+    b2bValues,
+    b2bParameters,
+  )
+
+  assert.equal(result.peakLoadKw, 150)
+  assert.ok(result.projectedPeakLoadKw > result.peakLoadKw)
+  assert.equal(result.peakLoadReductionKw, 0)
+  assert.equal(result.batteryPeakCoverageKw, 0)
+  assert.ok(!result.warnings.some((warning) => warning.includes('Hundertstel-kW')))
+})
+
+test('B2B demand includes expected growth and charging demand exactly once', () => {
+  const result = calculateScenarioResult(
+    'b2b_einstieg',
+    b2bValues,
+    b2bParameters,
+  )
+
+  assert.equal(result.householdDemandKwh, 57_500)
+  assert.equal(result.evDemandKwh, 50_000)
+  assert.equal(result.totalDemandKwh, 107_500)
+  assert.equal(result.gridImportKwh, result.totalDemandKwh)
+  assert.equal(result.expectedGrowthPercent, 15)
+})
+
+test('B2B storage bundle respects usable capacity and backup reserve', () => {
+  const result = calculateScenarioResult(
+    'b2b_autark_abgesichert',
+    b2bValues,
+    b2bParameters,
+  )
+
+  assert.equal(result.usableStorageKwh, 18)
+  assert.equal(result.backupReserveKwh, 3.6)
+  assert.equal(result.batteryPeakCoverageKw, 50)
+  assert.equal(result.peakLoadReductionKw, 50)
+  assert.ok(
+    Math.abs(
+      result.remainingGridPeakKw -
+        (result.projectedPeakLoadKw - result.peakLoadReductionKw),
+    ) <= 0.2,
+  )
+})
+
+test('B2B annual savings use the CMS demand charge', () => {
+  const result = calculateScenarioResult(
+    'b2b_autark_abgesichert',
+    b2bValues,
+    b2bParameters,
+  )
+  const expectedSavings =
+    result.peakLoadReductionKw * b2bParameters.demandChargeEurPerKwYear!
+
+  assert.ok(Math.abs(result.demandChargeSavingsEur - expectedSavings) <= 1)
+  assert.equal(result.annualSavingsEur, result.demandChargeSavingsEur)
+})
+
+test('B2B growth and mobility adds only beneficial smart charging peak reduction', () => {
+  const storage = calculateScenarioResult(
+    'b2b_autark_abgesichert',
+    b2bValues,
+    b2bParameters,
+  )
+  const growthAndMobility = calculateScenarioResult(
+    'b2b_wachstum_mobilitaet',
+    b2bValues,
+    b2bParameters,
+  )
+  const withoutChargingStations = calculateScenarioResult(
+    'b2b_wachstum_mobilitaet',
+    {...b2bValues, chargingStations: 0},
+    b2bParameters,
+  )
+  const storageWithoutChargingStations = calculateScenarioResult(
+    'b2b_autark_abgesichert',
+    {...b2bValues, chargingStations: 0},
+    b2bParameters,
+  )
+
+  assert.ok(growthAndMobility.peakLoadReductionKw > storage.peakLoadReductionKw)
+  assert.ok(growthAndMobility.remainingGridPeakKw < storage.remainingGridPeakKw)
+  assert.equal(
+    withoutChargingStations.peakLoadReductionKw,
+    storageWithoutChargingStations.peakLoadReductionKw,
+  )
+})
+
+test('B2B uses growthDemandShare when the growth slider is absent', () => {
+  const result = calculateScenarioResult(
+    'b2b_einstieg',
+    {...b2bValues, expectedGrowthPercent: undefined},
+    b2bParameters,
+  )
+
+  assert.equal(result.expectedGrowthPercent, 15)
+  assert.equal(result.householdDemandKwh, 57_500)
+})
+
+test('B2B backup reserve lowers dispatchable peak-shaving power', () => {
+  const values = {...b2bValues, storageSize: 10, chargingStations: 0}
+  const withoutReserve = calculateScenarioResult(
+    'b2b_autark_abgesichert',
+    values,
+    {...b2bParameters, backupReserveShare: 0},
+  )
+  const withReserve = calculateScenarioResult(
+    'b2b_autark_abgesichert',
+    values,
+    b2bParameters,
+  )
+
+  assert.ok(withReserve.batteryPeakCoverageKw < withoutReserve.batteryPeakCoverageKw)
+  assert.ok(withReserve.peakLoadReductionKw < withoutReserve.peakLoadReductionKw)
 })

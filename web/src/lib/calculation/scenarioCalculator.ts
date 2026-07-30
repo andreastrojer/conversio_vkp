@@ -1,10 +1,18 @@
-export type ScenarioType = 'b2c_pv' | 'b2c_pv_speicher' | 'b2c_komplett'
+export type B2cScenarioType = 'b2c_pv' | 'b2c_pv_speicher' | 'b2c_komplett'
+
+export type B2bScenarioType =
+  | 'b2b_einstieg'
+  | 'b2b_autark_abgesichert'
+  | 'b2b_wachstum_mobilitaet'
+
+export type ScenarioType = B2cScenarioType | B2bScenarioType
 
 export type CalculatorValues = {
   annualConsumption: number
   storageSize: number
   chargingStations: number
   peakLoadKw?: number
+  expectedGrowthPercent?: number
 }
 
 export type CalculationParameters = Partial<{
@@ -19,6 +27,9 @@ export type CalculationParameters = Partial<{
   batteryRoundTripEfficiency: number
   usableStorageShare: number
   annualOperatingCostEur: number
+  backupReserveShare: number
+  demandChargeEurPerKwYear: number
+  growthDemandShare: number
 }> &
   Record<string, number | undefined>
 
@@ -45,6 +56,11 @@ export type ScenarioCalculationResult = {
   remainingGridPeakKw: number
   batteryPowerKw: number
   usableStorageKwh: number
+  peakLoadReductionKw: number
+  projectedPeakLoadKw: number
+  demandChargeSavingsEur: number
+  backupReserveKwh: number
+  expectedGrowthPercent: number
   isPrognosis: true
   warnings: string[]
 }
@@ -52,6 +68,7 @@ export type ScenarioCalculationResult = {
 export type ScenarioResultDifference = {
   autarkyDifference: number
   savingsDifference: number
+  peakLoadReductionDifference: number
 }
 
 type ResolvedCalculationParameters = {
@@ -65,6 +82,18 @@ type ResolvedCalculationParameters = {
   roundTripEfficiency: number
   usableStorageShare: number
   annualOperatingCostEur: number
+}
+
+type ResolvedB2bCalculationParameters = {
+  evDemandPerChargingStationKwh: number
+  smartChargingShiftShare: number
+  batteryPowerKw: number
+  roundTripEfficiency: number
+  usableStorageShare: number
+  annualOperatingCostEur: number
+  backupReserveShare: number
+  demandChargeEurPerKwYear: number
+  growthDemandShare: number
 }
 
 type SliderDefinition = {
@@ -124,6 +153,18 @@ export const B2C_CALCULATION_FALLBACKS = {
   annualOperatingCostEur: 0,
 } as const satisfies ResolvedCalculationParameters
 
+export const B2B_CALCULATION_FALLBACKS = {
+  evDemandPerChargingStationKwh: 0,
+  smartChargingShiftShare: 0,
+  batteryPowerKw: 0,
+  roundTripEfficiency: 0.9,
+  usableStorageShare: 0.9,
+  annualOperatingCostEur: 0,
+  backupReserveShare: 0,
+  demandChargeEurPerKwYear: 0,
+  growthDemandShare: 0,
+} as const satisfies ResolvedB2bCalculationParameters
+
 const parameterAliases: Record<keyof ResolvedCalculationParameters, string[]> = {
   pvSizeKwp: ['pvSizeKwp'],
   specificYieldKwhPerKwp: ['specificYieldKwhPerKwp'],
@@ -137,6 +178,18 @@ const parameterAliases: Record<keyof ResolvedCalculationParameters, string[]> = 
   annualOperatingCostEur: ['annualOperatingCostEur'],
 }
 
+const b2bParameterAliases: Record<keyof ResolvedB2bCalculationParameters, string[]> = {
+  evDemandPerChargingStationKwh: ['evDemandPerChargingStationKwh'],
+  smartChargingShiftShare: ['smartChargingShiftShare'],
+  batteryPowerKw: ['batteryPowerKw'],
+  roundTripEfficiency: ['roundTripEfficiency', 'batteryRoundTripEfficiency'],
+  usableStorageShare: ['usableStorageShare'],
+  annualOperatingCostEur: ['annualOperatingCostEur'],
+  backupReserveShare: ['backupReserveShare'],
+  demandChargeEurPerKwYear: ['demandChargeEurPerKwYear'],
+  growthDemandShare: ['growthDemandShare'],
+}
+
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
 const safeNumber = (value: number | undefined) =>
@@ -148,6 +201,21 @@ function normalizeKey(value: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/ß/g, 'ss')
     .toLowerCase()
+}
+
+export function isScenarioType(value: string): value is ScenarioType {
+  return (
+    value === 'b2c_pv' ||
+    value === 'b2c_pv_speicher' ||
+    value === 'b2c_komplett' ||
+    value === 'b2b_einstieg' ||
+    value === 'b2b_autark_abgesichert' ||
+    value === 'b2b_wachstum_mobilitaet'
+  )
+}
+
+function isB2bScenarioType(scenarioType: ScenarioType): scenarioType is B2bScenarioType {
+  return scenarioType.startsWith('b2b_')
 }
 
 function isPeakLoadKey(value: string) {
@@ -226,6 +294,73 @@ function resolveCalculationParameters(
   }
 }
 
+function resolveB2bParameter(
+  parameters: CalculationParameters,
+  key: keyof ResolvedB2bCalculationParameters,
+  warnings: string[],
+) {
+  for (const alias of b2bParameterAliases[key]) {
+    const value = parameters[alias]
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return Math.max(0, value)
+    }
+  }
+
+  warnings.push(`CMS-Parameter "${key}" fehlt; B2B-Fallback wird verwendet.`)
+
+  return B2B_CALCULATION_FALLBACKS[key]
+}
+
+function resolveB2bCalculationParameters(
+  parameters: CalculationParameters,
+  warnings: string[],
+): ResolvedB2bCalculationParameters {
+  return {
+    evDemandPerChargingStationKwh: resolveB2bParameter(
+      parameters,
+      'evDemandPerChargingStationKwh',
+      warnings,
+    ),
+    smartChargingShiftShare: clamp(
+      resolveB2bParameter(parameters, 'smartChargingShiftShare', warnings),
+      0,
+      1,
+    ),
+    batteryPowerKw: resolveB2bParameter(parameters, 'batteryPowerKw', warnings),
+    roundTripEfficiency: clamp(
+      resolveB2bParameter(parameters, 'roundTripEfficiency', warnings),
+      0,
+      1,
+    ),
+    usableStorageShare: clamp(
+      resolveB2bParameter(parameters, 'usableStorageShare', warnings),
+      0,
+      1,
+    ),
+    annualOperatingCostEur: resolveB2bParameter(
+      parameters,
+      'annualOperatingCostEur',
+      warnings,
+    ),
+    backupReserveShare: clamp(
+      resolveB2bParameter(parameters, 'backupReserveShare', warnings),
+      0,
+      1,
+    ),
+    demandChargeEurPerKwYear: resolveB2bParameter(
+      parameters,
+      'demandChargeEurPerKwYear',
+      warnings,
+    ),
+    growthDemandShare: resolveB2bParameter(parameters, 'growthDemandShare', warnings),
+  }
+}
+
+function normalizeShare(value: number) {
+  return clamp(value > 1 ? value / 100 : value, 0, 1)
+}
+
 function normalizePeakLoadKw({
   rawPeakLoadKw,
   totalDemandKwh,
@@ -282,6 +417,31 @@ function normalizePeakLoadKw({
   }
 
   return peakLoadKw
+}
+
+function normalizeB2bPeakLoadKw({
+  rawPeakLoadKw,
+  annualDemandKwh,
+  warnings,
+}: {
+  rawPeakLoadKw: number | undefined
+  annualDemandKwh: number
+  warnings: string[]
+}) {
+  if (
+    typeof rawPeakLoadKw === 'number' &&
+    Number.isFinite(rawPeakLoadKw) &&
+    rawPeakLoadKw > 0
+  ) {
+    return rawPeakLoadKw
+  }
+
+  const averageLoadKw = annualDemandKwh > 0 ? annualDemandKwh / HOURS_PER_YEAR : 0
+  const fallbackPeakLoadKw = averageLoadKw * FALLBACK_PEAK_TO_AVERAGE_RATIO
+
+  warnings.push('B2B-Lastspitze fehlt oder ist ungueltig; Verbrauchs-Fallback wird verwendet.')
+
+  return fallbackPeakLoadKw
 }
 
 function scaleProfileToAnnual(profile: Float64Array, annualKwh: number) {
@@ -375,6 +535,16 @@ function buildEvProfile({
   }
 
   return scaleProfileToAnnual(profile, annualEvDemandKwh)
+}
+
+function getProfilePeakKw(profile: Float64Array) {
+  let peakLoadKw = 0
+
+  for (const intervalDemandKwh of profile) {
+    peakLoadKw = Math.max(peakLoadKw, intervalDemandKwh / PROFILE_INTERVAL_HOURS)
+  }
+
+  return peakLoadKw
 }
 
 function buildPvProfile(annualPvProductionKwh: number) {
@@ -604,11 +774,144 @@ function roundPeak(value: number) {
   return Math.round(value * 10) / 10
 }
 
+function calculateB2bScenarioResult(
+  scenarioType: B2bScenarioType,
+  values: CalculatorValues,
+  parameters: CalculationParameters,
+): ScenarioCalculationResult {
+  const warnings: string[] = []
+  const resolvedParameters = resolveB2bCalculationParameters(parameters, warnings)
+  const annualConsumptionKwh = safeNumber(values.annualConsumption)
+  const storageSizeKwh = safeNumber(values.storageSize)
+  const chargingStations = Math.round(safeNumber(values.chargingStations))
+  const configuredGrowth =
+    typeof values.expectedGrowthPercent === 'number' &&
+    Number.isFinite(values.expectedGrowthPercent)
+      ? Math.max(0, values.expectedGrowthPercent)
+      : resolvedParameters.growthDemandShare
+  const growthDemandShare = normalizeShare(configuredGrowth)
+  const grownBusinessDemandKwh = annualConsumptionKwh * (1 + growthDemandShare)
+  const evDemandKwh =
+    chargingStations * resolvedParameters.evDemandPerChargingStationKwh
+  const totalDemandKwh = grownBusinessDemandKwh + evDemandKwh
+  const currentPeakLoadKw = normalizeB2bPeakLoadKw({
+    rawPeakLoadKw: values.peakLoadKw,
+    annualDemandKwh: annualConsumptionKwh,
+    warnings,
+  })
+  const uncontrolledEvProfile = buildEvProfile({
+    annualEvDemandKwh: evDemandKwh,
+    chargingStations,
+    smartChargingShiftShare: 0,
+  })
+  const uncontrolledEvPeakKw = getProfilePeakKw(uncontrolledEvProfile)
+  const projectedPeakLoadKw =
+    currentPeakLoadKw * (1 + growthDemandShare) + uncontrolledEvPeakKw
+  const usesStorage =
+    scenarioType === 'b2b_autark_abgesichert' ||
+    scenarioType === 'b2b_wachstum_mobilitaet'
+  const usesSmartCharging = scenarioType === 'b2b_wachstum_mobilitaet'
+  const usableStorageKwh = usesStorage
+    ? storageSizeKwh * resolvedParameters.usableStorageShare
+    : 0
+  const backupReserveKwh = usesStorage
+    ? usableStorageKwh * resolvedParameters.backupReserveShare
+    : 0
+  const dispatchableStorageKwh = Math.max(0, usableStorageKwh - backupReserveKwh)
+  const dischargeEfficiency = Math.sqrt(resolvedParameters.roundTripEfficiency)
+  const availableBatteryDischargeKw =
+    dispatchableStorageKwh * dischargeEfficiency / PROFILE_INTERVAL_HOURS
+  const optimizedSmartChargingPeakReductionKw =
+    usesSmartCharging &&
+    chargingStations > 0 &&
+    resolvedParameters.smartChargingShiftShare > 0
+      ? Math.max(
+          0,
+          uncontrolledEvPeakKw -
+            Math.min(
+              ...[
+                resolvedParameters.smartChargingShiftShare / 2,
+                resolvedParameters.smartChargingShiftShare,
+              ].map((smartChargingShiftShare) =>
+                getProfilePeakKw(
+                  buildEvProfile({
+                    annualEvDemandKwh: evDemandKwh,
+                    chargingStations,
+                    smartChargingShiftShare,
+                  }),
+                ),
+              ),
+            ),
+        )
+      : 0
+  const peakAfterSmartChargingKw = Math.max(
+    0,
+    projectedPeakLoadKw - optimizedSmartChargingPeakReductionKw,
+  )
+  const batteryPeakCoverageKw = usesStorage
+    ? Math.min(
+        peakAfterSmartChargingKw,
+        resolvedParameters.batteryPowerKw,
+        availableBatteryDischargeKw,
+      )
+    : 0
+  const peakLoadReductionKw = Math.min(
+    projectedPeakLoadKw,
+    optimizedSmartChargingPeakReductionKw + batteryPeakCoverageKw,
+  )
+  const remainingGridPeakKw = Math.max(0, projectedPeakLoadKw - peakLoadReductionKw)
+  const baselineCostEur =
+    projectedPeakLoadKw * resolvedParameters.demandChargeEurPerKwYear
+  const newEnergyCostEur =
+    remainingGridPeakKw * resolvedParameters.demandChargeEurPerKwYear +
+    resolvedParameters.annualOperatingCostEur
+  const demandChargeSavingsEur =
+    peakLoadReductionKw * resolvedParameters.demandChargeEurPerKwYear
+  const annualSavingsEur =
+    demandChargeSavingsEur - resolvedParameters.annualOperatingCostEur
+
+  return {
+    totalDemandKwh: roundEnergy(totalDemandKwh),
+    householdDemandKwh: roundEnergy(grownBusinessDemandKwh),
+    evDemandKwh: roundEnergy(evDemandKwh),
+    pvGenerationKwh: 0,
+    directPvConsumptionKwh: 0,
+    batteryChargeKwh: 0,
+    batteryDischargeKwh: 0,
+    storageLossKwh: 0,
+    selfConsumedPvKwh: 0,
+    selfSuppliedLoadKwh: 0,
+    exportedPvKwh: 0,
+    gridImportKwh: roundEnergy(totalDemandKwh),
+    autarkyPercent: 0,
+    baselineCostEur: roundMoney(baselineCostEur),
+    newEnergyCostEur: roundMoney(newEnergyCostEur),
+    feedInRevenueEur: 0,
+    annualSavingsEur: roundMoney(annualSavingsEur),
+    peakLoadKw: roundPeak(currentPeakLoadKw),
+    batteryPeakCoverageKw: roundPeak(batteryPeakCoverageKw),
+    remainingGridPeakKw: roundPeak(remainingGridPeakKw),
+    batteryPowerKw: roundPeak(resolvedParameters.batteryPowerKw),
+    usableStorageKwh: roundPeak(usableStorageKwh),
+    peakLoadReductionKw: roundPeak(peakLoadReductionKw),
+    projectedPeakLoadKw: roundPeak(projectedPeakLoadKw),
+    demandChargeSavingsEur: roundMoney(demandChargeSavingsEur),
+    backupReserveKwh: roundPeak(backupReserveKwh),
+    expectedGrowthPercent: Math.round(growthDemandShare * 1000) / 10,
+    isPrognosis: true,
+    warnings,
+  }
+}
+
 export function calculateScenarioResult(
   scenarioType: ScenarioType,
   values: CalculatorValues,
   parameters: CalculationParameters,
 ): ScenarioCalculationResult {
+  if (isB2bScenarioType(scenarioType)) {
+    return calculateB2bScenarioResult(scenarioType, values, parameters)
+  }
+
   const warnings: string[] = []
   const resolvedParameters = resolveCalculationParameters(parameters, warnings)
   const householdDemandKwh = safeNumber(values.annualConsumption)
@@ -729,6 +1032,11 @@ export function calculateScenarioResult(
     remainingGridPeakKw: roundPeak(remainingGridPeakKw),
     batteryPowerKw: roundPeak(resolvedParameters.batteryPowerKw),
     usableStorageKwh: roundPeak(usableStorageKwh),
+    peakLoadReductionKw: roundPeak(batteryPeakCoverageKw),
+    projectedPeakLoadKw: roundPeak(peakLoadKw),
+    demandChargeSavingsEur: 0,
+    backupReserveKwh: 0,
+    expectedGrowthPercent: 0,
     isPrognosis: true,
     warnings,
   }
@@ -741,5 +1049,7 @@ export function calculateScenarioResultDifference(
   return {
     autarkyDifference: nextScenario.autarkyPercent - previousScenario.autarkyPercent,
     savingsDifference: nextScenario.annualSavingsEur - previousScenario.annualSavingsEur,
+    peakLoadReductionDifference:
+      nextScenario.peakLoadReductionKw - previousScenario.peakLoadReductionKw,
   }
 }

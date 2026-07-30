@@ -61,6 +61,10 @@ function formatEuro(value: number) {
   return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}€`
 }
 
+function formatPeak(value: number) {
+  return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 1}).format(value)} kW`
+}
+
 function parseSendDocumentsResponse(value: unknown): SendDocumentsResponse {
   if (!isRecord(value)) {
     return {success: false, error: 'Der Server hat keine gültige Antwort geliefert.'}
@@ -535,14 +539,24 @@ export function NextStepScreen({
 
               {displayResult ? (
                 <div className={`h-full ${metricClassName}`}>
-                  <p className="flex items-baseline gap-[14px] uppercase">
-                    <strong className="text-[32px] font-bold leading-none">{formatPercent(displayResult.autarkyPercent)}</strong>
-                    <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
-                  </p>
-                  <p className="mt-[6px] flex items-baseline gap-[14px] uppercase">
-                    <strong className="text-[32px] font-bold leading-none">{formatEuro(displayResult.annualSavingsEur)}</strong>
-                    <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
-                  </p>
+                  {displayResult.peakLoadReductionKw !== undefined ? (
+                    <p className="flex items-baseline gap-[10px] whitespace-nowrap uppercase">
+                      <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">{formatPeak(displayResult.peakLoadReductionKw)}</strong>
+                      <span className="shrink-0 whitespace-nowrap text-[15px] font-medium tracking-[0.025em] max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px]">LASTSPITZENREDUKTION</span>
+                    </p>
+                  ) : null}
+                  {displayResult.autarkyPercent !== undefined ? (
+                    <p className={`${displayResult.peakLoadReductionKw !== undefined ? 'mt-[6px] ' : ''}flex items-baseline gap-[14px] whitespace-nowrap uppercase`}>
+                      <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">{formatPercent(displayResult.autarkyPercent)}</strong>
+                      <span className="shrink-0 whitespace-nowrap text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
+                    </p>
+                  ) : null}
+                  {displayResult.annualSavingsEur !== undefined ? (
+                    <p className="mt-[6px] flex items-baseline gap-[14px] whitespace-nowrap uppercase">
+                      <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">{formatEuro(displayResult.annualSavingsEur)}</strong>
+                      <span className="shrink-0 whitespace-nowrap text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <div aria-hidden="true" />

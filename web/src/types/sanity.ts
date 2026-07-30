@@ -80,6 +80,9 @@ export type MatrixScenario = {
   | 'b2c_pv'
   | 'b2c_pv_speicher'
   | 'b2c_komplett'
+  | 'b2b_einstieg'
+  | 'b2b_autark_abgesichert'
+  | 'b2b_wachstum_mobilitaet'
   sortOrder?: number
   isActive?: boolean
   resultText?: string

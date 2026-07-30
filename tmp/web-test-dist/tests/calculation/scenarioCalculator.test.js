@@ -23,6 +23,24 @@ const baseParameters = {
     batteryPowerKw: 5,
     usableStorageShare: 0.9,
 };
+const b2bValues = {
+    annualConsumption: 50_000,
+    storageSize: 20,
+    chargingStations: 10,
+    peakLoadKw: 150,
+    expectedGrowthPercent: 15,
+};
+const b2bParameters = {
+    usableStorageShare: 0.9,
+    batteryRoundTripEfficiency: 0.9,
+    batteryPowerKw: 50,
+    annualOperatingCostEur: 0,
+    smartChargingShiftShare: 0.35,
+    backupReserveShare: 0.2,
+    evDemandPerChargingStationKwh: 5000,
+    demandChargeEurPerKwYear: 112.32,
+    growthDemandShare: 0.15,
+};
 function assertFiniteNonNegativeEnergy(result) {
     for (const [key, value] of Object.entries(result)) {
         if (typeof value !== 'number') {
@@ -208,4 +226,56 @@ function assertEnergyBalances(result) {
             }
         }
     }
+});
+(0, node_test_1.default)('B2B keeps the CMS LASTSPITZE in real kW', () => {
+    const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_einstieg', b2bValues, b2bParameters);
+    strict_1.default.equal(result.peakLoadKw, 150);
+    strict_1.default.ok(result.projectedPeakLoadKw > result.peakLoadKw);
+    strict_1.default.equal(result.peakLoadReductionKw, 0);
+    strict_1.default.equal(result.batteryPeakCoverageKw, 0);
+    strict_1.default.ok(!result.warnings.some((warning) => warning.includes('Hundertstel-kW')));
+});
+(0, node_test_1.default)('B2B demand includes expected growth and charging demand exactly once', () => {
+    const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_einstieg', b2bValues, b2bParameters);
+    strict_1.default.equal(result.householdDemandKwh, 57_500);
+    strict_1.default.equal(result.evDemandKwh, 50_000);
+    strict_1.default.equal(result.totalDemandKwh, 107_500);
+    strict_1.default.equal(result.gridImportKwh, result.totalDemandKwh);
+    strict_1.default.equal(result.expectedGrowthPercent, 15);
+});
+(0, node_test_1.default)('B2B storage bundle respects usable capacity and backup reserve', () => {
+    const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', b2bValues, b2bParameters);
+    strict_1.default.equal(result.usableStorageKwh, 18);
+    strict_1.default.equal(result.backupReserveKwh, 3.6);
+    strict_1.default.equal(result.batteryPeakCoverageKw, 50);
+    strict_1.default.equal(result.peakLoadReductionKw, 50);
+    strict_1.default.ok(Math.abs(result.remainingGridPeakKw -
+        (result.projectedPeakLoadKw - result.peakLoadReductionKw)) <= 0.2);
+});
+(0, node_test_1.default)('B2B annual savings use the CMS demand charge', () => {
+    const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', b2bValues, b2bParameters);
+    const expectedSavings = result.peakLoadReductionKw * b2bParameters.demandChargeEurPerKwYear;
+    strict_1.default.ok(Math.abs(result.demandChargeSavingsEur - expectedSavings) <= 1);
+    strict_1.default.equal(result.annualSavingsEur, result.demandChargeSavingsEur);
+});
+(0, node_test_1.default)('B2B growth and mobility adds only beneficial smart charging peak reduction', () => {
+    const storage = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', b2bValues, b2bParameters);
+    const growthAndMobility = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_wachstum_mobilitaet', b2bValues, b2bParameters);
+    const withoutChargingStations = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_wachstum_mobilitaet', { ...b2bValues, chargingStations: 0 }, b2bParameters);
+    const storageWithoutChargingStations = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', { ...b2bValues, chargingStations: 0 }, b2bParameters);
+    strict_1.default.ok(growthAndMobility.peakLoadReductionKw > storage.peakLoadReductionKw);
+    strict_1.default.ok(growthAndMobility.remainingGridPeakKw < storage.remainingGridPeakKw);
+    strict_1.default.equal(withoutChargingStations.peakLoadReductionKw, storageWithoutChargingStations.peakLoadReductionKw);
+});
+(0, node_test_1.default)('B2B uses growthDemandShare when the growth slider is absent', () => {
+    const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_einstieg', { ...b2bValues, expectedGrowthPercent: undefined }, b2bParameters);
+    strict_1.default.equal(result.expectedGrowthPercent, 15);
+    strict_1.default.equal(result.householdDemandKwh, 57_500);
+});
+(0, node_test_1.default)('B2B backup reserve lowers dispatchable peak-shaving power', () => {
+    const values = { ...b2bValues, storageSize: 10, chargingStations: 0 };
+    const withoutReserve = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', values, { ...b2bParameters, backupReserveShare: 0 });
+    const withReserve = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', values, b2bParameters);
+    strict_1.default.ok(withReserve.batteryPeakCoverageKw < withoutReserve.batteryPeakCoverageKw);
+    strict_1.default.ok(withReserve.peakLoadReductionKw < withoutReserve.peakLoadReductionKw);
 });

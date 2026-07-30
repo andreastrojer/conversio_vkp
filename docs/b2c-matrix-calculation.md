@@ -1,7 +1,8 @@
 # B2C-Matrixberechnung
 
 Diese Dokumentation beschreibt die finale Berechnungslogik der B2C-Scenario-Matrix. Oberfläche,
-Navigation, CMS-Struktur und B2B-Berechnung bleiben unverändert. Das Ergebnis ist eine
+Navigation und CMS-Struktur bleiben unverändert. Die separate B2B-Logik ist in
+`b2b-matrix-calculation.md` beschrieben. Das Ergebnis ist eine
 deterministische Jahresprognose auf Basis von 35.040 Viertelstundenintervallen.
 
 ## Eingaben

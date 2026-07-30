@@ -9,15 +9,17 @@ import {
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {
   ScenarioMatrixBundle,
+  ScenarioMatrixMetric,
   ScenarioMatrixPageData,
   ScenarioMatrixParameter,
   ScenarioMatrixSlider,
 } from '@/lib/scenarioMatrix'
 import {
   calculateScenarioResult,
+  isScenarioType,
   type CalculationParameters,
   type CalculatorValues,
-  type ScenarioType,
+  type ScenarioCalculationResult,
 } from '@/lib/calculation/scenarioCalculator'
 import type {ConsultationCalculationResult} from '@/lib/consultation'
 import {saveScenarioSelection} from '@/lib/consultationStore'
@@ -47,14 +49,30 @@ function formatNumber(value: number, unit?: string) {
 type CalculatedBundle = {
   autarkyPercent?: number
   annualSavingsEur?: number
+  peakLoadReductionKw?: number
+  metrics: CalculatedMetric[]
 }
 
-const validScenarioTypes = new Set<ScenarioType>(['b2c_pv', 'b2c_pv_speicher', 'b2c_komplett'])
+type CalculatedMetric = {
+  key: string
+  title: string
+  value: number
+  unit?: string
+  metricType?: string
+}
+
 const sliderKeyAliases: Record<keyof CalculatorValues, string[]> = {
   annualConsumption: ['annualConsumption'],
   storageSize: ['storageSize', 'speichergrösse', 'speichergroesse', 'speichergrosse'],
   chargingStations: ['chargingStations', 'ladestationen', 'ladepunkte'],
   peakLoadKw: ['peakLoadKw', 'lastspitze'],
+  expectedGrowthPercent: [
+    'expectedGrowthPercent',
+    'growth',
+    'growthPercent',
+    'rising',
+    'wachstum',
+  ],
 }
 const b2cSliderKeys = new Set([
   'annualconsumption',
@@ -93,6 +111,11 @@ function buildCalculatorValues(
   const storageSize = findExactSliderValue(sliders, values, 'storageSize')
   const chargingStations = findExactSliderValue(sliders, values, 'chargingStations')
   const peakLoadKw = findExactSliderValue(sliders, values, 'peakLoadKw')
+  const expectedGrowthPercent = findExactSliderValue(
+    sliders,
+    values,
+    'expectedGrowthPercent',
+  )
 
   if (
     typeof annualConsumption !== 'number' ||
@@ -102,7 +125,13 @@ function buildCalculatorValues(
     return undefined
   }
 
-  return {annualConsumption, storageSize, chargingStations, peakLoadKw}
+  return {
+    annualConsumption,
+    storageSize,
+    chargingStations,
+    peakLoadKw,
+    expectedGrowthPercent,
+  }
 }
 
 function getVisibleSliders(sliders: ScenarioMatrixSlider[], customerType: CustomerGroup) {
@@ -127,17 +156,138 @@ function calculateBundle(
   bundle: ScenarioMatrixBundle,
   values: CalculatorValues | undefined,
   parameters: CalculationParameters | undefined,
+  metrics: ScenarioMatrixMetric[],
 ): CalculatedBundle {
-  if (!values || !parameters || !bundle.scenarioType || !validScenarioTypes.has(bundle.scenarioType as ScenarioType)) {
-    return {}
+  if (
+    !values ||
+    !parameters ||
+    !bundle.scenarioType ||
+    !isScenarioType(bundle.scenarioType)
+  ) {
+    return {metrics: []}
   }
 
-  const result = calculateScenarioResult(bundle.scenarioType as ScenarioType, values, parameters)
+  const result = calculateScenarioResult(bundle.scenarioType, values, parameters)
 
   return {
     autarkyPercent: result.autarkyPercent,
     annualSavingsEur: result.annualSavingsEur,
+    peakLoadReductionKw: result.peakLoadReductionKw,
+    metrics: buildCalculatedMetrics(
+      metrics,
+      result,
+      values,
+      bundle.scenarioType.startsWith('b2b_'),
+    ),
   }
+}
+
+function buildCalculatedMetrics(
+  metrics: ScenarioMatrixMetric[],
+  result: ScenarioCalculationResult,
+  values: CalculatorValues,
+  isBusinessScenario: boolean,
+): CalculatedMetric[] {
+  const configuredMetrics = metrics.flatMap((metric) => {
+    const value = resolveMetricValue(metric, result, values)
+
+    return value === undefined
+      ? []
+      : [{
+          key: metric.key,
+          title: metric.title,
+          value,
+          unit: metric.unit,
+          metricType: metric.metricType,
+        }]
+  })
+
+  if (!isBusinessScenario) {
+    return configuredMetrics
+  }
+
+  const peakMetric = configuredMetrics.find(
+    (metric) => normalizeCmsKey(metric.metricType || '') === 'lastspitzen',
+  ) || {
+    key: 'lastspitzenreduktion',
+    title: 'LASTSPITZENREDUKTION',
+    value: result.peakLoadReductionKw,
+    unit: 'kW',
+    metricType: 'lastspitzen',
+  }
+  const autarkyMetric = configuredMetrics.find(
+    (metric) => normalizeCmsKey(metric.metricType || '') === 'autarkiegrad',
+  ) || {
+    key: 'autarkie',
+    title: 'AUTARK',
+    value: result.autarkyPercent,
+    unit: '%',
+    metricType: 'autarkiegrad',
+  }
+  const savingsMetric = configuredMetrics.find((metric) => {
+    const identity = normalizeCmsKey(`${metric.key} ${metric.title}`)
+    const unit = normalizeCmsKey(metric.unit || '')
+
+    return identity.includes('ersparnis') || unit === '€' || unit === 'eur'
+  }) || {
+    key: 'ersparnis-jahr',
+    title: 'ERSPARNIS / JAHR',
+    value: result.annualSavingsEur,
+    unit: '€',
+    metricType: 'nutzenargument',
+  }
+
+  return [peakMetric, autarkyMetric, savingsMetric]
+}
+
+function resolveMetricValue(
+  metric: ScenarioMatrixMetric,
+  result: ScenarioCalculationResult,
+  values: CalculatorValues,
+) {
+  const metricType = normalizeCmsKey(metric.metricType || '')
+  const identity = normalizeCmsKey(`${metric.key} ${metric.title}`)
+
+  if (metricType === 'autarkiegrad' || identity.includes('autark')) {
+    return result.autarkyPercent
+  }
+
+  if (metricType === 'lastspitzen' || identity.includes('lastspitzenreduktion')) {
+    return result.peakLoadReductionKw
+  }
+
+  if (
+    identity.includes('ersparnis') ||
+    (metricType === 'nutzenargument' && normalizeCmsKey(metric.unit || '') === '€')
+  ) {
+    return result.annualSavingsEur
+  }
+
+  if (metricType === 'jahresverbrauch') {
+    return result.totalDemandKwh
+  }
+
+  if (metricType === 'speichergroesse') {
+    return result.usableStorageKwh
+  }
+
+  if (metricType === 'ladestation') {
+    return values.chargingStations
+  }
+
+  if (metricType === 'jahresertrag') {
+    return result.pvGenerationKwh
+  }
+
+  if (metricType === 'eigenverbrauch') {
+    return normalizeCmsKey(metric.unit || '') === '%'
+      ? result.pvGenerationKwh > 0
+        ? result.selfConsumedPvKwh / result.pvGenerationKwh * 100
+        : 0
+      : result.selfConsumedPvKwh
+  }
+
+  return undefined
 }
 
 function formatPercent(value: number) {
@@ -146,6 +296,39 @@ function formatPercent(value: number) {
 
 function formatEuro(value: number) {
   return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))}€`
+}
+
+function formatCalculatedMetric(metric: CalculatedMetric, value = metric.value) {
+  const normalizedUnit = normalizeCmsKey(metric.unit || '')
+
+  if (normalizedUnit === '%') {
+    return formatPercent(value)
+  }
+
+  if (normalizedUnit === '€' || normalizedUnit === 'eur') {
+    return formatEuro(value)
+  }
+
+  return formatNumber(value, metric.unit)
+}
+
+function metricDeltaLabel(metric: CalculatedMetric) {
+  const metricType = normalizeCmsKey(metric.metricType || '')
+  const normalizedUnit = normalizeCmsKey(metric.unit || '')
+
+  if (metricType === 'autarkiegrad') {
+    return 'AUTARK'
+  }
+
+  if (metricType === 'lastspitzen') {
+    return 'LASTSPITZE'
+  }
+
+  if (normalizedUnit === '€' || normalizedUnit === 'eur') {
+    return ''
+  }
+
+  return metric.title
 }
 
 function SliderControl({
@@ -240,16 +423,19 @@ function BundleCard({
   isBusiness: boolean
   isWireframeLayout: boolean
 }) {
-  const autarkyDelta =
-    result.autarkyPercent !== undefined && previousResult?.autarkyPercent !== undefined
-      ? Math.round(result.autarkyPercent - previousResult.autarkyPercent)
-      : undefined
-  const savingsDelta =
-    result.annualSavingsEur !== undefined && previousResult?.annualSavingsEur !== undefined
-      ? Math.round(result.annualSavingsEur - previousResult.annualSavingsEur)
-      : undefined
-  const hasPositiveAutarkyDelta = autarkyDelta !== undefined && autarkyDelta > 0
-  const hasPositiveSavingsDelta = savingsDelta !== undefined && savingsDelta > 0
+  const positiveMetricDeltas = previousResult
+    ? result.metrics.flatMap((metric) => {
+        const previousMetric = previousResult.metrics.find(
+          (candidate) => candidate.key === metric.key,
+        )
+        const difference =
+          previousMetric === undefined ? undefined : metric.value - previousMetric.value
+
+        return difference !== undefined && difference > 0
+          ? [{metric, difference}]
+          : []
+      }).slice(0, 2)
+    : []
   const cardLayoutClassName = isWireframeLayout
     ? 'grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]'
     : 'h-[420px] w-[315px]'
@@ -302,7 +488,7 @@ function BundleCard({
         ) : null}
       </span>
 
-      {hasPositiveAutarkyDelta || hasPositiveSavingsDelta ? (
+      {positiveMetricDeltas.length > 0 ? (
         <span
           className={`absolute z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[7px] text-[16px] font-semibold uppercase leading-none ${
             isWireframeLayout
@@ -310,67 +496,63 @@ function BundleCard({
               : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
           }`}
         >
-          {hasPositiveAutarkyDelta ? (
-            <span className="flex items-center gap-[7px]">
-              {deltaIconUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={deltaIconUrl}
-                  alt={deltaIconAlt}
-                  className={`h-[14px] w-[14px] object-contain ${
-                    isBusiness
-                      ? '[filter:brightness(0)_saturate(100%)_invert(69%)_sepia(96%)_saturate(1050%)_hue-rotate(359deg)_brightness(101%)_contrast(95%)]'
-                      : ''
-                  }`}
-                />
-              ) : (
-                <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
-              )}
-              <span>
-                +{formatPercent(autarkyDelta)} AUTARK
+          {positiveMetricDeltas.map(({metric, difference}, index) => {
+            const deltaLabel = metricDeltaLabel(metric)
+
+            return (
+              <span key={metric.key} className="flex items-center gap-[7px]">
+                {deltaIconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={deltaIconUrl}
+                    alt={index === 0 ? deltaIconAlt : ''}
+                    className={`h-[14px] w-[14px] object-contain ${
+                      isBusiness
+                        ? '[filter:brightness(0)_saturate(100%)_invert(69%)_sepia(96%)_saturate(1050%)_hue-rotate(359deg)_brightness(101%)_contrast(95%)]'
+                        : ''
+                    }`}
+                    aria-hidden={index > 0 ? 'true' : undefined}
+                  />
+                ) : (
+                  <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
+                )}
+                <span>
+                  +{formatCalculatedMetric(metric, difference)}
+                  {deltaLabel ? ` ${deltaLabel}` : ''}
+                </span>
               </span>
-            </span>
-          ) : null}
-          {hasPositiveSavingsDelta ? (
-            <span className="flex items-center gap-[7px]">
-              {deltaIconUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={deltaIconUrl}
-                  alt=""
-                  className={`h-[14px] w-[14px] object-contain ${
-                    isBusiness
-                      ? '[filter:brightness(0)_saturate(100%)_invert(69%)_sepia(96%)_saturate(1050%)_hue-rotate(359deg)_brightness(101%)_contrast(95%)]'
-                      : ''
-                  }`}
-                  aria-hidden="true"
-                />
-              ) : (
-                <ArrowUp className="h-[14px] w-[14px] fill-current" strokeWidth={3} aria-hidden="true" />
-              )}
-              <span>+{formatEuro(savingsDelta)}</span>
-            </span>
-          ) : null}
+            )
+          })}
         </span>
       ) : null}
 
       <div className={resultClassName}>
-        {result.autarkyPercent !== undefined ? (
-          <p className="flex items-baseline gap-[14px] uppercase">
-            <strong className="text-[32px] font-bold leading-none">
-              {formatPercent(result.autarkyPercent)}
-            </strong>
-            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
-          </p>
-        ) : null}
-        {result.annualSavingsEur !== undefined ? (
-          <p className="mt-[6px] flex items-baseline gap-[14px] uppercase">
-            <strong className="text-[32px] font-bold leading-none">
-              {formatEuro(result.annualSavingsEur)}
-            </strong>
-            <span className="text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
-          </p>
-        ) : null}
+        {result.metrics.map((metric, index) => {
+          const isPeakReduction =
+            normalizeCmsKey(metric.metricType || '') === 'lastspitzen'
+
+          return (
+            <p
+              key={metric.key}
+              className={`${index > 0 ? 'mt-[6px] ' : ''}flex items-baseline whitespace-nowrap uppercase ${
+                isPeakReduction ? 'gap-[10px]' : 'gap-[14px]'
+              }`}
+            >
+              <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">
+                {formatCalculatedMetric(metric)}
+              </strong>
+              <span
+                className={`shrink-0 whitespace-nowrap font-medium tracking-[0.025em] ${
+                  isPeakReduction
+                    ? 'text-[15px] max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px]'
+                    : 'text-[20px] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]'
+                }`}
+              >
+                {metric.title}
+              </span>
+            </p>
+          )
+        })}
       </div>
 
       <div
@@ -458,17 +640,32 @@ function bottomNavigationHref(item: ProductNavigationItem, customerType: Custome
 function toConsultationCalculationResult(
   result: CalculatedBundle | undefined,
 ): ConsultationCalculationResult | undefined {
-  if (
-    typeof result?.autarkyPercent !== 'number' ||
-    typeof result.annualSavingsEur !== 'number'
-  ) {
+  if (!result) {
     return undefined
   }
 
-  return {
-    autarkyPercent: result.autarkyPercent,
-    annualSavingsEur: result.annualSavingsEur,
+  const selectedMetricTypes = new Set(
+    result.metrics.map((metric) => normalizeCmsKey(metric.metricType || '')),
+  )
+  const hasSavingsMetric = result.metrics.some((metric) => {
+    const identity = normalizeCmsKey(`${metric.key} ${metric.title}`)
+    const unit = normalizeCmsKey(metric.unit || '')
+
+    return identity.includes('ersparnis') || unit === '€' || unit === 'eur'
+  })
+  const calculationResult: ConsultationCalculationResult = {
+    autarkyPercent: selectedMetricTypes.has('autarkiegrad')
+      ? result.autarkyPercent
+      : undefined,
+    annualSavingsEur: hasSavingsMetric ? result.annualSavingsEur : undefined,
+    peakLoadReductionKw: selectedMetricTypes.has('lastspitzen')
+      ? result.peakLoadReductionKw
+      : undefined,
   }
+
+  return Object.values(calculationResult).some((value) => value !== undefined)
+    ? calculationResult
+    : undefined
 }
 
 export function ScenarioMatrixScreen({
@@ -478,6 +675,7 @@ export function ScenarioMatrixScreen({
   bundleTabLabel,
   calculateButtonLabel,
   sliders,
+  metrics,
   parameters,
   bundles,
   heroImageUrl,
@@ -564,7 +762,7 @@ export function ScenarioMatrixScreen({
   function handleCalculate() {
     const calculatorValues = buildCalculatorValues(sliders, values)
     const nextCalculatedBundles = visibleBundles.map((bundle) =>
-      calculateBundle(bundle, calculatorValues, calculationParameters),
+      calculateBundle(bundle, calculatorValues, calculationParameters, metrics),
     )
 
     setCalculatedBundles(nextCalculatedBundles)

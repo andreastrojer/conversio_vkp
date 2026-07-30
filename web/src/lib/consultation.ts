@@ -10,8 +10,9 @@ export type ConsultationCustomer = {
 }
 
 export type ConsultationCalculationResult = {
-  autarkyPercent: number
-  annualSavingsEur: number
+  autarkyPercent?: number
+  annualSavingsEur?: number
+  peakLoadReductionKw?: number
 }
 
 export type ConsultationBundle = {
@@ -142,14 +143,20 @@ export function normalizeCalculationResult(
 
   const autarkyPercent = normalizeFiniteNumber(value.autarkyPercent)
   const annualSavingsEur = normalizeFiniteNumber(value.annualSavingsEur)
+  const peakLoadReductionKw = normalizeFiniteNumber(value.peakLoadReductionKw)
 
-  if (autarkyPercent === undefined || annualSavingsEur === undefined) {
+  if (
+    autarkyPercent === undefined &&
+    annualSavingsEur === undefined &&
+    peakLoadReductionKw === undefined
+  ) {
     return undefined
   }
 
   return {
     autarkyPercent,
     annualSavingsEur,
+    peakLoadReductionKw,
   }
 }
 
@@ -387,6 +394,7 @@ export function buildCrmCsv({
     'Matrixwerte',
     'Autarkie',
     'Ersparnis',
+    'Lastspitzenreduktion',
     'Ausgewählte Produktblätter',
     'Quelle',
     'Status',
@@ -405,6 +413,7 @@ export function buildCrmCsv({
     matrixValues,
     consultation.calculationResult?.autarkyPercent,
     consultation.calculationResult?.annualSavingsEur,
+    consultation.calculationResult?.peakLoadReductionKw,
     selectedDocumentTitles.join(' | '),
     'Conversio Web-App',
     'Unterlagen vorbereitet',
@@ -542,8 +551,9 @@ export function buildCrmSpreadsheetHtml({
       ${exportRow('Scenario-Typ', formatScenarioTypeForExport(consultation))}
       ${exportRow('Status', 'Unterlagen vorbereitet')}
       ${exportSection('Ergebnis')}
-      ${exportRow('Autarkiegrad', consultation.calculationResult ? formatPercentValue(consultation.calculationResult.autarkyPercent) : undefined, 'metric')}
-      ${exportRow('Ersparnis pro Jahr', consultation.calculationResult ? formatCurrency(consultation.calculationResult.annualSavingsEur) : undefined, 'money')}
+      ${exportRow('Autarkiegrad', consultation.calculationResult?.autarkyPercent !== undefined ? formatPercentValue(consultation.calculationResult.autarkyPercent) : undefined, 'metric')}
+      ${exportRow('Ersparnis pro Jahr', consultation.calculationResult?.annualSavingsEur !== undefined ? formatCurrency(consultation.calculationResult.annualSavingsEur) : undefined, 'money')}
+      ${exportRow('Lastspitzenreduktion', consultation.calculationResult?.peakLoadReductionKw !== undefined ? `${formatDecimal(consultation.calculationResult.peakLoadReductionKw)} kW` : undefined, 'metric')}
       ${exportSection('Matrixwerte')}
       ${matrixRows || exportRow('Matrixwerte', 'Keine Werte gespeichert')}
       ${exportSection('Enthaltene Leistungen')}

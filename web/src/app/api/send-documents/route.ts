@@ -226,9 +226,16 @@ function formatCalculation(result: ConsultationCalculationResult | undefined) {
   }
 
   return [
-    `Autarkie: ${Math.round(result.autarkyPercent)}%`,
-    `Ersparnis: ${Math.round(result.annualSavingsEur)} EUR pro Jahr`,
-  ].join('\n')
+    result.autarkyPercent !== undefined
+      ? `Autarkie: ${Math.round(result.autarkyPercent)}%`
+      : '',
+    result.annualSavingsEur !== undefined
+      ? `Ersparnis: ${Math.round(result.annualSavingsEur)} EUR pro Jahr`
+      : '',
+    result.peakLoadReductionKw !== undefined
+      ? `Lastspitzenreduktion: ${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 1}).format(result.peakLoadReductionKw)} kW`
+      : '',
+  ].filter(Boolean).join('\n')
 }
 
 function buildSignature({
@@ -281,8 +288,14 @@ function buildMailContent({
     selectedDocuments,
     selectedScenario: scenarioTitle,
     appointmentDate: '',
-    autarkyPercent: payload.calculationResult ? `${Math.round(payload.calculationResult.autarkyPercent)}%` : '',
-    annualSavingsEur: payload.calculationResult ? `${Math.round(payload.calculationResult.annualSavingsEur)} EUR` : '',
+    autarkyPercent:
+      payload.calculationResult?.autarkyPercent !== undefined
+        ? `${Math.round(payload.calculationResult.autarkyPercent)}%`
+        : '',
+    annualSavingsEur:
+      payload.calculationResult?.annualSavingsEur !== undefined
+        ? `${Math.round(payload.calculationResult.annualSavingsEur)} EUR`
+        : '',
   }
   const subject = replaceTemplatePlaceholders(
     template?.subject || `Ihre Conversio Unterlagen: ${scenarioTitle}`,
