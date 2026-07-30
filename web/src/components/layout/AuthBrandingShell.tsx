@@ -17,6 +17,8 @@ type AuthBrandingShellProps = {
   footerAddress?: string | null
   legalLinks?: AuthBrandingLegalLink[] | null
   footerClassName?: string
+  footerTextSizeClassName?: string
+  footerSeparatorSizeClassName?: string
 }
 
 const fallbackFooterAddress = 'KOSCHATSTRASSE 24, 9800 SPITTAL/DRAU'
@@ -29,7 +31,7 @@ const patternImageClassName =
   `${patternFrameClassName} bg-contain bg-center bg-no-repeat opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]`
 const patternFallbackClassName = `${patternFrameClassName} opacity-[0.08] [transform:rotate(30deg)]`
 const baseFooterClassName =
-  'absolute bottom-[30px] left-[60px] z-10 flex items-center gap-[22px] font-sans text-[14px] font-normal uppercase tracking-[0.02em] text-[#2a2e33]'
+  'absolute bottom-[30px] left-[60px] z-10 flex items-center gap-[22px] font-sans font-normal uppercase tracking-[0.02em] text-[#2a2e33]'
 
 function ConversioLogo() {
   return (
@@ -84,6 +86,8 @@ export function AuthBrandingShell({
   footerAddress,
   legalLinks,
   footerClassName,
+  footerTextSizeClassName = 'text-[14px]',
+  footerSeparatorSizeClassName = 'text-[20px]',
 }: AuthBrandingShellProps) {
   const resolvedAddress =
     footerAddress?.trim().replace(/\s*\r?\n\s*/g, ', ') || fallbackFooterAddress
@@ -130,10 +134,10 @@ export function AuthBrandingShell({
 
         {children}
 
-        <footer className={`${baseFooterClassName} ${footerClassName ?? ''}`}>
+        <footer className={`${baseFooterClassName} ${footerTextSizeClassName} ${footerClassName ?? ''}`}>
           <FooterLink label={imprintLink.label.toLocaleUpperCase('de-AT')} url={imprintLink.url} />
           <FooterLink label={privacyLink.label.toLocaleUpperCase('de-AT')} url={privacyLink.url} />
-          <span aria-hidden="true" className="text-[20px] font-normal leading-none">
+          <span aria-hidden="true" className={`${footerSeparatorSizeClassName} font-normal leading-none`}>
             |
           </span>
           <span className="font-bold">{resolvedAddress.toLocaleUpperCase('de-AT')}</span>

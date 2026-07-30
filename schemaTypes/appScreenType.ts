@@ -429,9 +429,8 @@ export const appScreenType = defineType({
 
                   return {
                     title: label || productTitle || 'Hotspot',
-                    subtitle: `${productTitle || 'Kein Produkt'} · ${
-                      hasPosition ? `Position: ${xPercent}% / ${yPercent}%` : 'Keine Position'
-                    }`,
+                    subtitle: `${productTitle || 'Kein Produkt'} · ${hasPosition ? `Position: ${xPercent}% / ${yPercent}%` : 'Keine Position'
+                      }`,
                     media,
                   }
                 },
@@ -474,7 +473,7 @@ export const appScreenType = defineType({
           name: 'sliders',
           title: 'Eingabe-Regler',
           type: 'array',
-          validation: (Rule) => Rule.max(4),
+          validation: (Rule) => Rule.max(5),
           of: [
             {
               name: 'calculatorSlider',

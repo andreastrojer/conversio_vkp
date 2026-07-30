@@ -17,15 +17,15 @@ const fallbackHeadline = 'VERKAUFSPRÄSENTATION'
 const fallbackSubline = 'Starte jetzt in dein nächstes Verkaufsgespräch'
 const fallbackCtaLabel = 'MIT MICROSOFT ANMELDEN'
 const mainContentClassName =
-  'absolute left-[60px] top-[43.5%] z-10 max-w-[820px] -translate-y-1/2'
+  'absolute left-[60px] top-[43.5%] z-10 max-w-[1040px] -translate-y-1/2'
 const titleClassName =
-  'max-w-[820px] font-sans text-[54px] font-bold uppercase leading-[0.98] tracking-[0.024em] text-[#2a2e33]'
+  'max-w-[1040px] font-sans text-[72px] font-bold uppercase leading-[0.98] tracking-[0.024em] text-[#2a2e33]'
 const subtitleClassName =
-  'mt-[22px] max-w-[760px] font-sans text-[24px] font-normal leading-[1.3] tracking-[0.005em] text-[#2a2e33]'
+  'mt-[22px] max-w-[760px] font-sans text-[28px] font-normal leading-[1.3] tracking-[0.005em] text-[#2a2e33]'
 const formClassName =
   'mt-[22px]'
 const microsoftButtonClassName =
-  'inline-flex h-[42px] items-center justify-center gap-3 rounded-full bg-[#efb804] px-[26px] font-sans text-[16px] font-semibold uppercase tracking-[0.035em] text-[#2a2e33] shadow-none transition hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.24)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2a2e33] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#efb804] disabled:hover:shadow-none'
+  'inline-flex h-[48px] items-center justify-center gap-3 rounded-full bg-[#efb804] px-[30px] font-sans text-[20px] font-semibold uppercase tracking-[0.035em] text-[#2a2e33] shadow-none transition hover:bg-[#e4ad00] hover:shadow-[0_10px_24px_rgba(239,184,4,0.24)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2a2e33] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#efb804] disabled:hover:shadow-none'
 
 function MicrosoftGlyph() {
   return (
@@ -75,6 +75,8 @@ export function LoginScreen({
       rightPatternAlt={rightPatternAlt}
       footerAddress={footerAddress}
       legalLinks={legalLinks}
+      footerTextSizeClassName="text-[16px]"
+      footerSeparatorSizeClassName="text-[16px]"
     >
       <section className={mainContentClassName}>
         <h1 className={titleClassName}>
