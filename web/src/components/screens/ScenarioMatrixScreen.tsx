@@ -50,6 +50,9 @@ type CalculatedBundle = {
   autarkyPercent?: number
   annualSavingsEur?: number
   peakLoadReductionKw?: number
+  pvSizeKwp?: number
+  storageSizeKwh?: number
+  chargingStations?: number
   metrics: CalculatedMetric[]
 }
 
@@ -59,6 +62,12 @@ type CalculatedMetric = {
   value: number
   unit?: string
   metricType?: string
+}
+
+type IncludedItemDisplay = {
+  id: string
+  amount?: string
+  label: string
 }
 
 const sliderKeyAliases: Record<keyof CalculatorValues, string[]> = {
@@ -152,6 +161,29 @@ function buildCalculationParameters(
   ) as CalculationParameters
 }
 
+function getIncludedStorageSizeKwh(bundle: ScenarioMatrixBundle) {
+  const storageItem = bundle.includedItems.find((item) =>
+    normalizeCmsKey(item.label).includes('speicher'),
+  )
+  const match = storageItem?.amount?.replace(',', '.').match(/\d+(?:\.\d+)?/)
+
+  return match ? Number(match[0]) : 0
+}
+
+function buildBundleCalculatorValues(
+  bundle: ScenarioMatrixBundle,
+  values: CalculatorValues,
+) {
+  if (!bundle.scenarioType?.startsWith('b2b_')) {
+    return values
+  }
+
+  return {
+    ...values,
+    storageSize: Math.max(values.storageSize, getIncludedStorageSizeKwh(bundle)),
+  }
+}
+
 function calculateBundle(
   bundle: ScenarioMatrixBundle,
   values: CalculatorValues | undefined,
@@ -167,16 +199,20 @@ function calculateBundle(
     return {metrics: []}
   }
 
-  const result = calculateScenarioResult(bundle.scenarioType, values, parameters)
+  const bundleValues = buildBundleCalculatorValues(bundle, values)
+  const result = calculateScenarioResult(bundle.scenarioType, bundleValues, parameters)
 
   return {
     autarkyPercent: result.autarkyPercent,
     annualSavingsEur: result.annualSavingsEur,
     peakLoadReductionKw: result.peakLoadReductionKw,
+    pvSizeKwp: result.pvSizeKwp,
+    storageSizeKwh: result.storageSizeKwh,
+    chargingStations: bundleValues.chargingStations,
     metrics: buildCalculatedMetrics(
       metrics,
       result,
-      values,
+      bundleValues,
       bundle.scenarioType.startsWith('b2b_'),
     ),
   }
@@ -312,7 +348,7 @@ function formatCalculatedMetric(metric: CalculatedMetric, value = metric.value) 
   return formatNumber(value, metric.unit)
 }
 
-function metricDeltaLabel(metric: CalculatedMetric) {
+function metricDeltaLabel(metric: CalculatedMetric, isBusiness = false) {
   const metricType = normalizeCmsKey(metric.metricType || '')
   const normalizedUnit = normalizeCmsKey(metric.unit || '')
 
@@ -325,10 +361,185 @@ function metricDeltaLabel(metric: CalculatedMetric) {
   }
 
   if (normalizedUnit === '€' || normalizedUnit === 'eur') {
-    return ''
+    return isBusiness ? 'ERSPARNIS' : ''
   }
 
   return metric.title
+}
+
+function isPeakMetric(metric: CalculatedMetric) {
+  return normalizeCmsKey(metric.metricType || '') === 'lastspitzen'
+}
+
+function isAutarkyMetric(metric: CalculatedMetric) {
+  return normalizeCmsKey(metric.metricType || '') === 'autarkiegrad'
+}
+
+function isSavingsMetric(metric: CalculatedMetric) {
+  const identity = normalizeCmsKey(`${metric.key} ${metric.title}`)
+  const unit = normalizeCmsKey(metric.unit || '')
+
+  return identity.includes('ersparnis') || unit === '€' || unit === 'eur'
+}
+
+function buildPositiveMetricDeltas(
+  result: CalculatedBundle,
+  previousResult: CalculatedBundle | undefined,
+  isBusiness: boolean,
+) {
+  if (!previousResult) {
+    return []
+  }
+
+  const deltas = result.metrics.flatMap((metric) => {
+    const previousMetric = previousResult.metrics.find(
+      (candidate) => candidate.key === metric.key,
+    )
+    const difference =
+      previousMetric === undefined ? undefined : metric.value - previousMetric.value
+
+    return difference !== undefined && difference > 0
+      ? [{metric, difference}]
+      : []
+  })
+  const preferredPredicates = isBusiness
+    ? [isPeakMetric, isAutarkyMetric, isSavingsMetric]
+    : [isAutarkyMetric, isSavingsMetric]
+  const orderedDeltas: typeof deltas = []
+
+  for (const predicate of preferredPredicates) {
+    const delta = deltas.find(
+      (candidate) =>
+        predicate(candidate.metric) &&
+        !orderedDeltas.some((item) => item.metric.key === candidate.metric.key),
+    )
+
+    if (delta) {
+      orderedDeltas.push(delta)
+    }
+  }
+
+  for (const delta of deltas) {
+    if (!orderedDeltas.some((item) => item.metric.key === delta.metric.key)) {
+      orderedDeltas.push(delta)
+    }
+  }
+
+  return orderedDeltas.slice(0, isBusiness ? 3 : 2)
+}
+
+function splitIncludedItem(
+  item: ScenarioMatrixBundle['includedItems'][number],
+): Omit<IncludedItemDisplay, 'id'> {
+  const amount = item.amount?.trim()
+  const label = item.label.trim()
+
+  if (amount) {
+    return {amount, label}
+  }
+
+  const leadingAmountMatch = label.match(
+    /^(\d+(?:[,.]\d+)?\s*(?:kWp|kWh|MWp|MWh|kW|MW|%|x)?)(?:\s+)(.+)$/i,
+  )
+
+  if (!leadingAmountMatch) {
+    return {amount: undefined, label}
+  }
+
+  return {
+    amount: leadingAmountMatch[1].trim(),
+    label: leadingAmountMatch[2].trim(),
+  }
+}
+
+function formatChargingStationAmount(value: number) {
+  return `${formatNumber(Math.max(0, Math.round(value)))}x`
+}
+
+function getIncludedItemDisplay(
+  item: ScenarioMatrixBundle['includedItems'][number],
+  result: CalculatedBundle,
+): IncludedItemDisplay {
+  const display = splitIncludedItem(item)
+  const label = normalizeCmsKey(`${display.label} ${item.label}`)
+
+  if (label.includes('photovoltaik') && result.pvSizeKwp !== undefined) {
+    return {...display, id: item.id, amount: formatNumber(result.pvSizeKwp, 'kWp')}
+  }
+
+  if (label.includes('speicher') && result.storageSizeKwh !== undefined) {
+    return {...display, id: item.id, amount: formatNumber(result.storageSizeKwh, 'kWh')}
+  }
+
+  if (
+    (label.includes('ladestation') ||
+      label.includes('ladepunkt') ||
+      label.includes('wallbox') ||
+      label.includes('ladesaule')) &&
+    result.chargingStations !== undefined
+  ) {
+    return {
+      ...display,
+      id: item.id,
+      amount: formatChargingStationAmount(result.chargingStations),
+    }
+  }
+
+  return {...display, id: item.id}
+}
+
+function buildFallbackIncludedItems(
+  bundle: ScenarioMatrixBundle,
+  result: CalculatedBundle,
+): IncludedItemDisplay[] {
+  if (bundle.includedItems.length > 0 || !bundle.scenarioType?.startsWith('b2c_')) {
+    return []
+  }
+
+  const items: IncludedItemDisplay[] = []
+
+  if (result.pvSizeKwp !== undefined) {
+    items.push({
+      id: `${bundle.id}-fallback-pv`,
+      amount: formatNumber(result.pvSizeKwp, 'kWp'),
+      label: 'Photovoltaik',
+    })
+  }
+
+  if (
+    (bundle.scenarioType === 'b2c_pv_speicher' ||
+      bundle.scenarioType === 'b2c_komplett') &&
+    result.storageSizeKwh !== undefined
+  ) {
+    items.push({
+      id: `${bundle.id}-fallback-storage`,
+      amount: formatNumber(result.storageSizeKwh, 'kWh'),
+      label: 'Speicher',
+    })
+  }
+
+  if (bundle.scenarioType === 'b2c_komplett' && result.chargingStations !== undefined) {
+    items.push({
+      id: `${bundle.id}-fallback-charging`,
+      amount: formatChargingStationAmount(result.chargingStations),
+      label: 'Ladestation',
+    })
+  }
+
+  return items
+}
+
+function buildIncludedItemDisplays(
+  bundle: ScenarioMatrixBundle,
+  result: CalculatedBundle,
+) {
+  const configuredItems = bundle.includedItems.map((item) =>
+    getIncludedItemDisplay(item, result),
+  )
+
+  return configuredItems.length > 0
+    ? configuredItems
+    : buildFallbackIncludedItems(bundle, result)
 }
 
 function SliderControl({
@@ -423,34 +634,31 @@ function BundleCard({
   isBusiness: boolean
   isWireframeLayout: boolean
 }) {
-  const positiveMetricDeltas = previousResult
-    ? result.metrics.flatMap((metric) => {
-        const previousMetric = previousResult.metrics.find(
-          (candidate) => candidate.key === metric.key,
-        )
-        const difference =
-          previousMetric === undefined ? undefined : metric.value - previousMetric.value
-
-        return difference !== undefined && difference > 0
-          ? [{metric, difference}]
-          : []
-      }).slice(0, 2)
-    : []
+  const positiveMetricDeltas = buildPositiveMetricDeltas(
+    result,
+    previousResult,
+    isBusiness,
+  )
   const cardLayoutClassName = isWireframeLayout
-    ? 'grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]'
+    ? isBusiness
+      ? 'grid h-[500px] w-[316px] grid-rows-[42px_224px_148px_minmax(0,1fr)]'
+      : 'grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]'
     : 'h-[420px] w-[315px]'
   const titleSlotClassName = isWireframeLayout
     ? 'block h-full'
     : 'block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]'
   const imageSlotClassName = isWireframeLayout
-    ? 'flex h-full w-[316px] items-start justify-center pt-[14px]'
+    ? `flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[18px]' : 'pt-[14px]'}`
     : 'flex w-[315px] items-start justify-center pt-[24px]'
   const imageClassName = isWireframeLayout
-    ? 'h-[214px] w-[316px]'
+    ? isBusiness
+      ? 'h-[176px] w-[224px]'
+      : 'h-[214px] w-[316px]'
     : 'h-[160px] w-[315px]'
   const resultClassName = isWireframeLayout
-    ? `h-full ${isBusiness ? 'text-[#efb804]' : 'text-[#2a2e33]'}`
+    ? `h-full ${isBusiness ? 'pt-[2px] text-[#efb804]' : 'text-[#2a2e33]'}`
     : 'mt-[24px] text-[#efb804]'
+  const includedItemDisplays = buildIncludedItemDisplays(bundle, result)
 
   return (
     <button
@@ -490,17 +698,25 @@ function BundleCard({
 
       {positiveMetricDeltas.length > 0 ? (
         <span
-          className={`absolute z-[3] flex h-[72px] w-[156px] flex-col items-center justify-center gap-[7px] text-[16px] font-semibold uppercase leading-none ${
+          className={`absolute z-[3] flex flex-col items-center justify-center font-semibold uppercase leading-none ${
+            isBusiness
+              ? 'h-[90px] w-[200px] gap-[7px] px-[12px] text-[16px]'
+              : 'h-[72px] w-[156px] gap-[7px] text-[16px]'
+          } ${
             isWireframeLayout
-              ? `left-[-188px] top-[178px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[178px] ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#2a2e33]'}`
+              ? `${
+                  isBusiness
+                    ? 'left-[-220px] top-[154px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-208px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[154px]'
+                    : 'left-[-188px] top-[178px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-170px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[178px]'
+                } ${isBusiness ? 'bg-[#4a4f54] text-[#efb804]' : 'bg-[#efb804] text-[#2a2e33]'}`
               : `left-[-188px] top-[166px] text-[#efb804] ${isBusiness ? 'bg-[#4a4f54]' : 'bg-[#eceeef]'}`
           }`}
         >
           {positiveMetricDeltas.map(({metric, difference}, index) => {
-            const deltaLabel = metricDeltaLabel(metric)
+            const deltaLabel = metricDeltaLabel(metric, isBusiness)
 
             return (
-              <span key={metric.key} className="flex items-center gap-[7px]">
+              <span key={metric.key} className="flex items-center gap-[7px] whitespace-nowrap">
                 {deltaIconUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -528,27 +744,39 @@ function BundleCard({
 
       <div className={resultClassName}>
         {result.metrics.map((metric, index) => {
-          const isPeakReduction =
-            normalizeCmsKey(metric.metricType || '') === 'lastspitzen'
+          const isPeakReduction = isPeakMetric(metric)
+          const metricGapClassName =
+            isBusiness
+              ? isPeakReduction
+                ? 'gap-[8px]'
+                : 'gap-[11px]'
+              : isPeakReduction
+                ? 'gap-[10px]'
+                : 'gap-[14px]'
+          const metricValueClassName = isBusiness
+            ? isPeakReduction
+              ? 'text-[30px]'
+              : 'text-[30px]'
+            : 'text-[32px]'
+          const metricLabelClassName = isBusiness
+            ? 'text-[22px]'
+            : isPeakReduction
+              ? 'text-[15px] max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px]'
+              : 'text-[20px] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]'
+          const metricTitle = isBusiness && isPeakReduction ? 'REDUKTION' : metric.title
 
           return (
             <p
               key={metric.key}
-              className={`${index > 0 ? 'mt-[6px] ' : ''}flex items-baseline whitespace-nowrap uppercase ${
-                isPeakReduction ? 'gap-[10px]' : 'gap-[14px]'
-              }`}
+              className={`${index > 0 ? isBusiness ? 'mt-[4px] ' : 'mt-[6px] ' : ''}flex items-baseline whitespace-nowrap uppercase ${metricGapClassName}`}
             >
-              <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">
+              <strong className={`shrink-0 whitespace-nowrap font-bold leading-none ${metricValueClassName}`}>
                 {formatCalculatedMetric(metric)}
               </strong>
               <span
-                className={`shrink-0 whitespace-nowrap font-medium tracking-[0.025em] ${
-                  isPeakReduction
-                    ? 'text-[15px] max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px]'
-                    : 'text-[20px] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]'
-                }`}
+                className={`shrink-0 whitespace-nowrap font-medium tracking-[0.025em] ${metricLabelClassName}`}
               >
-                {metric.title}
+                {metricTitle}
               </span>
             </p>
           )
@@ -563,11 +791,13 @@ function BundleCard({
         }`}
       >
         <span className="shrink-0 font-normal uppercase">Enthalten:</span>
-        {bundle.includedItems.length > 0 ? (
+        {includedItemDisplays.length > 0 ? (
           <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
-            {bundle.includedItems.map((item) => (
+            {includedItemDisplays.map((item) => (
               <li key={item.id}>
-                {item.amount ? <strong className="font-bold">{item.amount} </strong> : null}
+                {item.amount ? (
+                  <strong className="font-bold">{item.amount} </strong>
+                ) : null}
                 {item.label}
               </li>
             ))}
@@ -661,6 +891,9 @@ function toConsultationCalculationResult(
     peakLoadReductionKw: selectedMetricTypes.has('lastspitzen')
       ? result.peakLoadReductionKw
       : undefined,
+    pvSizeKwp: result.pvSizeKwp,
+    storageSizeKwh: result.storageSizeKwh,
+    chargingStations: result.chargingStations,
   }
 
   return Object.values(calculationResult).some((value) => value !== undefined)
@@ -869,7 +1102,13 @@ export function ScenarioMatrixScreen({
                 />
               ) : null}
 
-              <div className="absolute left-[72px] top-[400px] z-[4] space-y-[28px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[415px]">
+              <div
+                className={`absolute left-[72px] z-[4] space-y-[28px] ${
+                  isBusiness
+                    ? 'top-[380px]'
+                    : 'top-[400px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[415px]'
+                }`}
+              >
                 {visibleSliders.map((slider) => (
                   <SliderControl
                     key={slider.id}

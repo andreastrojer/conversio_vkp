@@ -10,6 +10,8 @@ import {
   buildCrmSpreadsheetHtml,
   isValidEmail,
   validateConsultationCustomer,
+  type ConsultationCalculationResult,
+  type ConsultationBundle,
   type ConsultationState,
 } from '@/lib/consultation'
 import {
@@ -46,6 +48,17 @@ type ScenarioDocumentsResponse = {
 
 type UnknownRecord = Record<string, unknown>
 
+type IncludedItemDisplay = {
+  id: string
+  amount?: string
+  label: string
+}
+
+type BundleForIncludedDisplay = Pick<
+  ConsultationBundle,
+  'id' | 'scenarioType' | 'includedItems'
+>
+
 const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
 
@@ -63,6 +76,147 @@ function formatEuro(value: number) {
 
 function formatPeak(value: number) {
   return `${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 1}).format(value)} kW`
+}
+
+function formatNumber(value: number, unit?: string) {
+  const maximumFractionDigits = Number.isInteger(value) ? 0 : 1
+  const formatted = new Intl.NumberFormat('de-AT', {maximumFractionDigits}).format(value)
+
+  return unit ? `${formatted} ${unit}` : formatted
+}
+
+function formatChargingStationAmount(value: number) {
+  return `${formatNumber(Math.max(0, Math.round(value)))}x`
+}
+
+function normalizeDisplayKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .toLowerCase()
+}
+
+function splitIncludedItem(
+  item: ConsultationBundle['includedItems'][number],
+): Omit<IncludedItemDisplay, 'id'> {
+  const amount = item.amount?.trim()
+  const label = item.label.trim()
+
+  if (amount) {
+    return {amount, label}
+  }
+
+  const leadingAmountMatch = label.match(
+    /^(\d+(?:[,.]\d+)?\s*(?:kWp|kWh|MWp|MWh|kW|MW|%|x)?)(?:\s+)(.+)$/i,
+  )
+
+  if (!leadingAmountMatch) {
+    return {amount: undefined, label}
+  }
+
+  return {
+    amount: leadingAmountMatch[1].trim(),
+    label: leadingAmountMatch[2].trim(),
+  }
+}
+
+function getIncludedItemDisplay(
+  item: ConsultationBundle['includedItems'][number],
+  result: ConsultationCalculationResult | undefined,
+): IncludedItemDisplay {
+  const display = splitIncludedItem(item)
+  const label = normalizeDisplayKey(`${display.label} ${item.label}`)
+
+  if (label.includes('photovoltaik') && result?.pvSizeKwp !== undefined) {
+    return {...display, id: item.id, amount: formatNumber(result.pvSizeKwp, 'kWp')}
+  }
+
+  if (label.includes('speicher') && result?.storageSizeKwh !== undefined) {
+    return {...display, id: item.id, amount: formatNumber(result.storageSizeKwh, 'kWh')}
+  }
+
+  if (
+    (label.includes('ladestation') ||
+      label.includes('ladepunkt') ||
+      label.includes('wallbox') ||
+      label.includes('ladesaule')) &&
+    result?.chargingStations !== undefined
+  ) {
+    return {
+      ...display,
+      id: item.id,
+      amount: formatChargingStationAmount(result.chargingStations),
+    }
+  }
+
+  return {...display, id: item.id}
+}
+
+function buildFallbackIncludedItems(
+  bundle: BundleForIncludedDisplay,
+  result: ConsultationCalculationResult | undefined,
+): IncludedItemDisplay[] {
+  const scenarioType = bundle.scenarioType || ''
+
+  if (bundle.includedItems.length > 0 || !result) {
+    return []
+  }
+
+  const items: IncludedItemDisplay[] = []
+
+  if (result.pvSizeKwp !== undefined) {
+    items.push({
+      id: `${bundle.id}-fallback-pv`,
+      amount: formatNumber(result.pvSizeKwp, 'kWp'),
+      label: 'Photovoltaik',
+    })
+  }
+
+  if (
+    (scenarioType === 'b2c_pv_speicher' ||
+      scenarioType === 'b2c_komplett' ||
+      scenarioType === 'b2b_autark_abgesichert' ||
+      scenarioType === 'b2b_wachstum_mobilitaet') &&
+    result.storageSizeKwh !== undefined
+  ) {
+    items.push({
+      id: `${bundle.id}-fallback-storage`,
+      amount: formatNumber(result.storageSizeKwh, 'kWh'),
+      label: 'Speicher',
+    })
+  }
+
+  if (
+    (scenarioType === 'b2c_komplett' ||
+      scenarioType === 'b2b_wachstum_mobilitaet') &&
+    result.chargingStations !== undefined
+  ) {
+    items.push({
+      id: `${bundle.id}-fallback-charging`,
+      amount: formatChargingStationAmount(result.chargingStations),
+      label: 'Ladestation',
+    })
+  }
+
+  return items
+}
+
+function buildIncludedItemDisplays(
+  bundle: BundleForIncludedDisplay | undefined,
+  result: ConsultationCalculationResult | undefined,
+) {
+  if (!bundle) {
+    return []
+  }
+
+  const configuredItems = bundle.includedItems.map((item) =>
+    getIncludedItemDisplay(item, result),
+  )
+
+  return configuredItems.length > 0
+    ? configuredItems
+    : buildFallbackIncludedItems(bundle, result)
 }
 
 function parseSendDocumentsResponse(value: unknown): SendDocumentsResponse {
@@ -277,6 +431,10 @@ export function NextStepScreen({
     displayBundle && consultation.selectedBundle?.id === displayBundle.id
       ? consultation.calculationResult
       : undefined
+  const includedItemDisplays = useMemo(
+    () => buildIncludedItemDisplays(displayBundle, displayResult),
+    [displayBundle, displayResult],
+  )
   const scenarioId = displayBundle?.id
   const visibleDocumentCategories = documentCategoriesOverride || documentCategories
   const documentTitleById = useMemo(
@@ -453,7 +611,7 @@ export function NextStepScreen({
           slug: displayBundle.slug,
           scenarioType: displayBundle.scenarioType,
           features: displayBundle.features,
-          includedItems: displayBundle.includedItems,
+          includedItems: includedItemDisplays,
         }
       : undefined
     const exportConsultation: ConsultationState = {
@@ -515,7 +673,11 @@ export function NextStepScreen({
         </h1>
 
         <section
-          className="absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]"
+          className={`absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] ${
+            isBusiness
+              ? 'grid-rows-[42px_224px_148px_minmax(0,1fr)]'
+              : 'grid-rows-[42px_252px_118px_minmax(0,1fr)]'
+          }`}
           aria-label="Ausgewähltes Bundle"
         >
           {displayBundle ? (
@@ -526,35 +688,49 @@ export function NextStepScreen({
                 </span>
               </span>
 
-              <span className="flex h-full w-[316px] items-start justify-center pt-[14px]">
+              <span className={`flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[18px]' : 'pt-[14px]'}`}>
                 {bundleImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={bundleImageUrl}
                     alt={bundleImageAlt}
-                    className="h-[214px] w-[316px] object-contain object-center"
+                    className={`object-contain object-center ${
+                      isBusiness ? 'h-[176px] w-[224px]' : 'h-[214px] w-[316px]'
+                    }`}
                   />
                 ) : null}
               </span>
 
               {displayResult ? (
-                <div className={`h-full ${metricClassName}`}>
+                <div className={`h-full ${isBusiness ? 'pt-[2px] ' : ''}${metricClassName}`}>
                   {displayResult.peakLoadReductionKw !== undefined ? (
-                    <p className="flex items-baseline gap-[10px] whitespace-nowrap uppercase">
-                      <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">{formatPeak(displayResult.peakLoadReductionKw)}</strong>
-                      <span className="shrink-0 whitespace-nowrap text-[15px] font-medium tracking-[0.025em] max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px]">LASTSPITZENREDUKTION</span>
+                    <p className={`flex items-baseline whitespace-nowrap uppercase ${isBusiness ? 'gap-[8px]' : 'gap-[10px]'}`}>
+                      <strong className={`shrink-0 whitespace-nowrap font-bold leading-none ${isBusiness ? 'text-[30px]' : 'text-[32px]'}`}>{formatPeak(displayResult.peakLoadReductionKw)}</strong>
+                      <span className={`shrink-0 whitespace-nowrap font-medium tracking-[0.025em] ${
+                        isBusiness
+                          ? 'text-[22px]'
+                          : 'text-[15px] max-[1600px]:text-[16px] [@media(max-height:920px)]:text-[16px]'
+                      }`}>{isBusiness ? 'REDUKTION' : 'LASTSPITZENREDUKTION'}</span>
                     </p>
                   ) : null}
                   {displayResult.autarkyPercent !== undefined ? (
-                    <p className={`${displayResult.peakLoadReductionKw !== undefined ? 'mt-[6px] ' : ''}flex items-baseline gap-[14px] whitespace-nowrap uppercase`}>
-                      <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">{formatPercent(displayResult.autarkyPercent)}</strong>
-                      <span className="shrink-0 whitespace-nowrap text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">AUTARK</span>
+                    <p className={`${displayResult.peakLoadReductionKw !== undefined ? isBusiness ? 'mt-[4px] ' : 'mt-[6px] ' : ''}flex items-baseline whitespace-nowrap uppercase ${isBusiness ? 'gap-[11px]' : 'gap-[14px]'}`}>
+                      <strong className={`shrink-0 whitespace-nowrap font-bold leading-none ${isBusiness ? 'text-[30px]' : 'text-[32px]'}`}>{formatPercent(displayResult.autarkyPercent)}</strong>
+                      <span className={`shrink-0 whitespace-nowrap font-medium tracking-[0.025em] ${
+                        isBusiness
+                          ? 'text-[22px]'
+                          : 'text-[20px] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]'
+                      }`}>AUTARK</span>
                     </p>
                   ) : null}
                   {displayResult.annualSavingsEur !== undefined ? (
-                    <p className="mt-[6px] flex items-baseline gap-[14px] whitespace-nowrap uppercase">
-                      <strong className="shrink-0 whitespace-nowrap text-[32px] font-bold leading-none">{formatEuro(displayResult.annualSavingsEur)}</strong>
-                      <span className="shrink-0 whitespace-nowrap text-[20px] font-medium tracking-[0.025em] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]">ERSPARNIS / JAHR</span>
+                    <p className={`${isBusiness ? 'mt-[4px]' : 'mt-[6px]'} flex items-baseline whitespace-nowrap uppercase ${isBusiness ? 'gap-[11px]' : 'gap-[14px]'}`}>
+                      <strong className={`shrink-0 whitespace-nowrap font-bold leading-none ${isBusiness ? 'text-[30px]' : 'text-[32px]'}`}>{formatEuro(displayResult.annualSavingsEur)}</strong>
+                      <span className={`shrink-0 whitespace-nowrap font-medium tracking-[0.025em] ${
+                        isBusiness
+                          ? 'text-[22px]'
+                          : 'text-[20px] max-[1600px]:text-[22px] [@media(max-height:920px)]:text-[22px]'
+                      }`}>ERSPARNIS / JAHR</span>
                     </p>
                   ) : null}
                 </div>
@@ -564,9 +740,9 @@ export function NextStepScreen({
 
               <div className={`flex min-h-[60px] items-start gap-[8px] border-t-2 pt-[20px] font-sans text-[18px] leading-[1.35] tracking-normal ${isBusiness ? 'border-white' : 'border-[#2a2e33]'}`}>
                 <span className="shrink-0 font-normal uppercase">Enthalten:</span>
-                {displayBundle.includedItems.length > 0 ? (
+                {includedItemDisplays.length > 0 ? (
                   <ul className="space-y-px font-normal" aria-label="Enthaltene Leistungen">
-                    {displayBundle.includedItems.map((item) => (
+                    {includedItemDisplays.map((item) => (
                       <li key={item.id}>
                         {item.amount ? <strong className="font-bold">{item.amount} </strong> : null}
                         {item.label}

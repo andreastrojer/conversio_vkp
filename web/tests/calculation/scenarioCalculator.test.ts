@@ -36,6 +36,10 @@ const b2bValues: CalculatorValues = {
 }
 
 const b2bParameters: CalculationParameters = {
+  pvSizeKwp: 10,
+  specificYieldKwhPerKwp: 1050,
+  electricityPriceEurPerKwh: 0.3,
+  feedInTariffEurPerKwh: 0.06772,
   usableStorageShare: 0.9,
   batteryRoundTripEfficiency: 0.9,
   batteryPowerKw: 50,
@@ -180,6 +184,22 @@ test('charging stations increase annual demand exactly once', () => {
   assert.equal(
     withTwoChargingStations.totalDemandKwh - withoutCharging.totalDemandKwh,
     2 * baseParameters.evDemandPerChargingStationKwh!,
+  )
+})
+
+test('B2C PV size follows the demand covered by the bundle', () => {
+  const pvOnly = calculateScenarioResult('b2c_pv', baseValues, baseParameters)
+  const storage = calculateScenarioResult('b2c_pv_speicher', baseValues, baseParameters)
+  const complete = calculateScenarioResult('b2c_komplett', baseValues, baseParameters)
+
+  assert.equal(pvOnly.pvSizeKwp, 5.6)
+  assert.equal(storage.pvSizeKwp, 5.6)
+  assert.equal(complete.pvSizeKwp, 8)
+  assert.equal(pvOnly.pvGenerationKwh, baseValues.annualConsumption)
+  assert.equal(storage.pvGenerationKwh, baseValues.annualConsumption)
+  assert.equal(
+    complete.pvGenerationKwh,
+    baseValues.annualConsumption + baseParameters.evDemandPerChargingStationKwh!,
   )
 })
 
@@ -396,7 +416,13 @@ test('B2B demand includes expected growth and charging demand exactly once', () 
   assert.equal(result.householdDemandKwh, 57_500)
   assert.equal(result.evDemandKwh, 50_000)
   assert.equal(result.totalDemandKwh, 107_500)
-  assert.equal(result.gridImportKwh, result.totalDemandKwh)
+  assert.ok(result.gridImportKwh < result.totalDemandKwh)
+  assert.ok(
+    Math.abs(
+      result.totalDemandKwh -
+        (result.selfSuppliedLoadKwh + result.gridImportKwh),
+    ) <= 2,
+  )
   assert.equal(result.expectedGrowthPercent, 15)
 })
 
@@ -419,7 +445,7 @@ test('B2B storage bundle respects usable capacity and backup reserve', () => {
   )
 })
 
-test('B2B annual savings use the CMS demand charge', () => {
+test('B2B annual savings combine PV energy value and the CMS demand charge', () => {
   const result = calculateScenarioResult(
     'b2b_autark_abgesichert',
     b2bValues,
@@ -429,7 +455,47 @@ test('B2B annual savings use the CMS demand charge', () => {
     result.peakLoadReductionKw * b2bParameters.demandChargeEurPerKwYear!
 
   assert.ok(Math.abs(result.demandChargeSavingsEur - expectedSavings) <= 1)
-  assert.equal(result.annualSavingsEur, result.demandChargeSavingsEur)
+  assert.ok(result.annualSavingsEur > result.demandChargeSavingsEur)
+  assert.ok(
+    Math.abs(
+      result.annualSavingsEur -
+        (result.baselineCostEur - result.newEnergyCostEur + result.feedInRevenueEur),
+    ) <= 2,
+  )
+})
+
+test('B2B entry bundle already produces PV autarky and energy savings', () => {
+  const entry = calculateScenarioResult(
+    'b2b_einstieg',
+    b2bValues,
+    b2bParameters,
+  )
+
+  assert.equal(entry.pvGenerationKwh, b2bValues.annualConsumption)
+  assert.ok(entry.autarkyPercent > 0)
+  assert.ok(entry.annualSavingsEur > 0)
+  assert.equal(entry.batteryChargeKwh, 0)
+  assert.equal(entry.batteryDischargeKwh, 0)
+  assert.equal(entry.peakLoadReductionKw, 0)
+})
+
+test('B2B storage increases self-supply beyond the entry bundle', () => {
+  const entry = calculateScenarioResult(
+    'b2b_einstieg',
+    b2bValues,
+    b2bParameters,
+  )
+  const storage = calculateScenarioResult(
+    'b2b_autark_abgesichert',
+    b2bValues,
+    b2bParameters,
+  )
+
+  assert.ok(storage.batteryChargeKwh > 0)
+  assert.ok(storage.batteryDischargeKwh > 0)
+  assert.equal(storage.pvGenerationKwh, 57_500)
+  assert.ok(storage.autarkyPercent > entry.autarkyPercent)
+  assert.ok(storage.annualSavingsEur > entry.annualSavingsEur)
 })
 
 test('B2B growth and mobility adds only beneficial smart charging peak reduction', () => {
@@ -456,6 +522,9 @@ test('B2B growth and mobility adds only beneficial smart charging peak reduction
 
   assert.ok(growthAndMobility.peakLoadReductionKw > storage.peakLoadReductionKw)
   assert.ok(growthAndMobility.remainingGridPeakKw < storage.remainingGridPeakKw)
+  assert.equal(growthAndMobility.pvGenerationKwh, growthAndMobility.totalDemandKwh)
+  assert.ok(growthAndMobility.autarkyPercent > storage.autarkyPercent)
+  assert.ok(growthAndMobility.annualSavingsEur >= storage.annualSavingsEur)
   assert.equal(
     withoutChargingStations.peakLoadReductionKw,
     storageWithoutChargingStations.peakLoadReductionKw,

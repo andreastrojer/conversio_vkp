@@ -114,6 +114,7 @@ type ScenarioMatrixDocument = {
     calculationParameters?: RawParameter[] | null
     bundleScenarios?: RawBundleScenario[] | null
   } | null
+  sharedCalculationParameters?: RawParameter[] | null
   fallbackBundleScenarios?: RawBundleScenario[] | null
   offerSections?: RawOfferSection[] | null
   b2cOfferSections?: RawOfferSection[] | null
@@ -460,7 +461,10 @@ export async function getScenarioMatrixPageData(
       calculateButtonLabel: screen?.calculatorConfig?.calculateButtonLabel?.trim() || undefined,
       sliders: normalizeSliders(screen?.calculatorConfig?.sliders, customerType),
       metrics: normalizeMetrics(screen?.calculatorConfig?.resultMetrics, customerType),
-      parameters: normalizeParameters(screen?.calculatorConfig?.calculationParameters),
+      parameters: normalizeParameters([
+        ...(customerType === 'b2b' ? screen?.sharedCalculationParameters || [] : []),
+        ...(screen?.calculatorConfig?.calculationParameters || []),
+      ]),
       bundles,
       heroImageUrl: resolveImageUrl(heroImage, 3200),
       heroImageAlt: screen?.heroMedia?.altText?.trim() || screen?.heroMedia?.title?.trim() || '',

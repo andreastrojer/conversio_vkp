@@ -28,7 +28,7 @@ Aktuell verwendete Parameter:
 
 | Parameter | Bedeutung |
 | --- | --- |
-| `pvSizeKwp` | PV-Leistung in kWp |
+| `pvSizeKwp` | technischer Fallback fuer PV-Leistung, falls keine bedarfsbezogene Dimensionierung moeglich ist |
 | `specificYieldKwhPerKwp` | spezifischer Jahresertrag in kWh/kWp |
 | `electricityPriceEurPerKwh` | Netzstrompreis |
 | `feedInTariffEurPerKwh` | Einspeisevergütung |
@@ -61,11 +61,21 @@ totalDemandKwh = annualConsumptionKwh + evDemandKwh
 Der Jahresverbrauch-Slider wird als Haushaltsverbrauch verstanden. Der Verbrauch der Ladepunkte
 wird genau einmal addiert, weil Ladepunkte separat als eigener Slider erfasst werden.
 
-PV-Jahresertrag:
+PV-Dimensionierung und PV-Jahresertrag:
 
 ```text
-pvGenerationKwh = pvSizeKwp * specificYieldKwhPerKwp
+pvSizingDemandKwh =
+  b2c_komplett ? totalDemandKwh : annualConsumptionKwh
+
+effectivePvSizeKwp = pvSizingDemandKwh / specificYieldKwhPerKwp
+
+pvGenerationKwh = effectivePvSizeKwp * specificYieldKwhPerKwp
 ```
+
+Damit ist die im Bereich `Enthalten` angezeigte Photovoltaik-Leistung kein fixer CMS-Text mehr,
+sondern entspricht der Groesse, die in der jeweiligen Bundle-Berechnung verwendet wird. Beim
+Komplett-Bundle wird der Verbrauch der Ladepunkte mit dimensioniert, weil die Ladestation dort
+Teil des Bundles ist.
 
 Nutzbarer Speicher:
 

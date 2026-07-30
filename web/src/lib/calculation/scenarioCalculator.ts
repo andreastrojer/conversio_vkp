@@ -56,6 +56,8 @@ export type ScenarioCalculationResult = {
   remainingGridPeakKw: number
   batteryPowerKw: number
   usableStorageKwh: number
+  pvSizeKwp: number
+  storageSizeKwh: number
   peakLoadReductionKw: number
   projectedPeakLoadKw: number
   demandChargeSavingsEur: number
@@ -85,6 +87,10 @@ type ResolvedCalculationParameters = {
 }
 
 type ResolvedB2bCalculationParameters = {
+  pvSizeKwp: number
+  specificYieldKwhPerKwp: number
+  electricityPriceEurPerKwh: number
+  feedInTariffEurPerKwh: number
   evDemandPerChargingStationKwh: number
   smartChargingShiftShare: number
   batteryPowerKw: number
@@ -154,6 +160,10 @@ export const B2C_CALCULATION_FALLBACKS = {
 } as const satisfies ResolvedCalculationParameters
 
 export const B2B_CALCULATION_FALLBACKS = {
+  pvSizeKwp: 0,
+  specificYieldKwhPerKwp: 0,
+  electricityPriceEurPerKwh: 0,
+  feedInTariffEurPerKwh: 0,
   evDemandPerChargingStationKwh: 0,
   smartChargingShiftShare: 0,
   batteryPowerKw: 0,
@@ -179,6 +189,10 @@ const parameterAliases: Record<keyof ResolvedCalculationParameters, string[]> = 
 }
 
 const b2bParameterAliases: Record<keyof ResolvedB2bCalculationParameters, string[]> = {
+  pvSizeKwp: ['pvSizeKwp'],
+  specificYieldKwhPerKwp: ['specificYieldKwhPerKwp'],
+  electricityPriceEurPerKwh: ['electricityPriceEurPerKwh'],
+  feedInTariffEurPerKwh: ['feedInTariffEurPerKwh'],
   evDemandPerChargingStationKwh: ['evDemandPerChargingStationKwh'],
   smartChargingShiftShare: ['smartChargingShiftShare'],
   batteryPowerKw: ['batteryPowerKw'],
@@ -317,6 +331,22 @@ function resolveB2bCalculationParameters(
   warnings: string[],
 ): ResolvedB2bCalculationParameters {
   return {
+    pvSizeKwp: resolveB2bParameter(parameters, 'pvSizeKwp', warnings),
+    specificYieldKwhPerKwp: resolveB2bParameter(
+      parameters,
+      'specificYieldKwhPerKwp',
+      warnings,
+    ),
+    electricityPriceEurPerKwh: resolveB2bParameter(
+      parameters,
+      'electricityPriceEurPerKwh',
+      warnings,
+    ),
+    feedInTariffEurPerKwh: resolveB2bParameter(
+      parameters,
+      'feedInTariffEurPerKwh',
+      warnings,
+    ),
     evDemandPerChargingStationKwh: resolveB2bParameter(
       parameters,
       'evDemandPerChargingStationKwh',
@@ -491,6 +521,32 @@ function buildHouseholdProfile(annualConsumptionKwh: number) {
       const evening = gaussianByHour(hour, 19.4, 2.3)
       const nightBase = 0.22
       const shape = nightBase + 0.52 * morning + 0.22 * midday + 0.9 * evening
+
+      profile[day * INTERVALS_PER_DAY + interval] =
+        shape * season * PROFILE_INTERVAL_HOURS
+    }
+  }
+
+  return scaleProfileToAnnual(profile, annualConsumptionKwh)
+}
+
+function buildBusinessProfile(annualConsumptionKwh: number) {
+  const profile = new Float64Array(PROFILE_INTERVAL_COUNT)
+
+  for (let day = 0; day < DAYS_PER_YEAR; day += 1) {
+    const isWeekend = day % 7 === 5 || day % 7 === 6
+    const operatingDayFactor = isWeekend ? 0.28 : 1
+    const season = 1 + 0.08 * Math.cos((FULL_CIRCLE * (day - 15)) / DAYS_PER_YEAR)
+
+    for (let interval = 0; interval < INTERVALS_PER_DAY; interval += 1) {
+      const hour = (interval + 0.5) * PROFILE_INTERVAL_HOURS
+      const morning = gaussianByHour(hour, 9.2, 2.5)
+      const midday = gaussianByHour(hour, 13, 3.2)
+      const afternoon = gaussianByHour(hour, 16.2, 2.4)
+      const baseLoad = isWeekend ? 0.2 : 0.32
+      const shape =
+        baseLoad +
+        operatingDayFactor * (0.45 * morning + 0.72 * midday + 0.42 * afternoon)
 
       profile[day * INTERVALS_PER_DAY + interval] =
         shape * season * PROFILE_INTERVAL_HOURS
@@ -774,6 +830,15 @@ function roundPeak(value: number) {
   return Math.round(value * 10) / 10
 }
 
+function calculateDemandMatchedPvSizeKwp(
+  annualDemandKwh: number,
+  specificYieldKwhPerKwp: number,
+) {
+  return specificYieldKwhPerKwp > 0
+    ? safeNumber(annualDemandKwh) / specificYieldKwhPerKwp
+    : 0
+}
+
 function calculateB2bScenarioResult(
   scenarioType: B2bScenarioType,
   values: CalculatorValues,
@@ -794,6 +859,23 @@ function calculateB2bScenarioResult(
   const evDemandKwh =
     chargingStations * resolvedParameters.evDemandPerChargingStationKwh
   const totalDemandKwh = grownBusinessDemandKwh + evDemandKwh
+  const pvSizingDemandKwh =
+    scenarioType === 'b2b_einstieg'
+      ? annualConsumptionKwh
+      : scenarioType === 'b2b_autark_abgesichert'
+        ? grownBusinessDemandKwh
+        : totalDemandKwh
+  const demandMatchedPvSizeKwp =
+    calculateDemandMatchedPvSizeKwp(
+      pvSizingDemandKwh,
+      resolvedParameters.specificYieldKwhPerKwp,
+    )
+  const effectivePvSizeKwp = Math.max(
+    resolvedParameters.pvSizeKwp,
+    demandMatchedPvSizeKwp,
+  )
+  const pvGenerationKwh =
+    effectivePvSizeKwp * resolvedParameters.specificYieldKwhPerKwp
   const currentPeakLoadKw = normalizeB2bPeakLoadKw({
     rawPeakLoadKw: values.peakLoadKw,
     annualDemandKwh: annualConsumptionKwh,
@@ -860,39 +942,107 @@ function calculateB2bScenarioResult(
     optimizedSmartChargingPeakReductionKw + batteryPeakCoverageKw,
   )
   const remainingGridPeakKw = Math.max(0, projectedPeakLoadKw - peakLoadReductionKw)
+  const simulateSmartChargingShare = (smartChargingShiftShare: number) => {
+    const profile = buildB2bEnergyProfile({
+      businessDemandKwh: grownBusinessDemandKwh,
+      evDemandKwh,
+      pvGenerationKwh,
+      chargingStations,
+      smartChargingShiftShare,
+    })
+
+    return simulateEnergyProfile({
+      profile,
+      usesStorage,
+      usableStorageKwh: dispatchableStorageKwh,
+      batteryPowerKw: resolvedParameters.batteryPowerKw,
+      roundTripEfficiency: resolvedParameters.roundTripEfficiency,
+    })
+  }
+  const energyShiftCandidates =
+    usesSmartCharging && resolvedParameters.smartChargingShiftShare > 0
+      ? [
+          0,
+          resolvedParameters.smartChargingShiftShare / 2,
+          resolvedParameters.smartChargingShiftShare,
+        ]
+      : [0]
+  const energyResult = energyShiftCandidates
+    .map(simulateSmartChargingShare)
+    .reduce((bestResult, candidateResult) => {
+      const bestAnnualEnergyValueEur =
+        -bestResult.gridImportKwh * resolvedParameters.electricityPriceEurPerKwh +
+        bestResult.exportedPvKwh * resolvedParameters.feedInTariffEurPerKwh
+      const candidateAnnualEnergyValueEur =
+        -candidateResult.gridImportKwh * resolvedParameters.electricityPriceEurPerKwh +
+        candidateResult.exportedPvKwh * resolvedParameters.feedInTariffEurPerKwh
+
+      if (candidateAnnualEnergyValueEur > bestAnnualEnergyValueEur) {
+        return candidateResult
+      }
+
+      if (
+        candidateAnnualEnergyValueEur === bestAnnualEnergyValueEur &&
+        candidateResult.selfSuppliedLoadKwh > bestResult.selfSuppliedLoadKwh
+      ) {
+        return candidateResult
+      }
+
+      return bestResult
+    })
   const baselineCostEur =
+    totalDemandKwh * resolvedParameters.electricityPriceEurPerKwh +
     projectedPeakLoadKw * resolvedParameters.demandChargeEurPerKwYear
   const newEnergyCostEur =
-    remainingGridPeakKw * resolvedParameters.demandChargeEurPerKwYear +
-    resolvedParameters.annualOperatingCostEur
+    energyResult.gridImportKwh * resolvedParameters.electricityPriceEurPerKwh +
+    remainingGridPeakKw * resolvedParameters.demandChargeEurPerKwYear
+  const feedInRevenueEur =
+    energyResult.exportedPvKwh * resolvedParameters.feedInTariffEurPerKwh
   const demandChargeSavingsEur =
     peakLoadReductionKw * resolvedParameters.demandChargeEurPerKwYear
   const annualSavingsEur =
-    demandChargeSavingsEur - resolvedParameters.annualOperatingCostEur
+    baselineCostEur -
+    newEnergyCostEur +
+    feedInRevenueEur -
+    resolvedParameters.annualOperatingCostEur
+  const autarkyPercent =
+    totalDemandKwh > 0
+      ? clamp(
+          (energyResult.gridImportKwh <= 0
+            ? 1
+            : 1 - energyResult.gridImportKwh / totalDemandKwh) * 100,
+          0,
+          100,
+        )
+      : 0
 
   return {
     totalDemandKwh: roundEnergy(totalDemandKwh),
     householdDemandKwh: roundEnergy(grownBusinessDemandKwh),
     evDemandKwh: roundEnergy(evDemandKwh),
-    pvGenerationKwh: 0,
-    directPvConsumptionKwh: 0,
-    batteryChargeKwh: 0,
-    batteryDischargeKwh: 0,
-    storageLossKwh: 0,
-    selfConsumedPvKwh: 0,
-    selfSuppliedLoadKwh: 0,
-    exportedPvKwh: 0,
-    gridImportKwh: roundEnergy(totalDemandKwh),
-    autarkyPercent: 0,
+    pvGenerationKwh: roundEnergy(pvGenerationKwh),
+    directPvConsumptionKwh: roundEnergy(energyResult.directPvConsumptionKwh),
+    batteryChargeKwh: roundEnergy(energyResult.batteryChargeFromPvKwh),
+    batteryDischargeKwh: roundEnergy(energyResult.batteryDischargeKwh),
+    storageLossKwh: roundEnergy(energyResult.storageLossKwh),
+    selfConsumedPvKwh: roundEnergy(
+      energyResult.directPvConsumptionKwh + energyResult.batteryChargeFromPvKwh,
+    ),
+    selfSuppliedLoadKwh: roundEnergy(energyResult.selfSuppliedLoadKwh),
+    exportedPvKwh: roundEnergy(energyResult.exportedPvKwh),
+    gridImportKwh: roundEnergy(energyResult.gridImportKwh),
+    autarkyPercent: Math.round(autarkyPercent),
     baselineCostEur: roundMoney(baselineCostEur),
     newEnergyCostEur: roundMoney(newEnergyCostEur),
-    feedInRevenueEur: 0,
+    feedInRevenueEur: roundMoney(feedInRevenueEur),
     annualSavingsEur: roundMoney(annualSavingsEur),
     peakLoadKw: roundPeak(currentPeakLoadKw),
     batteryPeakCoverageKw: roundPeak(batteryPeakCoverageKw),
     remainingGridPeakKw: roundPeak(remainingGridPeakKw),
     batteryPowerKw: roundPeak(resolvedParameters.batteryPowerKw),
     usableStorageKwh: roundPeak(usableStorageKwh),
+    pvSizeKwp: roundPeak(effectivePvSizeKwp),
+    storageSizeKwh: roundPeak(usesStorage ? storageSizeKwh : 0),
     peakLoadReductionKw: roundPeak(peakLoadReductionKw),
     projectedPeakLoadKw: roundPeak(projectedPeakLoadKw),
     demandChargeSavingsEur: roundMoney(demandChargeSavingsEur),
@@ -900,6 +1050,37 @@ function calculateB2bScenarioResult(
     expectedGrowthPercent: Math.round(growthDemandShare * 1000) / 10,
     isPrognosis: true,
     warnings,
+  }
+}
+
+function buildB2bEnergyProfile({
+  businessDemandKwh,
+  evDemandKwh,
+  pvGenerationKwh,
+  chargingStations,
+  smartChargingShiftShare,
+}: {
+  businessDemandKwh: number
+  evDemandKwh: number
+  pvGenerationKwh: number
+  chargingStations: number
+  smartChargingShiftShare: number
+}): EnergyProfile {
+  const businessProfile = buildBusinessProfile(businessDemandKwh)
+  const evProfile = buildEvProfile({
+    annualEvDemandKwh: evDemandKwh,
+    chargingStations,
+    smartChargingShiftShare,
+  })
+  const demandKwh = new Float64Array(PROFILE_INTERVAL_COUNT)
+
+  for (let index = 0; index < PROFILE_INTERVAL_COUNT; index += 1) {
+    demandKwh[index] = businessProfile[index] + evProfile[index]
+  }
+
+  return {
+    demandKwh,
+    pvKwh: buildPvProfile(pvGenerationKwh),
   }
 }
 
@@ -920,8 +1101,16 @@ export function calculateScenarioResult(
   const evDemandKwh =
     chargingStations * resolvedParameters.evDemandPerChargingStationKwh
   const totalDemandKwh = householdDemandKwh + evDemandKwh
+  const pvSizingDemandKwh =
+    scenarioType === 'b2c_komplett'
+      ? totalDemandKwh
+      : householdDemandKwh
+  const effectivePvSizeKwp = calculateDemandMatchedPvSizeKwp(
+    pvSizingDemandKwh,
+    resolvedParameters.specificYieldKwhPerKwp,
+  )
   const pvGenerationKwh =
-    resolvedParameters.pvSizeKwp * resolvedParameters.specificYieldKwhPerKwp
+    effectivePvSizeKwp * resolvedParameters.specificYieldKwhPerKwp
   const usesStorage = scenarioType === 'b2c_pv_speicher' || scenarioType === 'b2c_komplett'
   const usesSmartCharging = scenarioType === 'b2c_komplett'
   const usableStorageKwh = usesStorage
@@ -1032,6 +1221,8 @@ export function calculateScenarioResult(
     remainingGridPeakKw: roundPeak(remainingGridPeakKw),
     batteryPowerKw: roundPeak(resolvedParameters.batteryPowerKw),
     usableStorageKwh: roundPeak(usableStorageKwh),
+    pvSizeKwp: roundPeak(effectivePvSizeKwp),
+    storageSizeKwh: roundPeak(usesStorage ? storageSizeKwh : 0),
     peakLoadReductionKw: roundPeak(batteryPeakCoverageKw),
     projectedPeakLoadKw: roundPeak(peakLoadKw),
     demandChargeSavingsEur: 0,

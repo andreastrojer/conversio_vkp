@@ -31,6 +31,10 @@ const b2bValues = {
     expectedGrowthPercent: 15,
 };
 const b2bParameters = {
+    pvSizeKwp: 10,
+    specificYieldKwhPerKwp: 1050,
+    electricityPriceEurPerKwh: 0.3,
+    feedInTariffEurPerKwh: 0.06772,
     usableStorageShare: 0.9,
     batteryRoundTripEfficiency: 0.9,
     batteryPowerKw: 50,
@@ -115,6 +119,17 @@ function assertEnergyBalances(result) {
     const withoutCharging = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv', { ...baseValues, chargingStations: 0 }, baseParameters);
     const withTwoChargingStations = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv', { ...baseValues, chargingStations: 2 }, baseParameters);
     strict_1.default.equal(withTwoChargingStations.totalDemandKwh - withoutCharging.totalDemandKwh, 2 * baseParameters.evDemandPerChargingStationKwh);
+});
+(0, node_test_1.default)('B2C PV size follows the demand covered by the bundle', () => {
+    const pvOnly = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv', baseValues, baseParameters);
+    const storage = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', baseValues, baseParameters);
+    const complete = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_komplett', baseValues, baseParameters);
+    strict_1.default.equal(pvOnly.pvSizeKwp, 5.6);
+    strict_1.default.equal(storage.pvSizeKwp, 5.6);
+    strict_1.default.equal(complete.pvSizeKwp, 8);
+    strict_1.default.equal(pvOnly.pvGenerationKwh, baseValues.annualConsumption);
+    strict_1.default.equal(storage.pvGenerationKwh, baseValues.annualConsumption);
+    strict_1.default.equal(complete.pvGenerationKwh, baseValues.annualConsumption + baseParameters.evDemandPerChargingStationKwh);
 });
 (0, node_test_1.default)('smart charging affects only the complete bundle', () => {
     const storageWithoutSmart = (0, scenarioCalculator_1.calculateScenarioResult)('b2c_pv_speicher', baseValues, { ...baseParameters, smartChargingShiftShare: 0 });
@@ -240,7 +255,9 @@ function assertEnergyBalances(result) {
     strict_1.default.equal(result.householdDemandKwh, 57_500);
     strict_1.default.equal(result.evDemandKwh, 50_000);
     strict_1.default.equal(result.totalDemandKwh, 107_500);
-    strict_1.default.equal(result.gridImportKwh, result.totalDemandKwh);
+    strict_1.default.ok(result.gridImportKwh < result.totalDemandKwh);
+    strict_1.default.ok(Math.abs(result.totalDemandKwh -
+        (result.selfSuppliedLoadKwh + result.gridImportKwh)) <= 2);
     strict_1.default.equal(result.expectedGrowthPercent, 15);
 });
 (0, node_test_1.default)('B2B storage bundle respects usable capacity and backup reserve', () => {
@@ -252,11 +269,31 @@ function assertEnergyBalances(result) {
     strict_1.default.ok(Math.abs(result.remainingGridPeakKw -
         (result.projectedPeakLoadKw - result.peakLoadReductionKw)) <= 0.2);
 });
-(0, node_test_1.default)('B2B annual savings use the CMS demand charge', () => {
+(0, node_test_1.default)('B2B annual savings combine PV energy value and the CMS demand charge', () => {
     const result = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', b2bValues, b2bParameters);
     const expectedSavings = result.peakLoadReductionKw * b2bParameters.demandChargeEurPerKwYear;
     strict_1.default.ok(Math.abs(result.demandChargeSavingsEur - expectedSavings) <= 1);
-    strict_1.default.equal(result.annualSavingsEur, result.demandChargeSavingsEur);
+    strict_1.default.ok(result.annualSavingsEur > result.demandChargeSavingsEur);
+    strict_1.default.ok(Math.abs(result.annualSavingsEur -
+        (result.baselineCostEur - result.newEnergyCostEur + result.feedInRevenueEur)) <= 2);
+});
+(0, node_test_1.default)('B2B entry bundle already produces PV autarky and energy savings', () => {
+    const entry = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_einstieg', b2bValues, b2bParameters);
+    strict_1.default.equal(entry.pvGenerationKwh, b2bValues.annualConsumption);
+    strict_1.default.ok(entry.autarkyPercent > 0);
+    strict_1.default.ok(entry.annualSavingsEur > 0);
+    strict_1.default.equal(entry.batteryChargeKwh, 0);
+    strict_1.default.equal(entry.batteryDischargeKwh, 0);
+    strict_1.default.equal(entry.peakLoadReductionKw, 0);
+});
+(0, node_test_1.default)('B2B storage increases self-supply beyond the entry bundle', () => {
+    const entry = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_einstieg', b2bValues, b2bParameters);
+    const storage = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', b2bValues, b2bParameters);
+    strict_1.default.ok(storage.batteryChargeKwh > 0);
+    strict_1.default.ok(storage.batteryDischargeKwh > 0);
+    strict_1.default.equal(storage.pvGenerationKwh, 57_500);
+    strict_1.default.ok(storage.autarkyPercent > entry.autarkyPercent);
+    strict_1.default.ok(storage.annualSavingsEur > entry.annualSavingsEur);
 });
 (0, node_test_1.default)('B2B growth and mobility adds only beneficial smart charging peak reduction', () => {
     const storage = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', b2bValues, b2bParameters);
@@ -265,6 +302,9 @@ function assertEnergyBalances(result) {
     const storageWithoutChargingStations = (0, scenarioCalculator_1.calculateScenarioResult)('b2b_autark_abgesichert', { ...b2bValues, chargingStations: 0 }, b2bParameters);
     strict_1.default.ok(growthAndMobility.peakLoadReductionKw > storage.peakLoadReductionKw);
     strict_1.default.ok(growthAndMobility.remainingGridPeakKw < storage.remainingGridPeakKw);
+    strict_1.default.equal(growthAndMobility.pvGenerationKwh, growthAndMobility.totalDemandKwh);
+    strict_1.default.ok(growthAndMobility.autarkyPercent > storage.autarkyPercent);
+    strict_1.default.ok(growthAndMobility.annualSavingsEur >= storage.annualSavingsEur);
     strict_1.default.equal(withoutChargingStations.peakLoadReductionKw, storageWithoutChargingStations.peakLoadReductionKw);
 });
 (0, node_test_1.default)('B2B uses growthDemandShare when the growth slider is absent', () => {

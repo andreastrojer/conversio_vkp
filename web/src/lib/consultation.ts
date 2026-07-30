@@ -13,6 +13,9 @@ export type ConsultationCalculationResult = {
   autarkyPercent?: number
   annualSavingsEur?: number
   peakLoadReductionKw?: number
+  pvSizeKwp?: number
+  storageSizeKwh?: number
+  chargingStations?: number
 }
 
 export type ConsultationBundle = {
@@ -144,11 +147,17 @@ export function normalizeCalculationResult(
   const autarkyPercent = normalizeFiniteNumber(value.autarkyPercent)
   const annualSavingsEur = normalizeFiniteNumber(value.annualSavingsEur)
   const peakLoadReductionKw = normalizeFiniteNumber(value.peakLoadReductionKw)
+  const pvSizeKwp = normalizeFiniteNumber(value.pvSizeKwp)
+  const storageSizeKwh = normalizeFiniteNumber(value.storageSizeKwh)
+  const chargingStations = normalizeFiniteNumber(value.chargingStations)
 
   if (
     autarkyPercent === undefined &&
     annualSavingsEur === undefined &&
-    peakLoadReductionKw === undefined
+    peakLoadReductionKw === undefined &&
+    pvSizeKwp === undefined &&
+    storageSizeKwh === undefined &&
+    chargingStations === undefined
   ) {
     return undefined
   }
@@ -157,6 +166,9 @@ export function normalizeCalculationResult(
     autarkyPercent,
     annualSavingsEur,
     peakLoadReductionKw,
+    pvSizeKwp,
+    storageSizeKwh,
+    chargingStations,
   }
 }
 

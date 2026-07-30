@@ -857,6 +857,18 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`coalesce(
       }
     }
   },
+  "sharedCalculationParameters": *[
+    _type == "appScreen" &&
+    screenType == "scenarioMatrix" &&
+    targetAudience == "b2c" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0].calculatorConfig.calculationParameters[]{
+    _key,
+    key,
+    label,
+    value,
+    unit
+  },
   "fallbackBundleScenarios": *[
     _type == "scenario" &&
     isActive != false &&
