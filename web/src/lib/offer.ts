@@ -269,6 +269,7 @@ export type OfferPageData = {
 
 const offerClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
+const largeOfferImageWidth = 8000
 
 function sortSections(a: OfferSection, b: OfferSection) {
   const aOrder = typeof a.sortOrder === 'number' ? a.sortOrder : Number.POSITIVE_INFINITY
@@ -639,8 +640,8 @@ export async function getOfferPageData(
     const sections = (screen?.sections || []).sort(sortSections)
       .map((section) => ({
         ...section,
-        imageUrl: buildImageUrl(section.image, 2400, undefined, 100),
-        mediaImageUrl: buildImageUrl(section.media?.image, 2400, undefined, 100),
+        imageUrl: buildImageUrl(section.image, largeOfferImageWidth, undefined, 100),
+        mediaImageUrl: buildImageUrl(section.media?.image, largeOfferImageWidth, undefined, 100),
         mediaUrl: resolveMediaUrl(section.media),
         mediaType: section.media?.mediaType,
         mediaAlt: section.media?.altText || section.media?.title || section.title || '',
@@ -691,8 +692,8 @@ export async function getOfferPageData(
       headline: screen?.headline,
       subline: screen?.subline,
       sections,
-      heroImageUrl: buildImageUrl(screen?.heroImage, 2400, undefined, 100),
-      heroMediaImageUrl: buildImageUrl(screen?.heroMedia?.image, 2400, undefined, 100),
+      heroImageUrl: buildImageUrl(screen?.heroImage, largeOfferImageWidth, undefined, 100),
+      heroMediaImageUrl: buildImageUrl(screen?.heroMedia?.image, largeOfferImageWidth, undefined, 100),
       heroMediaUrl: resolveMediaUrl(screen?.heroMedia),
       heroMediaType: screen?.heroMedia?.mediaType,
       heroMediaAlt: screen?.heroMedia?.altText || screen?.heroMedia?.title || '',

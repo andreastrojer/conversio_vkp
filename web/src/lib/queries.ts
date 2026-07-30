@@ -827,6 +827,14 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`coalesce(
       description,
       resultText,
       nextStepText,
+      bundleImage{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      },
+      bundleImageAlt,
       sortOrder,
       isActive,
       includedItems[]{
@@ -883,6 +891,14 @@ export const SCENARIO_MATRIX_PAGE_QUERY = defineQuery(groq`coalesce(
     description,
     resultText,
     nextStepText,
+    bundleImage{
+      ...,
+      "assetUrl": asset->url,
+      "mimeType": asset->mimeType,
+      "extension": asset->extension,
+      "originalFilename": asset->originalFilename
+    },
+    bundleImageAlt,
     sortOrder,
     isActive,
     includedItems[]{

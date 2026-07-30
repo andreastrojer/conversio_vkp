@@ -327,14 +327,25 @@ function buildMailContent({
 async function sendGraphMail({
   accessToken,
   recipientEmail,
+  salesPersonEmail,
   mailContent,
   attachments,
 }: {
   accessToken: string
   recipientEmail: string
+  salesPersonEmail: string
   mailContent: MailContent
   attachments: PdfAttachment[]
 }) {
+  const bccRecipients =
+    salesPersonEmail && salesPersonEmail.toLowerCase() !== recipientEmail.toLowerCase()
+      ? [{
+          emailAddress: {
+            address: salesPersonEmail,
+          },
+        }]
+      : []
+
   const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
     method: 'POST',
     headers: {
@@ -353,6 +364,7 @@ async function sendGraphMail({
             address: recipientEmail,
           },
         }],
+        bccRecipients,
         attachments: attachments.map((attachment) => ({
           '@odata.type': '#microsoft.graph.fileAttachment',
           name: attachment.name,
@@ -418,6 +430,7 @@ export async function POST(request: Request) {
       await sendGraphMail({
         accessToken,
         recipientEmail: payload.recipientEmail,
+        salesPersonEmail,
         mailContent,
         attachments,
       })

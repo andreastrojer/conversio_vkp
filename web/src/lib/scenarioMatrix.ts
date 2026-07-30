@@ -64,6 +64,8 @@ type RawBundleScenario = {
   description?: string | null
   resultText?: string | null
   nextStepText?: string | null
+  bundleImage?: SanityImage
+  bundleImageAlt?: string | null
   sortOrder?: number | null
   isActive?: boolean | null
   includedItems?: Array<{
@@ -157,6 +159,8 @@ export type ScenarioMatrixBundle = {
   description?: string
   resultText?: string
   nextStepText?: string
+  imageUrl?: string
+  imageAlt?: string
   sortOrder?: number
   features: string[]
   includedItems: Array<{
@@ -313,8 +317,8 @@ function resolveImageUrl(image: SanityImage | undefined, width = 2800) {
   return buildLogoUrl(image) || buildImageUrl(image, width, undefined, 100)
 }
 
-function resolveRasterImageUrl(image: SanityImage | undefined, width = 2800) {
-  return buildImageUrl(image, width, undefined, 100) || buildLogoUrl(image)
+function resolveRasterImageUrl(image: SanityImage | undefined, width = 2800, height?: number) {
+  return buildImageUrl(image, width, height, 100) || buildLogoUrl(image)
 }
 
 function findPhotovoltaicOfferSection(sections: RawOfferSection[] | null | undefined) {
@@ -356,6 +360,7 @@ function normalizeBundles(
       }
 
       const categories = (bundle.recommendedCategories || []).filter((category) => category.title?.trim())
+      const bundleImageUrl = resolveRasterImageUrl(bundle.bundleImage, 2200, 1300) || undefined
 
       return [{
         id: bundle._id?.trim() || `bundle-${index}`,
@@ -366,6 +371,8 @@ function normalizeBundles(
         description: bundle.description?.trim() || undefined,
         resultText: bundle.resultText?.trim() || undefined,
         nextStepText: bundle.nextStepText?.trim() || undefined,
+        imageUrl: bundleImageUrl,
+        imageAlt: bundleImageUrl ? bundle.bundleImageAlt?.trim() || title : undefined,
         sortOrder: bundle.sortOrder ?? undefined,
         features: categories.map(
           (category) => category.navigationLabel?.trim() || category.title?.trim() || '',
@@ -466,12 +473,12 @@ export async function getScenarioMatrixPageData(
         ...(screen?.calculatorConfig?.calculationParameters || []),
       ]),
       bundles,
-      heroImageUrl: resolveImageUrl(heroImage, 3200),
+      heroImageUrl: resolveImageUrl(heroImage, 8000),
       heroImageAlt: screen?.heroMedia?.altText?.trim() || screen?.heroMedia?.title?.trim() || '',
-      heroImage2Url: resolveImageUrl(heroImage2, 3200),
+      heroImage2Url: resolveImageUrl(heroImage2, 8000),
       heroImage2Alt: screen?.heroMedia?.altText?.trim() || screen?.heroMedia?.title?.trim() || '',
       primaryCta: screen?.primaryCta || null,
-      offerImageUrl: resolveRasterImageUrl(offerImage, 3200),
+      offerImageUrl: resolveRasterImageUrl(offerImage, 8000),
       offerImageAlt:
         offerSection?.media?.altText?.trim() ||
         offerSection?.media?.title?.trim() ||

@@ -682,13 +682,35 @@ function BundleCard({
     ? 'block h-full'
     : 'block h-[38px] max-[1600px]:h-[42px] [@media(max-height:920px)]:h-[42px]'
   const imageSlotClassName = isWireframeLayout
-    ? `flex h-full w-[316px] items-start justify-center ${isBusiness ? 'pt-[10px]' : 'pt-[14px]'}`
+    ? `flex h-full w-[316px] items-start justify-center overflow-visible ${
+        isBusiness ? 'pt-[6px]' : 'pt-[14px]'
+      }`
     : 'flex w-[315px] items-start justify-center pt-[24px]'
   const imageClassName = isWireframeLayout
     ? isBusiness
-      ? 'h-[196px] w-[280px]'
+      ? 'h-[230px] w-[390px] max-w-none'
       : 'h-[214px] w-[316px]'
     : 'h-[160px] w-[315px]'
+  const imageFitClassName = isWireframeLayout && isBusiness
+    ? 'object-contain object-center'
+    : 'object-contain object-center'
+  const businessBundleImageClassName = (() => {
+    if (!isWireframeLayout || !isBusiness) {
+      return ''
+    }
+
+    const scenarioIdentity = `${bundle.scenarioType || ''} ${bundle.title || ''}`.toLowerCase()
+
+    if (scenarioIdentity.includes('einstieg')) {
+      return 'translate-y-[-48px] scale-[1.34]'
+    }
+
+    if (scenarioIdentity.includes('autark') || scenarioIdentity.includes('abgesichert')) {
+      return 'translate-y-[-25px] scale-[1.22]'
+    }
+
+    return 'scale-100'
+  })()
   const resultClassName = isWireframeLayout
     ? `h-full ${isBusiness ? 'pt-[2px] text-[#efb804]' : 'text-[#2a2e33]'}`
     : 'mt-[24px] text-[#efb804]'
@@ -725,7 +747,9 @@ function BundleCard({
           <img
             src={imageUrl}
             alt={imageAlt}
-            className={`${imageClassName} object-contain object-center transition-transform duration-300 group-hover:scale-[1.015]`}
+            className={`relative z-[4] ${imageClassName} ${imageFitClassName} ${businessBundleImageClassName} transition-transform duration-300 ${
+              isBusiness ? '' : 'group-hover:scale-[1.015]'
+            }`}
           />
         ) : null}
       </span>
@@ -1130,8 +1154,10 @@ export function ScenarioMatrixScreen({
                   <img
                     src={heroImageUrl}
                     alt={heroImageAlt}
-                    className={`pointer-events-none absolute bottom-[-92px] right-[-42px] z-0 h-[840px] w-[1100px] object-contain object-right-bottom ${
-                      isBusiness ? '' : 'brightness-0 opacity-30'
+                    className={`pointer-events-none absolute z-0 object-contain object-right-bottom ${
+                      isBusiness
+                        ? 'bottom-[-142px] right-[-130px] h-[840px] w-[1100px]'
+                        : 'bottom-[-92px] right-[-42px] h-[840px] w-[1100px] brightness-0 opacity-30'
                     }`}
                 />
               ) : null}
@@ -1190,8 +1216,8 @@ export function ScenarioMatrixScreen({
                     <BundleCard
                       key={bundle.id}
                       bundle={bundle}
-                      imageUrl={bundleImageUrl}
-                      imageAlt={bundleImageAlt}
+                      imageUrl={bundle.imageUrl || bundleImageUrl}
+                      imageAlt={bundle.imageAlt || bundleImageAlt}
                       deltaIconUrl={heroImage2Url}
                       deltaIconAlt={heroImage2Alt}
                       result={calculatedBundles[index]}

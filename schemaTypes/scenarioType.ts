@@ -76,6 +76,22 @@ export const scenarioType = defineType({
       ],
     }),
     defineField({
+      name: 'bundleImage',
+      title: 'Bundle-Bild Matrix',
+      type: 'image',
+      group: 'content',
+      description:
+        'Optionales Bild für dieses Szenario in der Matrix-Kalkulation. Für B2B kann damit jedes Bundle ein eigenes Bild bekommen.',
+      options: { hotspot: true },
+    }),
+    defineField({
+      name: 'bundleImageAlt',
+      title: 'Alt-Text Bundle-Bild',
+      type: 'string',
+      group: 'content',
+      description: 'Optional. Falls leer, wird der Szenario-Titel als Alt-Text verwendet.',
+    }),
+    defineField({
       name: 'scenarioType',
       title: 'Szenario-Typ',
       type: 'string',
@@ -139,9 +155,13 @@ export const scenarioType = defineType({
   ],
   orderings: [{ title: 'Reihenfolge', name: 'sortOrderAsc', by: [{ field: 'sortOrder', direction: 'asc' }] }],
   preview: {
-    select: { title: 'title', scenarioType: 'scenarioType', targetGroup: 'targetGroup' },
-    prepare({ title, scenarioType, targetGroup }) {
-      return { title: title || 'Unbenanntes Szenario', subtitle: `${scenarioType || 'kein Typ'} · ${targetGroup || 'keine Zielgruppe'}` }
+    select: { title: 'title', scenarioType: 'scenarioType', targetGroup: 'targetGroup', media: 'bundleImage' },
+    prepare({ title, scenarioType, targetGroup, media }) {
+      return {
+        title: title || 'Unbenanntes Szenario',
+        subtitle: `${scenarioType || 'kein Typ'} · ${targetGroup || 'keine Zielgruppe'}`,
+        media,
+      }
     },
   },
 })

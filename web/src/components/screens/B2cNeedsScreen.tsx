@@ -183,51 +183,21 @@ function PlusMarker({media, className}: {media?: B2cMedia; className?: string}) 
   )
 }
 
-function StepMarker({
-  number,
-  media,
-}: {
-  number: number
-  media?: B2cMedia
-}) {
-  if (media) {
-    return (
-      <span className="relative z-[1] grid h-[49px] w-[43px] shrink-0 place-items-center">
-        <MarkerMedia media={media} className="absolute inset-0 h-full w-full" />
-        <span className="relative z-[1] text-[16px] font-medium leading-none text-white">
-          {number}
-        </span>
-      </span>
-    )
-  }
-
+function AccordionMarker({active}: {active: boolean}) {
   return (
-    <span
-      className="grid h-[46px] w-[46px] shrink-0 place-items-center bg-white [clip-path:polygon(30%_0,70%_0,100%_30%,100%_70%,70%_100%,30%_100%,0_70%,0_30%)]"
+    <svg
+      viewBox="0 0 22 22"
+      className={`h-[22px] w-[22px] shrink-0 ${active ? 'text-[#efb804]' : 'text-white'}`}
       aria-hidden="true"
     >
-      <span className="grid h-[39px] w-[39px] place-items-center bg-[#34393e] text-[16px] font-medium leading-none text-white [clip-path:polygon(30%_0,70%_0,100%_30%,100%_70%,70%_100%,30%_100%,0_70%,0_30%)]">
-        {number}
-      </span>
-    </span>
-  )
-}
-
-function ArrowMedia({
-  media,
-  direction,
-}: {
-  media?: B2cMedia
-  direction: 'up' | 'down'
-}) {
-  if (media) {
-    return <MarkerMedia media={media} className="h-[12px] w-[12px]" />
-  }
-
-  return direction === 'up' ? (
-    <ChevronUp className="h-[14px] w-[14px]" strokeWidth={1.8} aria-hidden="true" />
-  ) : (
-    <ChevronDown className="h-[14px] w-[14px]" strokeWidth={1.8} aria-hidden="true" />
+      <path
+        d="M7.1 2.5h7.8l4.6 4.6v7.8l-4.6 4.6H7.1l-4.6-4.6V7.1L7.1 2.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
@@ -258,96 +228,65 @@ function OverviewContent({sections}: {sections: B2cDetailSection[]}) {
   )
 }
 
-function FunctionContent({
-  tab,
-  processMarkerMedia,
-}: {
-  tab: B2cDetailTab
-  processMarkerMedia?: B2cMedia
-}) {
+function FunctionContent({tab}: {tab: B2cDetailTab}) {
   const steps = tab.functionSteps
-  const configuredVisibleSteps = tab.functionNavigation?.visibleSteps
-  const visibleStepCount =
-    typeof configuredVisibleSteps === 'number'
-      ? Math.min(steps.length, Math.max(1, configuredVisibleSteps))
-      : steps.length
-  const lastPageStartIndex =
-    steps.length > 0
-      ? Math.floor((steps.length - 1) / visibleStepCount) * visibleStepCount
-      : 0
-  const [startIndex, setStartIndex] = useState(0)
-  const safeStartIndex = Math.min(startIndex, lastPageStartIndex)
-  const visibleSteps = steps.slice(safeStartIndex, safeStartIndex + visibleStepCount)
-  const markerMedia = tab.functionNavigation?.stepMarkerMedia || processMarkerMedia
+  const [activeStepKey, setActiveStepKey] = useState(steps[0]?._key || '')
+  const safeActiveStepKey =
+    steps.some((step) => step._key === activeStepKey) ? activeStepKey : steps[0]?._key || ''
 
   return (
-    <div className="relative w-[500px]">
-      <div className="absolute right-[50px] top-[2px] z-[3] flex w-[24px] flex-col gap-[4px]">
-        <button
-          type="button"
-          className="grid h-[24px] w-[24px] place-items-center rounded-full bg-white text-[#efb804] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804] disabled:cursor-default disabled:bg-white/45 disabled:text-white/80"
-          onClick={() =>
-            setStartIndex((current) => Math.max(0, current - visibleStepCount))
-          }
-          disabled={safeStartIndex === 0}
-          aria-label="Vorherige Funktionsschritte"
-          title="Vorherige Funktionsschritte"
-        >
-          <ArrowMedia media={tab.functionNavigation?.upArrowMedia} direction="up" />
-        </button>
-        <button
-          type="button"
-          className="grid h-[24px] w-[24px] place-items-center rounded-full bg-white text-[#efb804] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#efb804] disabled:cursor-default disabled:bg-white/45 disabled:text-white/80"
-          onClick={() =>
-            setStartIndex((current) =>
-              Math.min(lastPageStartIndex, current + visibleStepCount),
-            )
-          }
-          disabled={safeStartIndex === lastPageStartIndex}
-          aria-label="Weitere Funktionsschritte"
-          title="Weitere Funktionsschritte"
-        >
-          <ArrowMedia media={tab.functionNavigation?.downArrowMedia} direction="down" />
-        </button>
-      </div>
+    <div className="w-[500px]">
+      {steps.map((step) => {
+        const isActive = step._key === safeActiveStepKey
+        const contentId = `${step._key}-function-content`
 
-      <ol className="relative flex min-h-[390px] flex-col justify-start">
-        {visibleSteps.map((step, index) => {
-          const isFinalStep = safeStartIndex + index === steps.length - 1
-
-          return (
-            <li
-              key={step._key}
-              className="relative z-[1] grid min-h-[142px] grid-cols-[46px_minmax(0,1fr)] items-start gap-[44px]"
+        return (
+          <div
+            key={step._key}
+            className={
+              isActive
+                ? 'pb-[34px]'
+                : 'border-b-2 border-white/90'
+            }
+          >
+            <button
+              type="button"
+              className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans text-[22px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:text-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[25px] ${
+                isActive ? 'text-[#efb804]' : 'text-white'
+              }`}
+              aria-expanded={isActive}
+              aria-controls={contentId}
+              onClick={() => setActiveStepKey(step._key)}
             >
-              {!isFinalStep ? (
-                <span
-                  className={`absolute left-[20px] top-[47px] z-0 w-[3px] bg-white ${
-                    index === visibleSteps.length - 1 ? '-bottom-[320px]' : '-bottom-[2px]'
-                  }`}
-                  aria-hidden="true"
-                />
-              ) : null}
-              <StepMarker number={step.stepNumber} media={markerMedia} />
-              <div className="max-w-[310px] pt-[8px]">
-                <h2 className="text-[22px] font-bold uppercase leading-[1.08] text-white max-[1600px]:text-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[25px]">
-                  {step.title}
-                </h2>
-                <div className="mt-[12px] space-y-[10px] text-[20px] leading-[1.35] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]">
-                  {splitParagraphs(step.text).map((paragraph, paragraphIndex) => (
-                    <p
-                      key={`${step._key}-paragraph-${paragraphIndex}`}
-                      className="whitespace-pre-line"
-                    >
-                      {paragraph}
-                    </p>
-                  ))}
+              <span>{step.title}</span>
+              <AccordionMarker active={isActive} />
+            </button>
+
+            {isActive ? (
+              <motion.div
+                key={contentId}
+                id={contentId}
+                initial={{opacity: 0, y: -6}}
+                animate={{opacity: 1, y: 0}}
+                transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
+              >
+                <div className="pb-[18px] pt-[28px]">
+                  <div className="max-w-[420px] space-y-[10px] text-[20px] font-normal leading-[1.35] tracking-[0.025em] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]">
+                    {splitParagraphs(step.text).map((paragraph, paragraphIndex) => (
+                      <p
+                        key={`${step._key}-paragraph-${paragraphIndex}`}
+                        className="whitespace-pre-line"
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </li>
-          )
-        })}
-      </ol>
+              </motion.div>
+            ) : null}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -735,7 +674,6 @@ export function B2cNeedsScreen({
                       <FunctionContent
                         key={activeTab._key}
                         tab={activeTab}
-                        processMarkerMedia={selectedProduct.processMarkerMedia}
                       />
                     ) : activeTab?.key === 'interplay' ? (
                       <InterplayContent
@@ -747,12 +685,6 @@ export function B2cNeedsScreen({
                 </div>
               </div>
 
-              {activeTab?.key === 'functions' ? (
-                <span
-                  className="absolute bottom-0 left-[80px] z-[3] h-[36px] w-[3px] bg-white"
-                  aria-hidden="true"
-                />
-              ) : null}
             </motion.section>
           ) : (
             <motion.section

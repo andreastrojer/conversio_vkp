@@ -318,7 +318,7 @@ function normalizeDetailTabs(
             (row) => row.label?.trim() || row.value?.trim(),
           ),
           imageUrl: resolveImageUrl(section.image, 8000),
-          mediaImageUrl: resolveImageUrl(section.media?.image),
+          mediaImageUrl: resolveImageUrl(section.media?.image, 8000),
           mediaUrl: resolveMediaUrl(section.media),
           mediaType: section.media?.mediaType,
           mediaAlt: section.media?.altText || section.media?.title || section.title || fallbackTitle,
@@ -394,7 +394,7 @@ function normalizeProducts(products: ProductDocument[] | null | undefined): What
       catalogMediaAlt:
         product.catalogMedia?.altText || product.catalogMedia?.title || product.catalogLabel || product.title,
       detailImageUrl: resolveImageUrl(product.detailImage, 8000),
-      detailMediaImageUrl: resolveImageUrl(product.detailMedia?.image),
+      detailMediaImageUrl: resolveImageUrl(product.detailMedia?.image, 8000),
       detailMediaUrl: resolveMediaUrl(product.detailMedia),
       detailMediaType: product.detailMedia?.mediaType,
       detailMediaAlt:

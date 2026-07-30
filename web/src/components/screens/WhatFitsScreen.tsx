@@ -926,8 +926,14 @@ export function WhatFitsScreen({
             >
               <MediaLayer
                 media={catalogMedia}
-                className="absolute bottom-[8px] left-[20px] h-[810px] w-[700px]"
-                imageClassName="h-full w-full object-contain object-left-bottom"
+                className={
+                  isBusiness
+                    ? 'absolute bottom-[-18px] left-[-10px] h-[900px] w-[780px]'
+                    : 'absolute bottom-[8px] left-[20px] h-[810px] w-[700px]'
+                }
+                imageClassName={`h-full w-full object-contain ${
+                  isBusiness ? 'object-center-bottom' : 'object-left-bottom'
+                }`}
               />
 
               <div className="absolute right-[60px] top-[270px] w-[650px]">
@@ -1081,6 +1087,10 @@ export function WhatFitsScreen({
                         }`
                     : emphasizesBusinessDetailImage
                       ? 'absolute bottom-[-34px] left-[-100px] h-[740px] w-[68cqw]'
+                    : isEnergyCommunity
+                      ? 'absolute bottom-[-58px] left-[210px] h-[740px] w-[60cqw]'
+                    : isBusiness
+                      ? 'absolute bottom-[70px] left-[42px] h-[650px] w-[60cqw]'
                     : isTechnicalTab
                       ? 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
                     : 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
@@ -1088,6 +1098,10 @@ export function WhatFitsScreen({
                 imageClassName={
                   selectedModel && activeTab?.key === 'overview'
                     ? 'h-full w-full object-contain object-center'
+                    : isEnergyCommunity
+                      ? 'h-full w-full object-contain object-left-bottom'
+                    : isBusiness
+                      ? 'h-full w-full object-contain object-left'
                     : isTechnicalTab
                       ? 'h-full w-full object-cover object-left-top'
                     : 'h-full w-full object-cover object-left-top'
