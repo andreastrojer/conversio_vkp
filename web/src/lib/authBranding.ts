@@ -21,6 +21,11 @@ export type SanityImage = {
   hotspot?: unknown
 } | null
 
+type SanityImageHotspot = {
+  x?: number | null
+  y?: number | null
+}
+
 export type LoginScreenDocument = {
   title?: string | null
   screenKey?: string | null
@@ -133,6 +138,20 @@ export function buildImageUrl(image: SanityImage | undefined, width: number, hei
   } catch {
     return undefined
   }
+}
+
+function isValidHotspotCoordinate(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+}
+
+export function resolveImageObjectPosition(image: SanityImage | undefined) {
+  const hotspot = image?.hotspot as SanityImageHotspot | undefined
+
+  if (!isValidHotspotCoordinate(hotspot?.x) || !isValidHotspotCoordinate(hotspot?.y)) {
+    return undefined
+  }
+
+  return `${hotspot.x * 100}% ${hotspot.y * 100}%`
 }
 
 export function buildLogoUrl(image: SanityImage | undefined) {

@@ -1,5 +1,5 @@
 import {getAboutPageData, type ChapterNavigationItem} from '@/lib/about'
-import {buildImageUrl, buildLogoUrl, type SanityImage} from '@/lib/authBranding'
+import {buildImageUrl, buildLogoUrl, resolveImageObjectPosition, type SanityImage} from '@/lib/authBranding'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {WHAT_FITS_PAGE_QUERY} from '@/lib/queries'
 import {sanityClient} from '@/lib/sanity'
@@ -25,7 +25,9 @@ export type ProductDetailSection = {
   text?: string | null
   specificationRows: ProductSpecificationRow[]
   imageUrl?: string
+  imageObjectPosition?: string
   mediaImageUrl?: string
+  mediaImageObjectPosition?: string
   mediaUrl?: string
   mediaType?: string | null
   mediaAlt: string
@@ -58,9 +60,11 @@ export type ProductModel = {
   modelGroupOrder?: number | null
   sortOrder?: number | null
   imageUrl?: string
+  imageObjectPosition?: string
   selectionCardBackgroundUrl?: string
   selectionCardBackground2Url?: string
   mediaImageUrl?: string
+  mediaImageObjectPosition?: string
   mediaUrl?: string
   mediaType?: string | null
   mediaAlt: string
@@ -78,12 +82,16 @@ export type WhatFitsProduct = {
   navigationLabel: string
   sortOrder?: number | null
   catalogImageUrl?: string
+  catalogImageObjectPosition?: string
   catalogMediaImageUrl?: string
+  catalogMediaImageObjectPosition?: string
   catalogMediaUrl?: string
   catalogMediaType?: string | null
   catalogMediaAlt: string
   detailImageUrl?: string
+  detailImageObjectPosition?: string
   detailMediaImageUrl?: string
+  detailMediaImageObjectPosition?: string
   detailMediaUrl?: string
   detailMediaType?: string | null
   detailMediaAlt: string
@@ -139,6 +147,14 @@ type ProductDocument = {
       _key?: string | null
       title?: string | null
       text?: string | null
+      isActive?: boolean | null
+    }> | null
+    functionSteps?: Array<{
+      _key?: string | null
+      stepNumber?: number | null
+      title?: string | null
+      text?: string | null
+      sortOrder?: number | null
       isActive?: boolean | null
     }> | null
     sections?: Array<{
@@ -305,24 +321,50 @@ function normalizeDetailTabs(
           title: item.title,
           text: item.text?.trim() || null,
         })),
-      sections: (tab.sections || [])
-        .filter(
-          (section): section is NonNullable<typeof tab.sections>[number] & {_key: string} =>
-            Boolean(section._key && section.isActive !== false),
-        )
-        .map((section) => ({
-          _key: section._key,
-          title: section.title,
-          text: section.text,
-          specificationRows: (section.specificationRows || []).filter(
-            (row) => row.label?.trim() || row.value?.trim(),
-          ),
-          imageUrl: resolveImageUrl(section.image, 8000),
-          mediaImageUrl: resolveImageUrl(section.media?.image, 8000),
-          mediaUrl: resolveMediaUrl(section.media),
-          mediaType: section.media?.mediaType,
-          mediaAlt: section.media?.altText || section.media?.title || section.title || fallbackTitle,
-        })),
+      sections:
+        tab.key === 'functions' && tab.functionSteps?.length
+          ? tab.functionSteps
+              .filter(
+                (step): step is NonNullable<typeof tab.functionSteps>[number] & {_key: string} =>
+                  Boolean(step._key && step.title?.trim() && step.isActive !== false),
+              )
+              .sort((a, b) => {
+                const first = typeof a.sortOrder === 'number' ? a.sortOrder : Number.POSITIVE_INFINITY
+                const second = typeof b.sortOrder === 'number' ? b.sortOrder : Number.POSITIVE_INFINITY
+
+                if (first !== second) {
+                  return first - second
+                }
+
+                return (a.stepNumber || 0) - (b.stepNumber || 0)
+              })
+              .map((step) => ({
+                _key: step._key,
+                title: step.title,
+                text: step.text,
+                specificationRows: [],
+                mediaAlt: step.title || fallbackTitle,
+              }))
+          : (tab.sections || [])
+              .filter(
+                (section): section is NonNullable<typeof tab.sections>[number] & {_key: string} =>
+                  Boolean(section._key && section.isActive !== false),
+              )
+              .map((section) => ({
+                _key: section._key,
+                title: section.title,
+                text: section.text,
+                specificationRows: (section.specificationRows || []).filter(
+                  (row) => row.label?.trim() || row.value?.trim(),
+                ),
+                imageUrl: resolveImageUrl(section.image, 8000),
+                imageObjectPosition: resolveImageObjectPosition(section.image),
+                mediaImageUrl: resolveImageUrl(section.media?.image, 8000),
+                mediaImageObjectPosition: resolveImageObjectPosition(section.media?.image),
+                mediaUrl: resolveMediaUrl(section.media),
+                mediaType: section.media?.mediaType,
+                mediaAlt: section.media?.altText || section.media?.title || section.title || fallbackTitle,
+              })),
     }))
 }
 
@@ -356,9 +398,11 @@ function normalizeModels(models: ProductModelDocument[] | null | undefined): Pro
       modelGroupOrder: model.modelGroupOrder,
       sortOrder: model.sortOrder,
       imageUrl: resolveImageUrl(model.image, 8000),
+      imageObjectPosition: resolveImageObjectPosition(model.image),
       selectionCardBackgroundUrl: resolveImageUrl(model.selectionCardBackground),
       selectionCardBackground2Url: resolveImageUrl(model.selectionCardBackground2),
       mediaImageUrl: resolveImageUrl(model.media?.image),
+      mediaImageObjectPosition: resolveImageObjectPosition(model.media?.image),
       mediaUrl: resolveMediaUrl(model.media),
       mediaType: model.media?.mediaType,
       mediaAlt: model.media?.altText || model.media?.title || model.title,
@@ -388,13 +432,17 @@ function normalizeProducts(products: ProductDocument[] | null | undefined): What
       navigationLabel: product.navigationLabel?.trim() || product.title.trim(),
       sortOrder: product.sortOrder,
       catalogImageUrl: resolveImageUrl(product.catalogImage),
+      catalogImageObjectPosition: resolveImageObjectPosition(product.catalogImage),
       catalogMediaImageUrl: resolveImageUrl(product.catalogMedia?.image),
+      catalogMediaImageObjectPosition: resolveImageObjectPosition(product.catalogMedia?.image),
       catalogMediaUrl: resolveMediaUrl(product.catalogMedia),
       catalogMediaType: product.catalogMedia?.mediaType,
       catalogMediaAlt:
         product.catalogMedia?.altText || product.catalogMedia?.title || product.catalogLabel || product.title,
       detailImageUrl: resolveImageUrl(product.detailImage, 8000),
+      detailImageObjectPosition: resolveImageObjectPosition(product.detailImage),
       detailMediaImageUrl: resolveImageUrl(product.detailMedia?.image, 8000),
+      detailMediaImageObjectPosition: resolveImageObjectPosition(product.detailMedia?.image),
       detailMediaUrl: resolveMediaUrl(product.detailMedia),
       detailMediaType: product.detailMedia?.mediaType,
       detailMediaAlt:

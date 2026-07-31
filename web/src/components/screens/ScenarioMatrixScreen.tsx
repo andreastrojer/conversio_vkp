@@ -687,9 +687,17 @@ function BundleCard({
     ? 'h-[326px] w-[480px] max-w-none'
     : 'h-[160px] w-[315px]'
   const imageFitClassName = 'object-contain object-center'
+  const isB2cPvBundle = isWireframeLayout && !isBusiness && bundle.scenarioType === 'b2c_pv'
+  const isB2cCompleteBundle = isWireframeLayout && !isBusiness && bundle.scenarioType === 'b2c_komplett'
   const bundleImageNudgeClassName =
-    isWireframeLayout && (bundle.scenarioType === 'b2c_pv' || bundle.scenarioType === 'b2b_einstieg')
-      ? 'translate-y-[-18px] scale-[1.08]'
+    isB2cPvBundle
+      ? 'translate-y-[-34px] origin-top scale-[1.1]'
+      : isWireframeLayout && bundle.scenarioType === 'b2b_einstieg'
+        ? 'translate-y-[-30px] scale-[1.08]'
+        : isWireframeLayout && bundle.scenarioType === 'b2b_autark_abgesichert'
+          ? 'translate-y-[-12px]'
+      : isB2cCompleteBundle
+        ? 'origin-top scale-[1.1]'
       : ''
   const resultClassName = isWireframeLayout
     ? `h-full ${isBusiness ? 'pt-[2px] text-[#efb804]' : 'text-[#2a2e33]'}`
@@ -728,7 +736,7 @@ function BundleCard({
             src={imageUrl}
             alt={imageAlt}
             className={`${imageClassName} ${imageFitClassName} ${bundleImageNudgeClassName} transition-transform duration-300 ${
-              isBusiness ? '' : 'group-hover:scale-[1.015]'
+              isBusiness || isB2cPvBundle || isB2cCompleteBundle ? '' : 'group-hover:scale-[1.015]'
             }`}
           />
         ) : null}
@@ -1215,25 +1223,37 @@ export function ScenarioMatrixScreen({
         </AnimatePresence>
 
         {isCalculation && calculationCtaLabel ? (
-          <div className="absolute bottom-[58px] right-[72px] z-[8] w-[262px] max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-auto [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-auto [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[52px] [@media(min-width:768px)_and_(max-width:1366px)]:left-auto [@media(min-width:768px)_and_(max-width:1366px)]:right-[72px]">
+          <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[8] flex items-end justify-between max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-[60px] [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-[60px] [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[52px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[72px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[72px]">
             <Link
-              href={calculationCtaHrefWithState}
-              onClick={() => {
-                if (activeBundle) {
-                  saveScenarioSelection({
-                    customerType,
-                    bundle: activeBundle,
-                    matrixValues: values,
-                    calculationResult: toConsultationCalculationResult(activeBundleResult),
-                  })
-                }
-              }}
-              className="group flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              href={`/needs?type=${customerType}`}
+              className="group w-[332px] text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
-              <span>{calculationCtaLabel}</span>
-              <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
+              <span className="flex items-center justify-between pb-[20px]">
+                <ArrowLeft className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1" strokeWidth={2.8} aria-hidden="true" />
+                <span>Was passt zu Ihnen</span>
+              </span>
+              <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
             </Link>
-            <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+            <div className="w-[262px]">
+              <Link
+                href={calculationCtaHrefWithState}
+                onClick={() => {
+                  if (activeBundle) {
+                    saveScenarioSelection({
+                      customerType,
+                      bundle: activeBundle,
+                      matrixValues: values,
+                      calculationResult: toConsultationCalculationResult(activeBundleResult),
+                    })
+                  }
+                }}
+                className="group flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              >
+                <span>{calculationCtaLabel}</span>
+                <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
+              </Link>
+              <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+            </div>
           </div>
         ) : null}
 
@@ -1260,7 +1280,7 @@ export function ScenarioMatrixScreen({
               )}
             </Link>
 
-            <div className={`relative z-[1] flex w-auto items-center justify-start gap-[40px] ${isBusiness ? 'px-[28px]' : 'pl-[10px] pr-[42px]'}`}>
+            <div className={`relative z-[1] flex w-auto items-center justify-start gap-[40px] ${isBusiness ? 'pl-[10px] pr-[36px]' : 'pl-[10px] pr-[42px]'}`}>
               {bottomNavigation.map((item) => {
                 const href = bottomNavigationHref(item, customerType)
                 const isMatrix = item.kind === 'screen' && Boolean(item.href?.includes('scenario-matrix'))

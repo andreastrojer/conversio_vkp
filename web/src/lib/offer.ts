@@ -219,7 +219,8 @@ export type B2cHouseHotspot = {
   yPercent: number
   sortOrder?: number | null
   media?: B2cMedia
-  product: B2cProduct
+  product?: B2cProduct
+  productSlug: string
 }
 
 export type B2cHouseConfig = {
@@ -518,6 +519,7 @@ function normalizeB2cHouseConfig(
     const product = hotspot.product?._id
       ? productsById.get(hotspot.product._id)
       : undefined
+    const fallbackSlug = hotspot.product?.slug?.trim()
     const xPercent = hotspot.xPercent
     const yPercent = hotspot.yPercent
 
@@ -525,7 +527,13 @@ function normalizeB2cHouseConfig(
       !hotspot._key ||
       !hotspot.label?.trim() ||
       hotspot.isActive === false ||
-      !product ||
+      (!product && !fallbackSlug) ||
+      hotspot.product?.isActive === false ||
+      !(
+        product ||
+        hotspot.product?.targetGroup === 'b2c' ||
+        hotspot.product?.targetGroup === 'both'
+      ) ||
       typeof xPercent !== 'number' ||
       xPercent < 0 ||
       xPercent > 100 ||
@@ -533,6 +541,11 @@ function normalizeB2cHouseConfig(
       yPercent < 0 ||
       yPercent > 100
     ) {
+      return []
+    }
+
+    const productSlug = product?.slug || fallbackSlug
+    if (!productSlug) {
       return []
     }
 
@@ -544,6 +557,7 @@ function normalizeB2cHouseConfig(
       sortOrder: hotspot.sortOrder,
       media: normalizeB2cMedia(hotspot.media, hotspot.label, 320) || defaultHotspotMedia,
       product,
+      productSlug,
     }]
   })
 

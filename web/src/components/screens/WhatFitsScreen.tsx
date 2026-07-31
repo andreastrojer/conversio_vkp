@@ -58,6 +58,7 @@ type ResolvedMedia = {
   kind: 'image' | 'video' | 'empty'
   url?: string
   alt: string
+  objectPosition?: string
 }
 
 const patternClassName =
@@ -92,6 +93,7 @@ function resolveCatalogMedia(product: WhatFitsProduct): ResolvedMedia {
       kind: 'image',
       url: product.catalogMediaImageUrl,
       alt: product.catalogMediaAlt,
+      objectPosition: product.catalogMediaImageObjectPosition,
     }
   }
 
@@ -110,6 +112,7 @@ function resolveCatalogMedia(product: WhatFitsProduct): ResolvedMedia {
       kind: 'image',
       url: product.catalogImageUrl,
       alt: product.catalogLabel,
+      objectPosition: product.catalogImageObjectPosition,
     }
   }
 
@@ -126,6 +129,7 @@ function resolveDetailMedia(
       kind: 'image',
       url: section.mediaImageUrl,
       alt: section.mediaAlt,
+      objectPosition: section.mediaImageObjectPosition,
     }
   }
 
@@ -144,6 +148,7 @@ function resolveDetailMedia(
       kind: 'image',
       url: section.imageUrl,
       alt: section.title || product.detailTitle,
+      objectPosition: section.imageObjectPosition,
     }
   }
 
@@ -153,6 +158,7 @@ function resolveDetailMedia(
       kind: 'image',
       url: product.detailMediaImageUrl,
       alt: product.detailMediaAlt,
+      objectPosition: product.detailMediaImageObjectPosition,
     }
   }
 
@@ -171,6 +177,7 @@ function resolveDetailMedia(
       kind: 'image',
       url: product.detailImageUrl,
       alt: product.detailTitle,
+      objectPosition: product.detailImageObjectPosition,
     }
   }
 
@@ -180,6 +187,7 @@ function resolveDetailMedia(
       kind: 'image',
       url: product.catalogImageUrl,
       alt: product.catalogLabel,
+      objectPosition: product.catalogImageObjectPosition,
     }
   }
 
@@ -217,6 +225,7 @@ function MediaLayer({
               className={`${imageClassName} ${
                 isSvgImage ? '[image-rendering:-webkit-optimize-contrast]' : ''
               }`}
+              style={media.objectPosition ? {objectPosition: media.objectPosition} : undefined}
               decoding="sync"
               fetchPriority="high"
             />
@@ -341,6 +350,12 @@ function isHydrogenStorageProduct(product?: WhatFitsProduct) {
   return value.includes('wasserstoffspeicher') || value.includes('hydrogen')
 }
 
+function isTransformerProduct(product?: WhatFitsProduct) {
+  const value = `${normalizeTabValue(product?.categoryType)} ${normalizeTabValue(product?.slug)} ${normalizeTabValue(product?.title)}`
+
+  return value.includes('transformator') || value.includes('transformer')
+}
+
 type ModelCoolingType = 'air' | 'immersion'
 
 function normalizeCoolingType(value?: string | null): ModelCoolingType | null {
@@ -362,6 +377,12 @@ function getCoolingTypeFallbackOrder(type: ModelCoolingType) {
 }
 
 function resolveModelCoolingType(model?: ProductModel | null): ModelCoolingType | null {
+  const rawType = normalizeTabValue(model?.coolingType)
+
+  if (rawType === 'transformer' || rawType.includes('transformator')) {
+    return null
+  }
+
   const type = normalizeCoolingType(model?.coolingType)
 
   if (type) {
@@ -369,6 +390,10 @@ function resolveModelCoolingType(model?: ProductModel | null): ModelCoolingType 
   }
 
   if (typeof model?.modelGroupOrder === 'number' && model.modelGroupOrder > 0) {
+    if (model.modelGroupOrder >= 30) {
+      return null
+    }
+
     return model.modelGroupOrder >= getCoolingTypeFallbackOrder('immersion') ? 'immersion' : 'air'
   }
 
@@ -376,9 +401,20 @@ function resolveModelCoolingType(model?: ProductModel | null): ModelCoolingType 
 }
 
 function getCoolingGroupLabel(product: WhatFitsProduct, type: ModelCoolingType) {
-  const label = type === 'air' ? product.modelGroupLabels?.air : product.modelGroupLabels?.immersion
+  const label =
+    type === 'air'
+      ? product.modelGroupLabels?.air
+      : product.modelGroupLabels?.immersion
 
-  return label?.trim() || (type === 'air' ? 'LUFTGEKÜHLT' : 'TAUCHGEKÜHLT')
+  if (label?.trim()) {
+    return label.trim()
+  }
+
+  if (type === 'air') {
+    return 'LUFTGEKÜHLT'
+  }
+
+  return 'TAUCHGEKÜHLT'
 }
 
 function getModelCoolingGroups(product: WhatFitsProduct | undefined) {
@@ -433,11 +469,23 @@ function resolveModelMedia(
   }
 
   if (section?.mediaImageUrl) {
-    return {key: `${section._key}-model-section-media-image`, kind: 'image', url: section.mediaImageUrl, alt: section.mediaAlt}
+    return {
+      key: `${section._key}-model-section-media-image`,
+      kind: 'image',
+      url: section.mediaImageUrl,
+      alt: section.mediaAlt,
+      objectPosition: section.mediaImageObjectPosition,
+    }
   }
 
   if (section?.imageUrl) {
-    return {key: `${section._key}-model-section-image`, kind: 'image', url: section.imageUrl, alt: section.title || model?.title || product.detailTitle}
+    return {
+      key: `${section._key}-model-section-image`,
+      kind: 'image',
+      url: section.imageUrl,
+      alt: section.title || model?.title || product.detailTitle,
+      objectPosition: section.imageObjectPosition,
+    }
   }
 
   const firstTabSection = tab?.sections.find((item) => item.mediaUrl || item.mediaImageUrl || item.imageUrl)
@@ -447,7 +495,13 @@ function resolveModelMedia(
   }
 
   if (model?.imageUrl) {
-    return {key: `${model._id}-model-image`, kind: 'image', url: model.imageUrl, alt: model.title}
+    return {
+      key: `${model._id}-model-image`,
+      kind: 'image',
+      url: model.imageUrl,
+      alt: model.title,
+      objectPosition: model.imageObjectPosition,
+    }
   }
 
   if (model?.mediaUrl && isVideo(model.mediaType)) {
@@ -455,15 +509,33 @@ function resolveModelMedia(
   }
 
   if (model?.mediaImageUrl) {
-    return {key: `${model._id}-model-media-image`, kind: 'image', url: model.mediaImageUrl, alt: model.mediaAlt}
+    return {
+      key: `${model._id}-model-media-image`,
+      kind: 'image',
+      url: model.mediaImageUrl,
+      alt: model.mediaAlt,
+      objectPosition: model.mediaImageObjectPosition,
+    }
   }
 
   if (product.detailImageUrl) {
-    return {key: `${product._id}-detail-image`, kind: 'image', url: product.detailImageUrl, alt: product.detailTitle}
+    return {
+      key: `${product._id}-detail-image`,
+      kind: 'image',
+      url: product.detailImageUrl,
+      alt: product.detailTitle,
+      objectPosition: product.detailImageObjectPosition,
+    }
   }
 
   if (product.catalogImageUrl) {
-    return {key: `${product._id}-catalog-image`, kind: 'image', url: product.catalogImageUrl, alt: product.catalogLabel}
+    return {
+      key: `${product._id}-catalog-image`,
+      kind: 'image',
+      url: product.catalogImageUrl,
+      alt: product.catalogLabel,
+      objectPosition: product.catalogImageObjectPosition,
+    }
   }
 
   return {key: `${product._id}-model-empty`, kind: 'empty', alt: ''}
@@ -588,6 +660,7 @@ export function WhatFitsScreen({
   const [selectedSlug, setSelectedSlug] = useState(initialProduct?.slug || products[0]?.slug || '')
   const selectedProduct = products.find((product) => product.slug === selectedSlug) || products[0]
   const hasLongCatalogCta = (selectedProduct?.catalogCtaLabel?.trim().length || 0) >= 18
+  const catalogBackHref = `/process?type=${customerType}`
   const [selectedModelSlug, setSelectedModelSlug] = useState(initialModel?.slug || selectedProduct?.models[0]?.slug || '')
   const selectedModel =
     selectedProduct?.models.find((model) => model.slug === selectedModelSlug || model._id === selectedModelSlug) ||
@@ -606,12 +679,19 @@ export function WhatFitsScreen({
     initialModel ? 'overview' : visibleTabs[0]?.key || '',
   )
   const activeTab = visibleTabs.find((tab) => tab.key === activeTabKey) || visibleTabs[0]
+  const isBusiness = customerType === 'b2b'
   const isTechnicalTab = isTechnicalTabKey(activeTab)
   const isFunctions = isFunctionsTab(activeTab)
   const isInterplay = isInterplayTab(activeTab)
   const isReference = isReferenceTab(activeTab)
   const isCompactSharedTab = isInterplay || isReference
   const isEnergyCommunity = isEnergyCommunityProduct(selectedProduct)
+  const alignsEnergyCommunityTabContent = isBusiness && isEnergyCommunity && !selectedModel
+  const usesB2cEnergyCommunityDetailLayout =
+    view === 'detail' && !isBusiness && isEnergyCommunity && !selectedModel
+  const usesDarkDetailTheme = isBusiness || usesB2cEnergyCommunityDetailLayout
+  const usesEnergyCommunityInterplayAccordion =
+    alignsEnergyCommunityTabContent && isInterplay && Boolean(activeTab?.contentItems.length)
   const isHydrogenStorage = isHydrogenStorageProduct(selectedProduct)
   const isHydrogenStorageReference =
     isReference &&
@@ -658,25 +738,31 @@ export function WhatFitsScreen({
       ? activeTab.introText?.trim() ||
         activeTab.sections.find((section) => !section.title?.trim() && section.text?.trim())?.text?.trim()
       : activeTab?.introText?.trim()
+  const activeContentItemKey =
+    usesEnergyCommunityInterplayAccordion && activeTab
+      ? activeTab.contentItems.some((item) => item._key === activeSectionKey)
+        ? activeSectionKey
+        : activeTab.contentItems[0]?._key || ''
+      : ''
   const detailMediaSection =
     selectedModel
       ? activeSection || activeTab?.sections[0] || overviewTab?.sections[0]
       : isTechnicalTab || isFunctions || hasStructuredTabContent ? overviewTab?.sections[0] : activeSection
-  const isBusiness = customerType === 'b2b'
+  const isTransformerDetail = isBusiness && isTransformerProduct(selectedProduct)
   const usesBusinessTechnicalTextSize = isBusiness && (isTechnicalTab || isFunctions)
-  const inactiveDetailPointUrl = isBusiness
+  const inactiveDetailPointUrl = usesDarkDetailTheme
     ? catalogDetailPointInactiveUrl
     : catalogDetailPointDarkUrl
-  const inactiveDetailPointImageColorClass = isBusiness
+  const inactiveDetailPointImageColorClass = usesDarkDetailTheme
     ? ''
     : '[filter:brightness(0)_saturate(100%)_invert(24%)_sepia(8%)_saturate(413%)_hue-rotate(176deg)_brightness(91%)_contrast(87%)]'
   const modelGroupActiveIconColorClass =
     '[filter:brightness(0)_saturate(100%)_invert(72%)_sepia(96%)_saturate(1828%)_hue-rotate(359deg)_brightness(98%)_contrast(101%)]'
-  const modelGroupInactiveIconColorClass = isBusiness
+  const modelGroupInactiveIconColorClass = usesDarkDetailTheme
     ? 'brightness-0 invert'
     : inactiveDetailPointImageColorClass
-  const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
-  const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
+  const pageLogoUrl = usesDarkDetailTheme ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
+  const navigationLogoUrl = usesDarkDetailTheme ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const catalogMedia = useMemo(
     () => selectedProduct ? resolveCatalogMedia(selectedProduct) : {key: 'catalog-empty', kind: 'empty', alt: ''} as ResolvedMedia,
     [selectedProduct],
@@ -803,7 +889,7 @@ export function WhatFitsScreen({
     const tab = visibleTabs.find((item) => item.key === tabKey)
 
     setActiveTabKey(tabKey)
-    setActiveSectionKey(tab?.sections[0]?._key || '')
+    setActiveSectionKey(tab?.sections[0]?._key || tab?.contentItems[0]?._key || '')
   }
 
   function handleBottomNavigation(item: ProductNavigationItem) {
@@ -879,18 +965,28 @@ export function WhatFitsScreen({
         : isCompactSharedTab
           ? 'text-[22px] font-semibold leading-[1.32]'
           : 'text-[22px] font-semibold leading-[1.35]'
+  const activeDetailContentPanelClassName = usesB2cEnergyCommunityDetailLayout
+    ? 'w-[560px]'
+    : detailContentPanelClassName
+  const screenBackgroundClassName = isBusiness
+    ? 'bg-[#2a2e33]'
+    : usesB2cEnergyCommunityDetailLayout
+      ? 'bg-[#34393e]'
+      : 'bg-[#f5f5f7]'
 
   return (
-    <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-[#f5f5f7]'}>
+    <PresentationViewport backgroundClassName={screenBackgroundClassName}>
       <main
-        className={`relative isolate h-full w-full overflow-hidden font-sans ${
-          isBusiness ? 'bg-[#2a2e33] text-white' : 'bg-[#f5f5f7] text-[#2a2e33]'
+        className={`relative isolate h-full w-full ${
+          usesB2cEnergyCommunityDetailLayout ? 'overflow-visible' : 'overflow-hidden'
+        } font-sans ${
+          usesDarkDetailTheme ? `${screenBackgroundClassName} text-white` : `${screenBackgroundClassName} text-[#2a2e33]`
         }`}
       >
-        {patternUrl ? (
+        {patternUrl && !usesB2cEnergyCommunityDetailLayout ? (
           <span
             className={`${patternClassName} ${
-              isBusiness
+              usesDarkDetailTheme
                 ? 'opacity-[0.065] [filter:brightness(0)_invert(1)]'
                 : 'opacity-[0.86] mix-blend-normal [filter:brightness(0)_saturate(100%)_invert(86%)_sepia(5%)_saturate(126%)_hue-rotate(178deg)_brightness(96%)_contrast(90%)]'
             }`}
@@ -967,6 +1063,7 @@ export function WhatFitsScreen({
                 >
                   {catalogProducts.map((product, index) => {
                     const isSelected = product.slug === selectedProduct?.slug
+                    const isCatalogTransformer = isBusiness && isTransformerProduct(product)
                     const catalogLabel = isBusiness
                       ? getBusinessCatalogLabel(product.catalogLabel)
                       : product.catalogLabel
@@ -977,6 +1074,8 @@ export function WhatFitsScreen({
                         type="button"
                         className={`group flex items-center gap-[28px] text-left uppercase leading-[1.16] tracking-[0.012em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
                           isBusiness ? 'text-[22px] font-bold' : 'text-[17px] font-semibold'
+                        } ${
+                          isCatalogTransformer ? 'translate-x-[36px]' : ''
                         } ${
                           isSelected
                             ? 'text-[#efb804]'
@@ -1011,23 +1110,35 @@ export function WhatFitsScreen({
               </div>
 
               {selectedProduct?.catalogCtaLabel ? (
-                <button
-                  type="button"
-                  className={`group absolute bottom-[58px] right-[72px] z-[4] ${hasLongCatalogCta ? 'w-[292px]' : 'w-[246px]'} text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]`}
-                  onClick={() => openProduct(selectedProduct.slug)}
-                >
-                  <span className="flex items-center justify-between pb-[20px]">
-                    <span
-                      className={
-                        hasLongCatalogCta ? 'whitespace-nowrap' : undefined
-                      }
-                    >
-                      {selectedProduct.catalogCtaLabel}
+                <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
+                  <Link
+                    href={catalogBackHref}
+                    className="group w-[218px] text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+                  >
+                    <span className="flex items-center justify-between pb-[20px]">
+                      <ArrowLeft className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1" strokeWidth={2.8} aria-hidden="true" />
+                      <span>Der Prozess</span>
                     </span>
-                    <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
-                  </span>
-                  <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
-                </button>
+                    <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+                  </Link>
+                  <button
+                    type="button"
+                    className={`group ${hasLongCatalogCta ? 'w-[292px]' : 'w-[246px]'} text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]`}
+                    onClick={() => openProduct(selectedProduct.slug)}
+                  >
+                    <span className="flex items-center justify-between pb-[20px]">
+                      <span
+                        className={
+                          hasLongCatalogCta ? 'whitespace-nowrap' : undefined
+                        }
+                      >
+                        {selectedProduct.catalogCtaLabel}
+                      </span>
+                      <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
+                    </span>
+                    <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+                  </button>
+                </div>
               ) : null}
             </motion.section>
           ) : selectedProduct ? (
@@ -1040,15 +1151,27 @@ export function WhatFitsScreen({
               transition={{duration: 0.36, ease: [0.22, 1, 0.36, 1]}}
               aria-labelledby="product-detail-heading"
             >
-              <div className="absolute left-[60px] top-[225px] z-[3]">
+              <div className={`absolute left-[60px] z-[3] ${usesB2cEnergyCommunityDetailLayout ? 'top-[220px]' : 'top-[225px]'}`}>
                 <h1
                   id="product-detail-heading"
-                  className="font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em]"
+                  className={
+                    usesB2cEnergyCommunityDetailLayout
+                      ? 'max-w-[760px] font-sans text-[54px] font-bold uppercase leading-[0.98] text-white'
+                      : 'font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em]'
+                  }
                 >
                   {selectedProduct.detailTitle}
                 </h1>
 
-                <div className="mt-[42px] flex items-start gap-[10px]" role="tablist" aria-label={selectedProduct.detailTitle}>
+                <div
+                  className={
+                    usesB2cEnergyCommunityDetailLayout
+                      ? 'mt-[44px] flex items-center gap-[34px]'
+                      : 'mt-[42px] flex items-start gap-[10px]'
+                  }
+                  role="tablist"
+                  aria-label={selectedProduct.detailTitle}
+                >
                   {visibleTabs.map((tab) => {
                     const isActive = tab.key === activeTab?.key
 
@@ -1058,10 +1181,14 @@ export function WhatFitsScreen({
                         type="button"
                         role="tab"
                         aria-selected={isActive}
-                        className={`relative px-[12px] pb-[9px] text-[16px] font-medium uppercase tracking-[0.01em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+                        className={`relative font-medium uppercase transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-5 focus-visible:outline-[#efb804] ${
+                          usesB2cEnergyCommunityDetailLayout
+                            ? 'pb-[12px] text-[18px] leading-none'
+                            : 'px-[12px] pb-[9px] text-[16px] tracking-[0.01em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
+                        } ${
                           isActive
                             ? 'text-[#efb804]'
-                            : isBusiness
+                            : usesDarkDetailTheme
                               ? 'text-white'
                               : 'text-[#2a2e33]'
                         }`}
@@ -1069,7 +1196,12 @@ export function WhatFitsScreen({
                       >
                         {tab.title}
                         {isActive ? (
-                          <span className="absolute inset-x-0 bottom-0 h-px bg-[#efb804] opacity-100 shadow-none" aria-hidden="true" />
+                          <span
+                            className={`absolute bottom-0 h-px bg-[#efb804] opacity-100 shadow-none ${
+                              usesB2cEnergyCommunityDetailLayout ? 'inset-x-[-10px]' : 'inset-x-0'
+                            }`}
+                            aria-hidden="true"
+                          />
                         ) : null}
                       </button>
                     )
@@ -1081,15 +1213,21 @@ export function WhatFitsScreen({
                 media={detailMedia}
                 className={
                   selectedModel && activeTab?.key === 'overview'
-                    ? emphasizesBusinessDetailImage
+                    ? isTransformerDetail
+                      ? 'absolute bottom-[58px] left-[8px] h-[560px] w-[640px]'
+                      : emphasizesBusinessDetailImage
                       ? 'absolute bottom-[48px] left-[64px] h-[540px] w-[540px]'
                       : `absolute bottom-[88px] h-[420px] w-[420px] ${
                           usesTopModelLabelLayout ? 'left-[200px]' : 'left-[150px]'
                         }`
                     : emphasizesBusinessDetailImage
                       ? 'absolute bottom-[-34px] left-[-100px] h-[740px] w-[68cqw]'
+                    : usesB2cEnergyCommunityDetailLayout
+                      ? 'absolute left-0 right-0 top-[calc(var(--presentation-bleed-y,0px)*-1)] h-[calc(100%+var(--presentation-bleed-y,0px))]'
                     : isEnergyCommunity
-                      ? 'absolute bottom-[-58px] left-[210px] h-[740px] w-[60cqw]'
+                      ? isBusiness
+                        ? 'absolute bottom-[-58px] left-[210px] h-[740px] w-[60cqw]'
+                        : 'absolute bottom-[140px] left-[42px] h-[500px] w-[830px]'
                     : isBusiness
                       ? 'absolute bottom-[70px] left-[42px] h-[650px] w-[60cqw]'
                     : isTechnicalTab
@@ -1099,6 +1237,8 @@ export function WhatFitsScreen({
                 imageClassName={
                   selectedModel && activeTab?.key === 'overview'
                     ? 'h-full w-full object-contain object-center'
+                    : usesB2cEnergyCommunityDetailLayout
+                      ? 'h-full w-full object-cover object-center'
                     : isEnergyCommunity
                       ? 'h-full w-full object-contain object-left-bottom'
                     : isBusiness
@@ -1109,13 +1249,26 @@ export function WhatFitsScreen({
                 }
               />
 
-              {!isBusiness ? (
+              {usesB2cEnergyCommunityDetailLayout ? (
+                <>
+                  <span
+                    className="pointer-events-none absolute left-0 right-0 top-[calc(var(--presentation-bleed-y,0px)*-1)] z-[1] h-[calc(100%+var(--presentation-bleed-y,0px))] bg-black/14"
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="pointer-events-none absolute left-0 top-[calc(var(--presentation-bleed-y,0px)*-1)] z-[1] h-[calc(100%+var(--presentation-bleed-y,0px))] w-[58%] bg-gradient-to-r from-black/42 via-black/22 to-transparent"
+                    aria-hidden="true"
+                  />
+                </>
+              ) : null}
+
+              {!isBusiness && !usesB2cEnergyCommunityDetailLayout ? (
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute bottom-0 left-0 z-[2] h-[650px] w-[62cqw]"
                 >
-                  <span className="absolute inset-x-0 top-0 h-[2px] bg-[#f5f5f7]" />
-                  <span className="absolute inset-y-0 right-0 w-[4cqw] bg-[#f5f5f7]" />
+                  <span className={`absolute inset-x-0 top-0 h-[2px] ${usesDarkDetailTheme ? 'bg-[#34393e]' : 'bg-[#f5f5f7]'}`} />
+                  <span className={`absolute inset-y-0 right-0 w-[4cqw] ${usesDarkDetailTheme ? 'bg-[#34393e]' : 'bg-[#f5f5f7]'}`} />
                 </div>
               ) : null}
 
@@ -1254,16 +1407,22 @@ export function WhatFitsScreen({
               ) : null}
 
               <div
-                className={`absolute left-[58.5cqw] right-[60px] z-[3] ${
-                  selectedModel && activeTab?.key === 'overview'
-                    ? 'top-[820px]'
-                    : isTechnicalTab || isFunctions || isCompactSharedTab || isEnergyCommunityOverview || hasStructuredTabContent
-                      ? 'top-[330px]'
-                      : 'top-[500px]'
-                }`}
+                className={
+                  usesB2cEnergyCommunityDetailLayout
+                    ? 'absolute bottom-[84px] left-[60px] top-[400px] z-[3] flex w-[560px] items-center overflow-y-auto'
+                    : `absolute left-[58.5cqw] right-[60px] z-[3] ${
+                        selectedModel && activeTab?.key === 'overview'
+                          ? 'top-[820px]'
+                          : alignsEnergyCommunityTabContent
+                            ? 'top-[305px]'
+                          : isTechnicalTab || isFunctions || isCompactSharedTab || isEnergyCommunityOverview || hasStructuredTabContent
+                            ? 'top-[305px]'
+                            : 'top-[500px]'
+                      }`
+                }
               >
                 {(isTechnicalTab || isFunctions) && activeTab ? (
-                  <div className={detailContentPanelClassName}>
+                  <div className={activeDetailContentPanelClassName}>
                     {activeTab.sections.map((section, index) => {
                       const isActive = index === safeActiveSectionIndex
                       const contentId = `${section._key}-technical-content`
@@ -1273,8 +1432,8 @@ export function WhatFitsScreen({
                           key={section._key}
                           className={
                             isActive
-                              ? 'pb-[34px]'
-                              : `border-b-2 ${isBusiness ? 'border-white/90' : 'border-[#2a2e33]/80'}`
+                              ? 'pb-[28px]'
+                              : `border-b-2 ${usesDarkDetailTheme ? 'border-white/90' : 'border-[#2a2e33]/80'}`
                           }
                         >
                           <button
@@ -1282,7 +1441,7 @@ export function WhatFitsScreen({
                             className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans ${isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : 'text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                               isActive
                                 ? 'text-[#efb804]'
-                                : isBusiness
+                                : usesDarkDetailTheme
                                   ? 'text-white'
                                   : 'text-[#2a2e33]'
                             }`}
@@ -1310,7 +1469,7 @@ export function WhatFitsScreen({
                             ) : (
                               <Hexagon
                                 className={`h-[22px] w-[22px] shrink-0 ${
-                                  isActive ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#2a2e33]'
+                                  isActive ? 'text-[#efb804]' : usesDarkDetailTheme ? 'text-white' : 'text-[#2a2e33]'
                                 }`}
                                 strokeWidth={2.4}
                                 aria-hidden="true"
@@ -1326,11 +1485,11 @@ export function WhatFitsScreen({
                               animate={{opacity: 1, y: 0}}
                               transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
                             >
-                              <div className="pb-[18px] pt-[28px]">
+                              <div className="pb-[14px] pt-[20px]">
                                 {section.text ? (
                                   <div
                                     className={`${isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} ${isFunctions && !isEnergyCommunity ? 'w-full max-w-none' : 'max-w-[420px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
-                                      isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
+                                      usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
                                     }`}
                                   >
                                     {isFunctions ? (
@@ -1375,7 +1534,7 @@ export function WhatFitsScreen({
                     })}
                   </div>
                 ) : hasStructuredTabContent && activeTab ? (
-                  <div className={`${detailContentPanelClassName}${isEnergyCommunityOverview ? ' translate-x-[18px]' : ''}`}>
+                  <div className={`${activeDetailContentPanelClassName}${isEnergyCommunityOverview && !usesB2cEnergyCommunityDetailLayout ? ' translate-x-[18px]' : ''}`}>
                     {activeTab.contentTitle?.trim() ? (
                       <h2
                         className={`mb-[28px] uppercase leading-[1.08] tracking-[0.01em] ${
@@ -1387,7 +1546,7 @@ export function WhatFitsScreen({
                               ? 'text-[22px] font-bold'
                               : 'text-[22px] font-bold'
                         } ${
-                          isBusiness ? 'text-white' : 'text-[#2a2e33]'
+                          usesDarkDetailTheme ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
                         {activeTab.contentTitle.trim()}
@@ -1397,7 +1556,7 @@ export function WhatFitsScreen({
                     {energyCommunityOverviewIntroText ? (
                       <div
                         className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${structuredIntroTextClassName} ${
-                          isBusiness ? 'text-white' : 'text-[#2a2e33]'
+                          usesDarkDetailTheme ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
                         {energyCommunityOverviewIntroText}
@@ -1409,21 +1568,107 @@ export function WhatFitsScreen({
                         className={`${isReference ? 'mt-[38px]' : 'mt-[44px]'} font-bold uppercase leading-none tracking-[0.01em] ${
                           isEnergyCommunityOverview ? 'text-[22px]' : isCompactSharedTab ? 'text-[22px]' : 'text-[22px]'
                         } ${
-                          isBusiness ? 'text-white' : 'text-[#2a2e33]'
+                          usesDarkDetailTheme ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
                         {activeTab.contentItemsTitle.trim()}
                       </h3>
                     ) : null}
 
-                    {(isEnergyCommunityOverview ? energyCommunityOverviewBulletItems.length : activeTab.contentItems.length) > 0 ? (
+                    {usesEnergyCommunityInterplayAccordion ? (
+                      <div className={`${energyCommunityOverviewIntroText || activeTab.contentItemsTitle?.trim() ? 'mt-[28px]' : ''}`}>
+                        {activeTab.contentItems.map((item) => {
+                          const isActive = item._key === activeContentItemKey
+                          const contentId = `${item._key}-interplay-content`
+                          const title = item.title?.trim() || item.text?.trim() || ''
+
+                          if (!title) {
+                            return null
+                          }
+
+                          return (
+                            <div
+                              key={item._key}
+                              className={
+                                isActive
+                                  ? 'pb-[24px]'
+                                  : `border-b-2 ${usesDarkDetailTheme ? 'border-white/90' : 'border-[#2a2e33]/80'}`
+                              }
+                            >
+                              <button
+                                type="button"
+                                className={`flex w-full items-center justify-between gap-6 py-[13px] text-left font-sans text-[18px] font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                                  isActive
+                                    ? 'text-[#efb804]'
+                                    : usesDarkDetailTheme
+                                      ? 'text-white'
+                                      : 'text-[#2a2e33]'
+                                }`}
+                                aria-expanded={isActive}
+                                aria-controls={contentId}
+                                onClick={() => setActiveSectionKey(item._key)}
+                              >
+                                <span>{title}</span>
+                                {isActive && catalogDetailPointActiveUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={catalogDetailPointActiveUrl}
+                                    alt=""
+                                    className="h-[22px] w-[22px] shrink-0 object-contain"
+                                    aria-hidden="true"
+                                  />
+                                ) : !isActive && inactiveDetailPointUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={inactiveDetailPointUrl}
+                                    alt=""
+                                    className={`h-[22px] w-[22px] shrink-0 object-contain ${inactiveDetailPointImageColorClass}`}
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  <Hexagon
+                                    className={`h-[22px] w-[22px] shrink-0 ${
+                                      isActive ? 'text-[#efb804]' : usesDarkDetailTheme ? 'text-white' : 'text-[#2a2e33]'
+                                    }`}
+                                    strokeWidth={2.4}
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </button>
+
+                              {isActive && item.text?.trim() ? (
+                                <motion.div
+                                  key={contentId}
+                                  id={contentId}
+                                  initial={{opacity: 0, y: -6}}
+                                  animate={{opacity: 1, y: 0}}
+                                  transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
+                                >
+                                  <div
+                                    className={`pb-[12px] pt-[14px] text-[18px] font-normal leading-[1.34] tracking-[0.01em] ${
+                                      usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
+                                    }`}
+                                  >
+                                    {splitParagraphs(item.text.trim()).map((paragraph, index) => (
+                                      <p key={`${item._key}-paragraph-${index}`} className="whitespace-pre-line">
+                                        {paragraph}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </motion.div>
+                              ) : null}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : (isEnergyCommunityOverview ? energyCommunityOverviewBulletItems.length : activeTab.contentItems.length) > 0 ? (
                       <div className={`${energyCommunityOverviewIntroText || activeTab.contentItemsTitle?.trim() ? (isReference ? 'mt-[28px]' : isEnergyCommunityOverview ? 'mt-[28px]' : isCompactSharedTab ? 'mt-[34px]' : 'mt-[42px]') : ''} ${isEnergyCommunityOverview ? 'ml-[10px] space-y-[5px]' : isCompactSharedTab ? 'space-y-[18px]' : 'space-y-[24px]'}`}>
                         {(isEnergyCommunityOverview ? energyCommunityOverviewBulletItems : activeTab.contentItems).map((item) => (
                           <div key={item._key} className={`${isEnergyCommunityOverview ? 'grid-cols-[14px_minmax(0,1fr)] gap-[14px]' : isCompactSharedTab ? 'grid-cols-[16px_minmax(0,1fr)] gap-[14px]' : 'grid-cols-[22px_minmax(0,1fr)] gap-[20px]'} grid`}>
                             {isEnergyCommunityOverview ? (
                               <span
                                 className={`mt-[13px] h-[5px] w-[5px] rounded-full ${
-                                  isBusiness ? 'bg-white' : 'bg-[#2a2e33]'
+                                  usesDarkDetailTheme ? 'bg-white' : 'bg-[#2a2e33]'
                                 }`}
                                 aria-hidden="true"
                               />
@@ -1438,7 +1683,7 @@ export function WhatFitsScreen({
                             ) : (
                               <Hexagon
                                 className={`${isCompactSharedTab ? 'mt-[4px] h-[15px] w-[15px]' : 'mt-[2px] h-[18px] w-[18px]'} shrink-0 ${
-                                  isBusiness ? 'text-white' : 'text-[#2a2e33]'
+                                  usesDarkDetailTheme ? 'text-white' : 'text-[#2a2e33]'
                                 }`}
                                 strokeWidth={2.3}
                                 aria-hidden="true"
@@ -1448,7 +1693,7 @@ export function WhatFitsScreen({
                               className={`font-normal tracking-[0.01em] ${
                                 isEnergyCommunityOverview ? 'text-[22px] leading-[1.35]' : isInterplay ? 'text-[18px] leading-[1.34]' : isReference ? 'text-[22px] leading-[1.34]' : 'text-[22px] leading-[1.42]'
                               } ${
-                                isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
+                                usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
                               }`}
                             >
                               {isReference ? (
@@ -1486,7 +1731,7 @@ export function WhatFitsScreen({
                       <div className="mt-[48px] space-y-[30px]">
                         {energyCommunityOverviewHintSections.map((section) => {
                           const hintLineImageUrl = section.mediaImageUrl || section.imageUrl
-                          const hintLineFilterClass = isBusiness
+                          const hintLineFilterClass = usesDarkDetailTheme
                             ? section.mediaImageUrl ? '' : '[filter:brightness(0)_invert(1)]'
                             : section.mediaImageUrl ? '' : '[filter:brightness(0)]'
 
@@ -1504,7 +1749,7 @@ export function WhatFitsScreen({
                                 ) : (
                                   <span
                                     className={`absolute bottom-[2px] left-0 top-[2px] block w-[3px] ${
-                                      isBusiness ? 'bg-white' : 'bg-black'
+                                      usesDarkDetailTheme ? 'bg-white' : 'bg-black'
                                     }`}
                                   />
                                 )}
@@ -1517,8 +1762,8 @@ export function WhatFitsScreen({
                                 ) : null}
                                 {section.text?.trim() ? (
                                   <div className={`mt-[16px] space-y-[12px] text-[22px] font-normal leading-[1.28] tracking-[0.01em] ${
-                                    isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
-                                  }`}>
+                                    usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
+                                    }`}>
                                     {splitParagraphs(section.text).map((paragraph, index) => (
                                       <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
                                         {paragraph}
@@ -1535,8 +1780,8 @@ export function WhatFitsScreen({
                   </div>
                 ) : activeSection?.text ? (
                   <div
-                    className={`${detailContentPanelClassName} space-y-[24px] text-[22px] font-normal leading-[1.45] tracking-[0.025em] ${
-                      isBusiness ? 'text-white/95' : 'text-[#2a2e33]/95'
+                    className={`${activeDetailContentPanelClassName} space-y-[24px] text-[22px] font-normal leading-[1.45] tracking-[0.025em] ${
+                      usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
                     }`}
                   >
                     {splitParagraphs(activeSection.text).map((paragraph, index) => (
@@ -1550,9 +1795,17 @@ export function WhatFitsScreen({
 
               {bottomNavigation.length > 0 ? (
                 <nav
-                  className="absolute bottom-[36px] left-[60px] z-[5] flex h-[48px] w-max items-center bg-[#464b50]"
+                  className={
+                    usesB2cEnergyCommunityDetailLayout
+                      ? 'absolute bottom-[36px] left-[60px] z-[8] isolate flex h-[48px] w-max items-center bg-transparent'
+                      : 'absolute bottom-[36px] left-[60px] z-[5] flex h-[48px] w-max items-center bg-[#464b50]'
+                  }
                   aria-label="Produktnavigation"
                 >
+                  {usesB2cEnergyCommunityDetailLayout ? (
+                    <span className="pointer-events-none absolute inset-0 z-0 bg-white/25" aria-hidden="true" />
+                  ) : null}
+
                   {previousBottomHref ? (
                     <Link
                       href={previousBottomHref}
@@ -1584,7 +1837,7 @@ export function WhatFitsScreen({
                     </button>
                   )}
 
-                  <div className={`flex w-auto items-center justify-start gap-[40px] pl-[10px] ${isBusiness ? 'pr-[36px]' : 'pr-[42px]'}`}>
+                  <div className={`relative z-[1] flex w-auto items-center justify-start gap-[40px] pl-[10px] ${isBusiness ? 'pr-[36px]' : 'pr-[42px]'}`}>
                     {bottomNavigation.map((item) => {
                       const isCatalog = item.kind === 'catalog'
                       const isActive = item.kind === 'product' && item.slug === selectedProduct.slug

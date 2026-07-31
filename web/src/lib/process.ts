@@ -18,6 +18,8 @@ export type ProcessSection = {
   title?: string | null
   eyebrow?: string | null
   text?: string | null
+  detailTitle?: string | null
+  detailText?: string | null
   visibleFor?: string | null
   layout?: string | null
   sortOrder?: number | null

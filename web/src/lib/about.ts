@@ -11,6 +11,7 @@ import {
 import {
   buildImageUrl,
   buildLogoUrl,
+  resolveImageObjectPosition,
   type LoginScreenDocument,
   type SanityImage,
   type SiteSettingsDocument,
@@ -28,6 +29,7 @@ export type AboutSection = {
   sortOrder?: number | null
   image?: SanityImage
   imageUrl?: string
+  imageObjectPosition?: string
   media?: {
     title?: string | null
     altText?: string | null
@@ -35,6 +37,7 @@ export type AboutSection = {
     image?: SanityImage
   } | null
   mediaImageUrl?: string
+  mediaImageObjectPosition?: string
   mediaTitle?: string | null
   mediaAltText?: string | null
   cta?: {
@@ -51,6 +54,10 @@ export type AboutScreenDocument = {
   screenKey?: string | null
   headline?: string | null
   subline?: string | null
+  activeRegion?: {
+    label?: string | null
+    text?: string | null
+  } | null
   targetAudience?: string | null
   isActive?: boolean | null
   sections?: AboutSection[] | null
@@ -106,12 +113,17 @@ export type AboutPageData = {
   patternAlt: string
   navigationArrowUrl?: string
   businessMapUrl?: string
+  businessMapObjectPosition?: string
   businessMapAlt?: string
 }
 
 const aboutClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
 const fallbackHeadline = 'WER WIR SIND'
+const fallbackActiveRegion = {
+  label: 'Aktiv in:',
+  text: 'DEUTSCHLAND, ÖSTERREICH, SCHWEIZ, LIECHTENSTEIN,\nSLOWENIEN, KROATIEN UND BOSNIEN',
+}
 
 const fallbackNavigation: Omit<ChapterNavigationItem, 'href'>[] = [
   {key: 'about', title: 'WER WIR SIND', number: 1, ctaLabel: 'ZUM KAPITEL'},
@@ -193,7 +205,9 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
       .map((section) => ({
         ...section,
         imageUrl: buildImageUrl(section.image, 3000, undefined, 100),
+        imageObjectPosition: resolveImageObjectPosition(section.image),
         mediaImageUrl: buildImageUrl(section.media?.image, 3000, undefined, 100),
+        mediaImageObjectPosition: resolveImageObjectPosition(section.media?.image),
         mediaTitle: section.media?.title,
         mediaAltText: section.media?.altText,
         cta: section.cta
@@ -211,9 +225,13 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
         ? {
             ...screen,
             headline: screen.headline?.trim() || fallbackHeadline,
+            activeRegion: {
+              label: screen.activeRegion?.label?.trim() || fallbackActiveRegion.label,
+              text: screen.activeRegion?.text?.trim() || fallbackActiveRegion.text,
+            },
             sections: filteredSections,
           }
-        : {headline: fallbackHeadline, screenKey: 'about'},
+        : {headline: fallbackHeadline, screenKey: 'about', activeRegion: fallbackActiveRegion},
       navigationItems: resolveNavigationItems(navigationSteps, customerType),
       logoUrl: normalLogoUrl,
       inverseLogoUrl,
@@ -228,11 +246,12 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
       navigationArrowUrl: buildLogoUrl(arrowImage) || buildImageUrl(arrowImage, 96, undefined, 100),
       businessMapUrl:
         buildLogoUrl(businessMap?.image) || buildImageUrl(businessMap?.image, 1200, undefined, 100),
+      businessMapObjectPosition: resolveImageObjectPosition(businessMap?.image),
       businessMapAlt: businessMap?.altText || businessMap?.title || '',
     }
   } catch {
     return {
-      screen: {headline: fallbackHeadline, screenKey: 'about'},
+      screen: {headline: fallbackHeadline, screenKey: 'about', activeRegion: fallbackActiveRegion},
       navigationItems: resolveNavigationItems([], customerType),
       logoAlt: 'Conversio Energie',
       patternAlt: '',

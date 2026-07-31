@@ -116,6 +116,34 @@ export const appScreenType = defineType({
       description: 'Kurzer Erklärungstext unter der Headline.',
     }),
     defineField({
+      name: 'activeRegion',
+      title: 'Aktiv-Region Hinweis',
+      type: 'object',
+      group: 'content',
+      description: 'Hinweis links unten im „Wer wir sind“-Screen, z. B. „Aktiv in:“ mit Länderauflistung.',
+      hidden: ({ document }) => document?.screenType !== 'about',
+      initialValue: {
+        label: 'Aktiv in:',
+        text: 'DEUTSCHLAND, ÖSTERREICH, SCHWEIZ, LIECHTENSTEIN,\nSLOWENIEN, KROATIEN UND BOSNIEN',
+      },
+      fields: [
+        defineField({
+          name: 'label',
+          title: 'Label',
+          type: 'string',
+          initialValue: 'Aktiv in:',
+        }),
+        defineField({
+          name: 'text',
+          title: 'Länder / Text',
+          type: 'text',
+          rows: 2,
+          initialValue:
+            'DEUTSCHLAND, ÖSTERREICH, SCHWEIZ, LIECHTENSTEIN,\nSLOWENIEN, KROATIEN UND BOSNIEN',
+        }),
+      ],
+    }),
+    defineField({
       name: 'heroImage',
       title: 'Hero-Bild',
       type: 'image',
@@ -152,6 +180,23 @@ export const appScreenType = defineType({
             defineField({ name: 'title', title: 'Section-Titel', type: 'string' }),
             defineField({ name: 'eyebrow', title: 'Kleines Label / Eyebrow', type: 'string' }),
             defineField({ name: 'text', title: 'Text', type: 'text', rows: 5 }),
+            defineField({
+              name: 'detailTitle',
+              title: 'Prozess-Detailtitel',
+              type: 'string',
+              description:
+                'Überschrift für die Detailanzeige beim ausgewählten Prozessschritt. Falls leer, wird der Section-Titel verwendet.',
+              hidden: ({ document }) => document?.screenType !== 'process',
+            }),
+            defineField({
+              name: 'detailText',
+              title: 'Prozess-Detailtext',
+              type: 'text',
+              rows: 6,
+              description:
+                'Text für die Detailanzeige beim ausgewählten Prozessschritt. Falls leer, wird der normale Section-Text verwendet.',
+              hidden: ({ document }) => document?.screenType !== 'process',
+            }),
             defineField({ name: 'image', title: 'Bild', type: 'image', options: { hotspot: true } }),
             defineField({
               name: 'media',

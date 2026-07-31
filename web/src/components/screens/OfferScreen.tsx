@@ -10,7 +10,7 @@ import {
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {OfferSection} from '@/lib/offer'
 import {AnimatePresence, motion} from 'framer-motion'
-import {ArrowRight, Hexagon} from 'lucide-react'
+import {ArrowLeft, ArrowRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
 import {useMemo, useState} from 'react'
 
@@ -214,6 +214,7 @@ export function OfferScreen({
     ],
   )
   const ctaHref = resolveTarget(primaryCta?.target, customerType)
+  const backHref = `/about?type=${customerType}`
 
   return (
     <PresentationViewport backgroundClassName={isBusiness ? 'bg-[#2a2e33]' : 'bg-[#f5f5f7]'}>
@@ -391,22 +392,34 @@ export function OfferScreen({
       </section>
 
       {primaryCta?.label ? (
-        <div className="absolute bottom-[58px] right-[72px] z-[4] w-[208px]">
-          {ctaHref ? (
-            <Link
-              href={ctaHref}
-              className="group flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
-            >
-              <span>{primaryCta.label}</span>
-              <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
-            </Link>
-          ) : (
-            <div className="flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
-              <span>{primaryCta.label}</span>
-              <ArrowRight className="h-[16px] w-[22px]" strokeWidth={2.8} aria-hidden="true" />
-            </div>
-          )}
-          <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+        <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
+          <Link
+            href={backHref}
+            className="group w-[228px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+          >
+            <span className="flex items-center justify-between pb-[20px]">
+              <ArrowLeft className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1" strokeWidth={2.8} aria-hidden="true" />
+              <span>Wer wir sind</span>
+            </span>
+            <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+          </Link>
+          <div className="w-[208px]">
+            {ctaHref ? (
+              <Link
+                href={ctaHref}
+                className="group flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              >
+                <span>{primaryCta.label}</span>
+                <ArrowRight className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1" strokeWidth={2.8} aria-hidden="true" />
+              </Link>
+            ) : (
+              <div className="flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
+                <span>{primaryCta.label}</span>
+                <ArrowRight className="h-[16px] w-[22px]" strokeWidth={2.8} aria-hidden="true" />
+              </div>
+            )}
+            <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+          </div>
         </div>
       ) : null}
 

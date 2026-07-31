@@ -10,7 +10,7 @@ import {
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {ProcessSection} from '@/lib/process'
 import {motion} from 'framer-motion'
-import {ArrowRight, Hexagon} from 'lucide-react'
+import {ArrowLeft, ArrowRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
 import {useState} from 'react'
 
@@ -36,8 +36,46 @@ type ProcessScreenProps = {
 const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
 
+const processDetailFallbacks = [
+  {
+    title: 'Besichtigung',
+    text: 'Wir besuchen Sie am Projektstandort und besprechen gemeinsam mit Ihnen Ihr Projekt. Alle relevanten Daten werden an diesem Termin aufgenommen.',
+  },
+  {
+    title: 'Angebot',
+    text: 'Wir legen Ihnen entsprechend Ihren Bedürfnissen und Projektspezifikationen ein individuelles Angebot.',
+  },
+  {
+    title: 'Beauftragung',
+    text: 'Nach einer detaillierten Besprechung aller Positionen Ihres Angebotes freuen wir uns über Ihre schriftliche Auftragserteilung. Hiermit kann unser Team beginnen, alle relevanten Abläufe einzuplanen und die nächsten Schritte vorzubereiten.',
+  },
+  {
+    title: 'Genehmigungen und Einreichungen',
+    text: 'Mit Ihrer Vollmacht kümmert sich unser Spezialistenteam um die Genehmigungen und Einreichungen bei den zuständigen Behörden und klärt für Sie verfügbare Förderungen ab.',
+  },
+  {
+    title: 'Lieferung und Errichtung',
+    text: 'Unser Team setzt das Projekt nach Abstimmung mit Ihnen am Standort um.',
+  },
+  {
+    title: 'Inbetriebnahme',
+    text: 'Es erfolgt ein Testbetrieb, eine Einschulung in die Anlage und App-Steuerung, die Ausfertigung eines Übergabeprotokolls und die Fertigstellungsmeldung an den Netzbetreiber.',
+  },
+  {
+    title: 'Projektabschluss',
+    text: 'Zusätzlich zu Gewährleistungen und Garantie bieten wir darüber hinaus umfangreiche Wartungs- und Servicedienstleistungen in komfortablen Angebotspaketen.',
+  },
+]
+
 function sectionKey(section: ProcessSection, index: number) {
   return section._key || `process-section-${index}`
+}
+
+function splitProcessDetailText(text: string) {
+  return text
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.replace(/\s*\n\s*/g, ' ').trim())
+    .filter(Boolean)
 }
 
 function ProcessRing({
@@ -102,6 +140,19 @@ export function ProcessScreen({
   const pageLogoUrl = isBusiness ? inverseLogoUrl || logoUrl : logoUrl || inverseLogoUrl
   const navigationLogoUrl = isBusiness ? logoUrl || inverseLogoUrl : inverseLogoUrl || logoUrl
   const ctaHref = resolveTarget(primaryCta?.target, customerType)
+  const backHref = `/offer?type=${customerType}`
+  const activeFallbackDetail = processDetailFallbacks[safeActiveIndex]
+  const activeDetailTitle =
+    activeSection?.detailTitle?.trim() ||
+    activeFallbackDetail?.title ||
+    activeSection?.title?.trim() ||
+    ''
+  const activeDetailText =
+    activeSection?.detailText?.trim() ||
+    activeFallbackDetail?.text ||
+    activeSection?.text?.trim() ||
+    ''
+  const activeDetailParagraphs = splitProcessDetailText(activeDetailText)
 
   function selectStep(index: number) {
     setActiveIndex(index)
@@ -147,7 +198,7 @@ export function ProcessScreen({
         </div>
 
         <p
-          className={`absolute bottom-[198px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+          className={`absolute bottom-[174px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
             isBusiness ? 'text-white/90' : 'text-[#2a2e33]/90'
           }`}
         >
@@ -155,7 +206,7 @@ export function ProcessScreen({
         </p>
 
         <section
-          className="absolute left-[175px] top-[272px] z-[3] h-[570px] w-[550px] [--process-label-offset:29px] [--process-step-gap:71px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[257px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[598px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:76px]"
+          className="absolute left-[175px] top-[296px] z-[3] h-[570px] w-[550px] [--process-label-offset:29px] [--process-step-gap:71px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[281px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[598px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-label-offset:32px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-step-gap:76px]"
           aria-label="Prozessschritte als Ringstapel"
         >
           {sections.map((section, index) => {
@@ -202,7 +253,7 @@ export function ProcessScreen({
 
           {activeSection ? (
             <motion.div
-              className="absolute left-[405px] flex w-[265px] items-center gap-[10px] transition-[top] duration-[420ms] ease-out [@media(min-height:940px)]:left-[355px]"
+              className="absolute left-[428px] flex w-[265px] translate-y-[-18px] items-center gap-[10px] transition-[top] duration-[420ms] ease-out [@media(min-height:940px)]:left-[378px]"
               style={{
                 top: `calc(${safeActiveIndex} * var(--process-step-gap) + var(--process-label-offset))`,
               }}
@@ -221,8 +272,32 @@ export function ProcessScreen({
           ) : null}
         </section>
 
+        {activeSection && (activeDetailTitle || activeDetailParagraphs.length > 0) ? (
+          <motion.section
+            key={`process-detail-${sectionKey(activeSection, safeActiveIndex)}`}
+            className="absolute right-[72px] top-[118px] z-[3] w-[494px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[109px]"
+            initial={{opacity: 0, y: 8}}
+            animate={{opacity: 1, y: 0}}
+            transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
+            aria-live="polite"
+          >
+            <h2 className="mb-[18px] whitespace-nowrap text-[25px] font-bold uppercase leading-[1.06] tracking-[0.01em] text-[#efb804] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]">
+              {activeDetailTitle}
+            </h2>
+            <div
+              className={`space-y-[10px] text-[20px] font-medium leading-[1.2] tracking-[0.004em] [@media(min-width:768px)_and_(max-width:1366px)]:text-[18px] ${
+                isBusiness ? 'text-white/92' : 'text-[#2a2e33]/92'
+              }`}
+            >
+              {activeDetailParagraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </motion.section>
+        ) : null}
+
         <section
-          className="absolute right-[72px] top-[255px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[230px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-list-step:84px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-point-center:42px]"
+          className="absolute right-[72px] top-[279px] z-[3] w-[525px] [--process-list-step:76px] [--process-point-center:37px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[254px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-list-step:84px] [@media(min-width:768px)_and_(max-width:1366px)]:[--process-point-center:42px]"
           aria-label="Prozessschritte"
         >
           <span
@@ -288,19 +363,35 @@ export function ProcessScreen({
         </section>
 
         {primaryCta?.label ? (
-          <div className="absolute bottom-[58px] right-[72px] z-[4] w-[276px]">
+          <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
             <Link
-              href={ctaHref}
-              className="group flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              href={backHref}
+              className="group w-[260px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
-              <span>{primaryCta.label}</span>
-              <ArrowRight
-                className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1"
-                strokeWidth={2.8}
-                aria-hidden="true"
-              />
+              <span className="flex items-center justify-between pb-[20px]">
+                <ArrowLeft
+                  className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1"
+                  strokeWidth={2.8}
+                  aria-hidden="true"
+                />
+                <span>Was wir bieten</span>
+              </span>
+              <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
             </Link>
-            <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+            <div className="w-[276px]">
+              <Link
+                href={ctaHref}
+                className="group flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              >
+                <span>{primaryCta.label}</span>
+                <ArrowRight
+                  className="h-[16px] w-[22px] transition-transform group-hover:translate-x-1"
+                  strokeWidth={2.8}
+                  aria-hidden="true"
+                />
+              </Link>
+              <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+            </div>
           </div>
         ) : null}
 

@@ -84,6 +84,8 @@ export const CUSTOMER_SELECTION_SCREEN_QUERY = defineQuery(groq`*[
     title,
     eyebrow,
     text,
+    detailTitle,
+    detailText,
     visibleFor,
     layout,
     sortOrder,
@@ -120,6 +122,10 @@ export const ABOUT_SCREEN_QUERY = defineQuery(groq`coalesce(
   "screenKey": screenKey.current,
   headline,
   subline,
+  activeRegion{
+    label,
+    text
+  },
   targetAudience,
   isActive,
   sections[]{
@@ -1402,6 +1408,17 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
         text,
         isActive
       },
+      "functionSteps": functionSteps[isActive != false] | order(
+        coalesce(sortOrder, 999999) asc,
+        stepNumber asc
+      ){
+        _key,
+        stepNumber,
+        title,
+        text,
+        sortOrder,
+        isActive
+      },
       sections[]{
         _key,
         title,
@@ -1492,6 +1509,17 @@ export const WHAT_FITS_PAGE_QUERY = defineQuery(groq`{
           _key,
           title,
           text,
+          isActive
+        },
+        "functionSteps": functionSteps[isActive != false] | order(
+          coalesce(sortOrder, 999999) asc,
+          stepNumber asc
+        ){
+          _key,
+          stepNumber,
+          title,
+          text,
+          sortOrder,
           isActive
         },
         sections[]{

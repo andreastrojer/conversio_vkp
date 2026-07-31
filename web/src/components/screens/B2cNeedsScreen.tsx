@@ -21,6 +21,7 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  Hexagon,
   ListFilter,
   Plus,
 } from 'lucide-react'
@@ -183,24 +184,6 @@ function PlusMarker({media, className}: {media?: B2cMedia; className?: string}) 
   )
 }
 
-function AccordionMarker({active}: {active: boolean}) {
-  return (
-    <svg
-      viewBox="0 0 22 22"
-      className={`h-[22px] w-[22px] shrink-0 ${active ? 'text-[#efb804]' : 'text-white'}`}
-      aria-hidden="true"
-    >
-      <path
-        d="M7.1 2.5h7.8l4.6 4.6v7.8l-4.6 4.6H7.1l-4.6-4.6V7.1L7.1 2.5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function OverviewContent({sections}: {sections: B2cDetailSection[]}) {
   return (
     <div className="w-[500px] space-y-[30px]">
@@ -259,7 +242,11 @@ function FunctionContent({tab}: {tab: B2cDetailTab}) {
               onClick={() => setActiveStepKey(step._key)}
             >
               <span>{step.title}</span>
-              <AccordionMarker active={isActive} />
+              <Hexagon
+                className="h-[21px] w-[21px] shrink-0"
+                strokeWidth={2.4}
+                aria-hidden="true"
+              />
             </button>
 
             {isActive ? (
@@ -605,7 +592,12 @@ export function B2cNeedsScreen({
       return
     }
 
-    openProduct(hotspot.product)
+    if (hotspot.product) {
+      openProduct(hotspot.product)
+      return
+    }
+
+    openProductBySlug(hotspot.productSlug)
   }
 
   return (

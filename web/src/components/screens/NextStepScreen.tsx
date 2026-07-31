@@ -21,7 +21,7 @@ import {
 } from '@/lib/consultationStore'
 import type {NextStepDocumentCategory, NextStepPageData} from '@/lib/nextStep'
 import {AnimatePresence, motion} from 'framer-motion'
-import {ArrowRight, Hexagon} from 'lucide-react'
+import {ArrowLeft, ArrowRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
 import {useEffect, useMemo, useState} from 'react'
 
@@ -846,6 +846,21 @@ export function NextStepScreen({
             />
           </div>
         ) : null}
+
+        <Link
+          href={`/scenario-matrix?type=${customerType}`}
+          className="group absolute bottom-[58px] left-[72px] z-[4] w-[284px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+        >
+          <span className="flex items-center justify-between pb-[20px]">
+            <ArrowLeft
+              className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1"
+              strokeWidth={2.8}
+              aria-hidden="true"
+            />
+            <span>Was rechnet sich</span>
+          </span>
+          <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
+        </Link>
 
         <ChapterNavigation
           customerType={customerType}

@@ -9,6 +9,10 @@ import Link from 'next/link'
 type AboutScreenProps = {
   customerType: CustomerGroup
   headline?: string | null
+  activeRegion?: {
+    label?: string | null
+    text?: string | null
+  } | null
   sections?: AboutSection[] | null
   navigationItems: ChapterNavigationItem[]
   logoUrl?: string
@@ -18,6 +22,7 @@ type AboutScreenProps = {
   patternAlt?: string
   navigationArrowUrl?: string
   businessMapUrl?: string
+  businessMapObjectPosition?: string
   businessMapAlt?: string
 }
 
@@ -122,15 +127,22 @@ function renderHighlightedLine(line: string) {
 
 function AboutDetailContent({
   headline,
+  activeRegion,
   sections,
   businessMapUrl,
+  businessMapObjectPosition,
   businessMapAlt,
   customerType,
   isBusiness,
 }: {
   headline: string
+  activeRegion?: {
+    label?: string | null
+    text?: string | null
+  } | null
   sections?: AboutSection[] | null
   businessMapUrl?: string
+  businessMapObjectPosition?: string
   businessMapAlt?: string
   customerType: CustomerGroup
   isBusiness: boolean
@@ -146,6 +158,12 @@ function AboutDetailContent({
   const descriptionBlocks =
     trustBlockIndex >= 0 ? textBlocks.filter((_, index) => index !== trustBlockIndex) : textBlocks
   const mapUrl = contentSection?.imageUrl || contentSection?.mediaImageUrl || businessMapUrl
+  const mapObjectPosition =
+    contentSection?.imageUrl
+      ? contentSection.imageObjectPosition
+      : contentSection?.mediaImageUrl
+        ? contentSection.mediaImageObjectPosition
+        : businessMapObjectPosition
   const mapAlt =
     contentSection?.mediaAltText ||
     contentSection?.mediaTitle ||
@@ -155,22 +173,19 @@ function AboutDetailContent({
   const ctaLabel = contentSection?.cta?.label?.trim()
   const ctaHref = `/offer?type=${customerType}`
   const ctaImageUrl = contentSection?.cta?.imageUrl
+  const activeRegionLabel = activeRegion?.label?.trim()
+  const activeRegionText = activeRegion?.text?.trim()
 
   return (
     <section className="relative z-[2] h-full w-full overflow-hidden">
-      <div
-        className={`absolute z-[1] ${
-          isBusiness
-            ? 'left-[-270px] top-[34px] w-[86%] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-260px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[144px]'
-            : 'left-[-38px] top-[42px] w-[68%] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-28px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[142px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[64%]'
-        }`}
-      >
+      <div className="absolute inset-0 z-[1]">
         {mapUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={mapUrl}
             alt={mapAlt}
-            className="h-auto w-full max-w-none object-contain drop-shadow-[0_28px_30px_rgba(0,0,0,0.24)]"
+            className="h-full w-full max-w-none object-cover object-center"
+            style={mapObjectPosition ? {objectPosition: mapObjectPosition} : undefined}
           />
         ) : (
           <div
@@ -184,7 +199,7 @@ function AboutDetailContent({
 
       <div className="absolute left-[58.5%] top-[314px] z-[2] flex w-[min(39%,600px)] flex-col items-start">
         <div
-          className={`inline-block max-w-full -rotate-[1.25deg] bg-[#efb804] py-[9px] shadow-[0_14px_28px_rgba(0,0,0,0.10)] ${
+          className={`inline-block max-w-full bg-[#efb804] py-[9px] shadow-[0_14px_28px_rgba(0,0,0,0.10)] ${
             isBusiness ? 'px-[24px]' : 'px-[32px]'
           }`}
         >
@@ -232,6 +247,23 @@ function AboutDetailContent({
         ) : null}
       </div>
 
+      {activeRegionText ? (
+        <div
+          className={`absolute bottom-[58px] left-[72px] z-[3] max-w-[620px] font-sans tracking-[0.012em] ${
+            isBusiness ? 'text-white' : 'text-[#2a2e33]'
+          }`}
+        >
+          {activeRegionLabel ? (
+            <p className="mb-[12px] text-[18px] font-medium leading-none">{activeRegionLabel}</p>
+          ) : null}
+          <div className="space-y-[2px] text-[18px] font-bold uppercase leading-[1.05]">
+            {splitTextLines(activeRegionText).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {ctaLabel ? (
         <div className="absolute bottom-[58px] right-[72px] z-[3] w-[208px]">
           {ctaHref ? (
@@ -269,6 +301,7 @@ function AboutDetailContent({
 export function AboutScreen({
   customerType,
   headline,
+  activeRegion,
   sections,
   navigationItems,
   logoUrl,
@@ -278,6 +311,7 @@ export function AboutScreen({
   patternAlt,
   navigationArrowUrl,
   businessMapUrl,
+  businessMapObjectPosition,
   businessMapAlt,
 }: AboutScreenProps) {
   const isBusiness = customerType === 'b2b'
@@ -336,8 +370,10 @@ export function AboutScreen({
 
       <AboutDetailContent
         headline={resolvedHeadline}
+        activeRegion={activeRegion}
         sections={sections}
         businessMapUrl={businessMapUrl}
+        businessMapObjectPosition={businessMapObjectPosition}
         businessMapAlt={businessMapAlt}
         customerType={customerType}
         isBusiness={isBusiness}
