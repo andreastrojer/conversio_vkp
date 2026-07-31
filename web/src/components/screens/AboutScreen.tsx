@@ -159,10 +159,10 @@ function AboutDetailContent({
   return (
     <section className="relative z-[2] h-full w-full overflow-hidden">
       <div
-        className={`absolute z-[1] w-[86%] ${
+        className={`absolute z-[1] ${
           isBusiness
-            ? 'left-[-270px] top-[34px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-260px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[144px]'
-            : 'left-[-90px] top-[-200px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-78px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[-44px]'
+            ? 'left-[-270px] top-[34px] w-[86%] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-260px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[144px]'
+            : 'left-[-38px] top-[42px] w-[68%] [@media(min-width:768px)_and_(max-width:1366px)]:left-[-28px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[142px] [@media(min-width:768px)_and_(max-width:1366px)]:w-[64%]'
         }`}
       >
         {mapUrl ? (
@@ -237,7 +237,7 @@ function AboutDetailContent({
           {ctaHref ? (
             <Link
               href={ctaHref}
-              className="group flex items-center justify-between pb-[14px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+              className="group flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
             >
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
@@ -251,7 +251,7 @@ function AboutDetailContent({
               ) : null}
             </Link>
           ) : (
-            <span className="flex items-center justify-between pb-[14px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
+            <span className="flex items-center justify-between pb-[20px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804]">
               <span>{ctaLabel}</span>
               {ctaImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

@@ -22,6 +22,8 @@ type AuthBrandingShellProps = {
 }
 
 const fallbackFooterAddress = 'KOSCHATSTRASSE 24, 9800 SPITTAL/DRAU'
+const imprintUrl = 'https://www.conversioenergie.at/imprint'
+const privacyUrl = 'https://www.conversioenergie.at/data-protection'
 
 const screenClassName =
   'relative isolate h-full w-full overflow-hidden bg-[#f5f5f7] text-[#2a2e33]'
@@ -91,8 +93,8 @@ export function AuthBrandingShell({
 }: AuthBrandingShellProps) {
   const resolvedAddress =
     footerAddress?.trim().replace(/\s*\r?\n\s*/g, ', ') || fallbackFooterAddress
-  const imprintLink = findLegalLink(legalLinks, /impress/i, 'IMPRESSUM')
-  const privacyLink = findLegalLink(legalLinks, /(datenschutz|privacy)/i, 'DATENSCHUTZ')
+  const imprintLink = {...findLegalLink(legalLinks, /impress/i, 'IMPRESSUM'), url: imprintUrl}
+  const privacyLink = {...findLegalLink(legalLinks, /(datenschutz|privacy)/i, 'DATENSCHUTZ'), url: privacyUrl}
   const patternStyle = rightPatternUrl
     ? {backgroundImage: `url("${rightPatternUrl}")`}
     : undefined

@@ -1016,7 +1016,7 @@ export function WhatFitsScreen({
                   className={`group absolute bottom-[58px] right-[72px] z-[4] ${hasLongCatalogCta ? 'w-[292px]' : 'w-[246px]'} text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]`}
                   onClick={() => openProduct(selectedProduct.slug)}
                 >
-                  <span className="flex items-center justify-between pb-[14px]">
+                  <span className="flex items-center justify-between pb-[20px]">
                     <span
                       className={
                         hasLongCatalogCta ? 'whitespace-nowrap' : undefined
