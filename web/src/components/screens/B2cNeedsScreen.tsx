@@ -196,7 +196,7 @@ function OverviewContent({sections}: {sections: B2cDetailSection[]}) {
           ) : null}
           {section.text ? (
             <div
-              className={`${section.title ? 'mt-[26px]' : ''} space-y-[22px] text-[20px] leading-[1.45] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]`}
+              className={`${section.title ? 'mt-[26px]' : ''} space-y-[22px] text-[23px] leading-[1.45] text-white/95`}
             >
               {splitParagraphs(section.text).map((paragraph, index) => (
                 <p key={`${section._key}-paragraph-${index}`} className="whitespace-pre-line">
@@ -258,7 +258,7 @@ function FunctionContent({tab}: {tab: B2cDetailTab}) {
                 transition={{duration: 0.22, ease: [0.22, 1, 0.36, 1]}}
               >
                 <div className="pb-[18px] pt-[28px]">
-                  <div className="max-w-[420px] space-y-[10px] text-[20px] font-normal leading-[1.35] tracking-[0.025em] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]">
+                  <div className="max-w-[420px] space-y-[10px] text-[25px] font-normal leading-[1.35] tracking-[0.025em] text-white/95">
                     {splitParagraphs(step.text).map((paragraph, paragraphIndex) => (
                       <p
                         key={`${step._key}-paragraph-${paragraphIndex}`}
@@ -300,7 +300,7 @@ function InterplayContent({
               className="grid grid-cols-[22px_minmax(0,1fr)] items-center gap-[18px]"
             >
               <PlusMarker media={markerMedia} className="h-[18px] w-[18px]" />
-              <div className="text-[20px] leading-[1.4] text-white/95 max-[1600px]:text-[22px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[23px]">
+              <div className="text-[23px] leading-[1.4] text-white/95">
                 {item.title ? (
                   <strong className="block font-semibold uppercase text-white">{item.title}</strong>
                 ) : null}
@@ -534,11 +534,31 @@ export function B2cNeedsScreen({
   const activeTab =
     selectedProduct?.detailTabs.find((tab) => tab.key === activeTabKey) ||
     selectedProduct?.detailTabs[0]
+  const selectedProductIdentity = normalizeNavigationLabel(
+    [
+      selectedProduct?.slug,
+      selectedProduct?.title,
+      selectedProduct?.navigationLabel,
+      selectedProduct?.detailTitle,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  )
+  const selectedProductCompactIdentity = selectedProductIdentity.replace(/[^a-z0-9]/g, '')
+  const isEnergyCommunityProduct =
+    selectedProductCompactIdentity.includes('energiegemeinschaft') ||
+    selectedProductCompactIdentity.includes('burgerenergiegemeinschaft') ||
+    selectedProductCompactIdentity.includes('buergerenergiegemeinschaft') ||
+    normalizeNavigationLabel(selectedProduct?.slug).replace(/[^a-z0-9]/g, '') === 'beg'
+  const overviewContentTopClassName =
+    'top-[400px] [@media(hover:hover)_and_(pointer:fine)_and_(min-width:1024px)_and_(max-height:900px)]:-translate-y-[18px] [@media(min-width:1367px)_and_(max-width:1600px)]:top-[386px] [@media(min-width:1367px)_and_(max-width:1600px)]:-translate-y-[18px] [@media(min-width:1601px)_and_(max-height:1100px)]:top-[386px] [@media(min-width:1601px)_and_(max-height:1100px)]:-translate-y-[18px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[390px]'
   const contentTopClassName =
     activeTab?.key === 'overview'
-      ? 'top-[400px] [@media(min-width:768px)_and_(max-width:1366px)]:top-[390px]'
+      ? overviewContentTopClassName
       : activeTab?.key === 'functions'
-        ? 'top-[390px]'
+        ? isEnergyCommunityProduct
+          ? overviewContentTopClassName
+          : 'top-[390px] [@media(hover:hover)_and_(pointer:fine)_and_(min-width:1024px)_and_(max-height:900px)]:-translate-y-[18px] [@media(min-width:1367px)_and_(max-width:1600px)]:-translate-y-[18px] [@media(min-width:1601px)_and_(max-height:1100px)]:-translate-y-[18px]'
         : 'top-[520px]'
   const contentBottomClassName =
     activeTab?.key === 'functions' || activeTab?.key === 'overview'
@@ -551,7 +571,7 @@ export function B2cNeedsScreen({
         ? 'overflow-visible'
         : 'overflow-y-auto'
   const contentAlignmentClassName =
-    activeTab?.key === 'overview' ? 'flex items-center' : ''
+    activeTab?.key === 'overview' && !isEnergyCommunityProduct ? 'flex items-center' : ''
   const contentWidthClassName =
     activeTab?.key === 'interplay' ? 'w-[720px]' : 'w-[560px]'
   const pageLogoUrl = inverseLogoUrl || logoUrl
@@ -656,7 +676,7 @@ export function B2cNeedsScreen({
               </div>
 
               <div
-                className={`absolute left-[60px] z-[3] ${contentTopClassName} ${contentBottomClassName} ${contentOverflowClassName} ${contentAlignmentClassName}`}
+                className={`${isEnergyCommunityProduct ? 'b2c-energy-community-detail-panel ' : ''}absolute left-[60px] z-[3] ${contentTopClassName} ${contentBottomClassName} ${contentOverflowClassName} ${contentAlignmentClassName}`}
               >
                 <div className={`relative ${contentWidthClassName}`}>
                   <div className="relative z-[1]">

@@ -1,7 +1,8 @@
 'use client'
 
-import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
 import {PresentationViewport} from '@/components/layout/PresentationViewport'
+import {BottomBackLink} from '@/components/navigation/BottomBackLink'
+import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
 import type {ChapterNavigationItem} from '@/lib/about'
 import {
   brandLogoImageClassName,
@@ -10,7 +11,7 @@ import {
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {OfferSection} from '@/lib/offer'
 import {AnimatePresence, motion} from 'framer-motion'
-import {ArrowLeft, ArrowRight, Hexagon} from 'lucide-react'
+import {ArrowRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
 import {useMemo, useState} from 'react'
 
@@ -291,7 +292,7 @@ export function OfferScreen({
           </AnimatePresence>
         </div>
 
-        <div className="absolute right-[72px] top-[55px] z-[3] w-[440px]">
+        <div className="absolute right-[72px] top-[55px] z-[3] w-[440px] [@media(min-width:1367px)_and_(max-width:1600px)]:top-[25px] [@media(min-width:1601px)_and_(max-height:1100px)]:top-[25px]">
           {sections.length > 0 ? (
             <div role="presentation">
               {sections.map((section, index) => {
@@ -393,16 +394,7 @@ export function OfferScreen({
 
       {primaryCta?.label ? (
         <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
-          <Link
-            href={backHref}
-            className="group w-[228px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
-          >
-            <span className="flex items-center justify-between pb-[20px]">
-              <ArrowLeft className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1" strokeWidth={2.8} aria-hidden="true" />
-              <span>Wer wir sind</span>
-            </span>
-            <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
-          </Link>
+          <BottomBackLink href={backHref}>Wer wir sind</BottomBackLink>
           <div className="w-[208px]">
             {ctaHref ? (
               <Link

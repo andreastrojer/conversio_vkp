@@ -3,6 +3,7 @@ import {auth} from '@/lib/auth'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {getProcessPageData} from '@/lib/process'
 import {redirect} from 'next/navigation'
+import {connection} from 'next/server'
 
 type ProcessPageProps = {
   searchParams: Promise<{
@@ -26,6 +27,7 @@ export default async function ProcessPage({searchParams}: ProcessPageProps) {
   const {type} = await searchParams
   const customerType = resolveCustomerType(type)
 
+  await connection()
   const content = await getProcessPageData(customerType)
 
   return (

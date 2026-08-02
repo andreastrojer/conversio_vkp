@@ -156,17 +156,17 @@ export function ChapterNavigation({
     'rounded-r-[18px] pb-[24px] pl-[60px] pr-[54px] pt-[43px]'
   const panelOverflow = 'overflow-hidden'
   const navigationSpacing =
-    'mt-[31px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1600px)]:mt-[13px] [@media(min-width:768px)_and_(max-width:1600px)]:h-[840px] [@media(min-width:768px)_and_(max-width:1600px)]:scale-100 [@media(min-width:768px)_and_(max-width:1600px)]:[width:100%] [@media(min-width:1367px)_and_(max-width:1600px)]:mt-[24px] [@media(min-width:1367px)_and_(max-width:1600px)]:h-[700px]'
+    'mt-[31px] flex h-[774px] origin-top-left scale-[0.9] flex-col [width:111.111111%] [@media(min-width:768px)_and_(max-width:1366px)]:mt-[13px] [@media(min-width:768px)_and_(max-width:1366px)]:h-[840px] [@media(min-width:768px)_and_(max-width:1366px)]:scale-100 [@media(min-width:768px)_and_(max-width:1366px)]:[width:100%] [@media(min-width:1367px)_and_(max-width:1600px)]:mt-[24px] [@media(min-width:1367px)_and_(max-width:1600px)]:h-[700px] [@media(min-width:1367px)_and_(max-width:1600px)]:scale-100 [@media(min-width:1367px)_and_(max-width:1600px)]:[width:100%] [@media(min-width:1601px)_and_(max-height:1100px)]:mt-[22px] [@media(min-width:1601px)_and_(max-height:1100px)]:h-[650px]'
   const itemSpacing = 'flex min-h-0 flex-1 flex-col justify-center py-0'
   const itemGap =
-    'gap-[24px] [@media(min-width:768px)_and_(max-width:1600px)]:gap-[44px] [@media(min-width:1367px)_and_(max-width:1600px)]:gap-[28px]'
+    'gap-[24px] [@media(min-width:768px)_and_(max-width:1366px)]:gap-[44px] [@media(min-width:1367px)_and_(max-width:1600px)]:gap-[24px] [@media(min-width:1601px)_and_(max-height:1100px)]:gap-[22px]'
   const numberSize = 'h-[42px] w-[42px]'
   const numberTextSize =
     'text-[16px] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px]'
   const titleTextSize =
-    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1600px)]:text-[29px]'
+    'text-[22px] max-[1600px]:text-[25px] [@media(max-height:920px)]:text-[25px] [@media(min-width:768px)_and_(max-width:1366px)]:text-[29px] [@media(min-width:1367px)_and_(max-width:1600px)]:text-[28px]'
   const ctaOffset =
-    'ml-[66px] mt-[14px] [@media(min-width:768px)_and_(max-width:1600px)]:ml-[86px]'
+    'ml-[66px] mt-[14px] [@media(min-width:768px)_and_(max-width:1366px)]:ml-[86px] [@media(min-width:1367px)_and_(max-width:1600px)]:mt-[14px] [@media(min-width:1601px)_and_(max-height:1100px)]:mt-[10px]'
   const ctaSize =
     'h-[34px] w-[190px] max-[1600px]:h-[38px] max-[1600px]:w-[204px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:w-[204px] [@media(min-width:768px)_and_(max-width:1600px)]:h-[31px] [@media(min-width:768px)_and_(max-width:1600px)]:w-[178px]'
   const ctaIconClassName = 'h-[17px] w-[17px] shrink-0 object-contain'

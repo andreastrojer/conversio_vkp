@@ -1,6 +1,7 @@
 'use client'
 
 import {PresentationViewport} from '@/components/layout/PresentationViewport'
+import {BottomBackLink} from '@/components/navigation/BottomBackLink'
 import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
 import {
   brandLogoImageClassName,
@@ -21,7 +22,7 @@ import {
 } from '@/lib/consultationStore'
 import type {NextStepDocumentCategory, NextStepPageData} from '@/lib/nextStep'
 import {AnimatePresence, motion} from 'framer-motion'
-import {ArrowLeft, ArrowRight, Hexagon} from 'lucide-react'
+import {ArrowRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
 import {useEffect, useMemo, useState} from 'react'
 
@@ -439,6 +440,8 @@ export function NextStepScreen({
     displayBundle?.scenarioType === 'b2c_pv' || displayBundle?.scenarioType === 'b2b_einstieg'
       ? 'translate-y-[-18px] scale-[1.08]'
       : ''
+  const nextStepLaptopLiftClassName =
+    '[@media(min-width:1000px)_and_(max-height:900px)]:-translate-y-[22px]'
   const scenarioId = displayBundle?.id
   const visibleDocumentCategories = documentCategoriesOverride || documentCategories
   const documentTitleById = useMemo(
@@ -672,12 +675,12 @@ export function NextStepScreen({
           </Link>
         </div>
 
-        <h1 className={`absolute left-[60px] top-[236px] z-[3] font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em] ${foregroundClassName}`}>
+        <h1 className={`absolute left-[60px] top-[236px] z-[3] font-sans text-[54px] font-bold uppercase leading-[0.92] tracking-[0.006em] ${foregroundClassName} ${nextStepLaptopLiftClassName}`}>
           {headline}
         </h1>
 
         <section
-          className="absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)]"
+          className={`absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)] ${nextStepLaptopLiftClassName}`}
           aria-label="Ausgewähltes Bundle"
         >
           {displayBundle ? (
@@ -753,7 +756,7 @@ export function NextStepScreen({
           ) : null}
         </section>
 
-        <section className="absolute left-[507px] top-[368px] z-[4] w-[350px]" aria-labelledby="documents-heading">
+        <section className={`absolute left-[507px] top-[368px] z-[4] w-[350px] ${nextStepLaptopLiftClassName}`} aria-labelledby="documents-heading">
           <h2 id="documents-heading" className={`text-[36px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {documentsHeadline}
           </h2>
@@ -775,7 +778,7 @@ export function NextStepScreen({
           </div>
         </section>
 
-        <section className="absolute left-[952px] top-[431px] z-[4] w-[410px]" aria-labelledby="email-heading">
+        <section className={`absolute left-[952px] top-[431px] z-[4] w-[410px] ${nextStepLaptopLiftClassName}`} aria-labelledby="email-heading">
           <h2 id="email-heading" className={`text-[18px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {emailLabel}
           </h2>
@@ -847,20 +850,12 @@ export function NextStepScreen({
           </div>
         ) : null}
 
-        <Link
+        <BottomBackLink
           href={`/scenario-matrix?type=${customerType}`}
-          className="group absolute bottom-[58px] left-[72px] z-[4] w-[284px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
+          className="absolute bottom-[48px] left-[64px] z-[4]"
         >
-          <span className="flex items-center justify-between pb-[20px]">
-            <ArrowLeft
-              className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1"
-              strokeWidth={2.8}
-              aria-hidden="true"
-            />
-            <span>Was rechnet sich</span>
-          </span>
-          <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
-        </Link>
+          Was rechnet sich
+        </BottomBackLink>
 
         <ChapterNavigation
           customerType={customerType}

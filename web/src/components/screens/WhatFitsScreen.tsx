@@ -1,6 +1,7 @@
 'use client'
 
 import {PresentationViewport} from '@/components/layout/PresentationViewport'
+import {BottomBackLink} from '@/components/navigation/BottomBackLink'
 import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
 import type {ChapterNavigationItem} from '@/lib/about'
 import {
@@ -689,6 +690,10 @@ export function WhatFitsScreen({
   const alignsEnergyCommunityTabContent = isBusiness && isEnergyCommunity && !selectedModel
   const usesB2cEnergyCommunityDetailLayout =
     view === 'detail' && !isBusiness && isEnergyCommunity && !selectedModel
+  const b2bDetailImageLaptopNudgeClassName =
+    isBusiness && view === 'detail'
+      ? 'origin-bottom-left [@media(min-width:1000px)_and_(max-height:900px)]:translate-y-[18px] [@media(min-width:1000px)_and_(max-height:900px)]:scale-[0.96]'
+      : ''
   const usesDarkDetailTheme = isBusiness || usesB2cEnergyCommunityDetailLayout
   const usesEnergyCommunityInterplayAccordion =
     alignsEnergyCommunityTabContent && isInterplay && Boolean(activeTab?.contentItems.length)
@@ -961,12 +966,14 @@ export function WhatFitsScreen({
     : isReference
       ? 'text-[18px] font-normal leading-[1.38]'
       : isEnergyCommunityOverview
-        ? 'text-[22px] font-normal leading-[1.28]'
+        ? usesB2cEnergyCommunityDetailLayout
+          ? 'text-[23px] font-normal leading-[1.28]'
+          : 'text-[22px] font-normal leading-[1.28]'
         : isCompactSharedTab
           ? 'text-[22px] font-semibold leading-[1.32]'
           : 'text-[22px] font-semibold leading-[1.35]'
   const activeDetailContentPanelClassName = usesB2cEnergyCommunityDetailLayout
-    ? 'w-[560px]'
+    ? 'w-[560px] [@media(min-width:1367px)_and_(max-width:1600px)]:w-[660px]'
     : detailContentPanelClassName
   const screenBackgroundClassName = isBusiness
     ? 'bg-[#2a2e33]'
@@ -1111,16 +1118,7 @@ export function WhatFitsScreen({
 
               {selectedProduct?.catalogCtaLabel ? (
                 <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
-                  <Link
-                    href={catalogBackHref}
-                    className="group w-[218px] text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
-                  >
-                    <span className="flex items-center justify-between pb-[20px]">
-                      <ArrowLeft className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1" strokeWidth={2.8} aria-hidden="true" />
-                      <span>Der Prozess</span>
-                    </span>
-                    <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
-                  </Link>
+                  <BottomBackLink href={catalogBackHref}>Der Prozess</BottomBackLink>
                   <button
                     type="button"
                     className={`group ${hasLongCatalogCta ? 'w-[292px]' : 'w-[246px]'} text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]`}
@@ -1211,7 +1209,7 @@ export function WhatFitsScreen({
 
               <MediaLayer
                 media={detailMedia}
-                className={
+                className={`${
                   selectedModel && activeTab?.key === 'overview'
                     ? isTransformerDetail
                       ? 'absolute bottom-[58px] left-[8px] h-[560px] w-[640px]'
@@ -1233,7 +1231,7 @@ export function WhatFitsScreen({
                     : isTechnicalTab
                       ? 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
                     : 'absolute bottom-0 left-0 h-[650px] w-[62cqw]'
-                }
+                } ${b2bDetailImageLaptopNudgeClassName}`}
                 imageClassName={
                   selectedModel && activeTab?.key === 'overview'
                     ? 'h-full w-full object-contain object-center'
@@ -1409,7 +1407,7 @@ export function WhatFitsScreen({
               <div
                 className={
                   usesB2cEnergyCommunityDetailLayout
-                    ? 'absolute bottom-[84px] left-[60px] top-[400px] z-[3] flex w-[560px] items-center overflow-y-auto'
+                    ? 'b2c-energy-community-detail-panel absolute bottom-[84px] left-[60px] top-[400px] z-[3] flex w-[560px] items-start overflow-y-auto [@media(hover:hover)_and_(pointer:fine)_and_(min-width:1024px)_and_(max-height:900px)]:bottom-[58px] [@media(hover:hover)_and_(pointer:fine)_and_(min-width:1024px)_and_(max-height:900px)]:top-[345px] [@media(hover:hover)_and_(pointer:fine)_and_(min-width:1024px)_and_(max-height:900px)]:w-[660px] [@media(hover:hover)_and_(pointer:fine)_and_(min-width:1024px)_and_(max-height:900px)]:pr-[16px] [@media(min-width:1367px)_and_(max-width:1600px)]:bottom-[58px] [@media(min-width:1367px)_and_(max-width:1600px)]:top-[345px] [@media(min-width:1367px)_and_(max-width:1600px)]:w-[660px] [@media(min-width:1367px)_and_(max-width:1600px)]:pr-[16px] [@media(min-width:1601px)_and_(max-height:1100px)]:bottom-[58px] [@media(min-width:1601px)_and_(max-height:1100px)]:top-[345px] [@media(min-width:1601px)_and_(max-height:1100px)]:w-[660px] [@media(min-width:1601px)_and_(max-height:1100px)]:pr-[16px]'
                     : `absolute left-[58.5cqw] right-[60px] z-[3] ${
                         selectedModel && activeTab?.key === 'overview'
                           ? 'top-[820px]'
@@ -1438,7 +1436,7 @@ export function WhatFitsScreen({
                         >
                           <button
                             type="button"
-                            className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans ${isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : 'text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
+                            className={`flex w-full items-center justify-between gap-6 py-[16px] text-left font-sans ${usesB2cEnergyCommunityDetailLayout && isFunctions ? 'text-[25px]' : isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : 'text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} font-bold uppercase leading-none transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] ${
                               isActive
                                 ? 'text-[#efb804]'
                                 : usesDarkDetailTheme
@@ -1488,7 +1486,7 @@ export function WhatFitsScreen({
                               <div className="pb-[14px] pt-[20px]">
                                 {section.text ? (
                                   <div
-                                    className={`${isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} ${isFunctions && !isEnergyCommunity ? 'w-full max-w-none' : 'max-w-[420px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
+                                    className={`${usesB2cEnergyCommunityDetailLayout && isFunctions ? 'w-full max-w-none text-[25px]' : isEnergyCommunity || usesBusinessTechnicalTextSize ? 'text-[22px]' : isFunctions ? 'w-full max-w-none text-[18px]' : 'max-w-[420px] text-[18px] max-[1600px]:text-[20px] [@media(max-height:920px)]:text-[20px]'} ${isFunctions && (!isEnergyCommunity || usesB2cEnergyCommunityDetailLayout) ? 'w-full max-w-none' : usesB2cEnergyCommunityDetailLayout ? 'w-full max-w-none' : 'max-w-[420px]'} space-y-[22px] font-normal leading-[1.42] tracking-[0.025em] ${
                                       usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
                                     }`}
                                   >
@@ -1555,7 +1553,7 @@ export function WhatFitsScreen({
 
                     {energyCommunityOverviewIntroText ? (
                       <div
-                        className={`max-w-[520px] whitespace-pre-line tracking-[0.01em] ${structuredIntroTextClassName} ${
+                        className={`${usesB2cEnergyCommunityDetailLayout ? 'max-w-[560px] [@media(min-width:1367px)_and_(max-width:1600px)]:max-w-[650px]' : 'max-w-[520px]'} whitespace-pre-line tracking-[0.01em] ${structuredIntroTextClassName} ${
                           usesDarkDetailTheme ? 'text-white' : 'text-[#2a2e33]'
                         }`}
                       >
@@ -1691,7 +1689,15 @@ export function WhatFitsScreen({
                             )}
                             <div
                               className={`font-normal tracking-[0.01em] ${
-                                isEnergyCommunityOverview ? 'text-[22px] leading-[1.35]' : isInterplay ? 'text-[18px] leading-[1.34]' : isReference ? 'text-[22px] leading-[1.34]' : 'text-[22px] leading-[1.42]'
+                                isEnergyCommunityOverview
+                                  ? usesB2cEnergyCommunityDetailLayout
+                                    ? 'text-[23px] leading-[1.32]'
+                                    : 'text-[22px] leading-[1.35]'
+                                : usesB2cEnergyCommunityDetailLayout && isInterplay
+                                  ? 'text-[23px] leading-[1.34]'
+                                : isInterplay
+                                  ? 'text-[18px] leading-[1.34]'
+                                : isReference ? 'text-[22px] leading-[1.34]' : 'text-[22px] leading-[1.42]'
                               } ${
                                 usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
                               }`}
@@ -1728,7 +1734,7 @@ export function WhatFitsScreen({
                     ) : null}
 
                     {isEnergyCommunityOverview && energyCommunityOverviewHintSections.length > 0 ? (
-                      <div className="mt-[48px] space-y-[30px]">
+                      <div className="mt-[48px] space-y-[30px] [@media(min-width:1367px)_and_(max-width:1600px)]:mt-[36px]">
                         {energyCommunityOverviewHintSections.map((section) => {
                           const hintLineImageUrl = section.mediaImageUrl || section.imageUrl
                           const hintLineFilterClass = usesDarkDetailTheme
@@ -1761,7 +1767,7 @@ export function WhatFitsScreen({
                                   </h3>
                                 ) : null}
                                 {section.text?.trim() ? (
-                                  <div className={`mt-[16px] space-y-[12px] text-[22px] font-normal leading-[1.28] tracking-[0.01em] ${
+                                  <div className={`mt-[16px] space-y-[12px] ${usesB2cEnergyCommunityDetailLayout ? 'text-[23px]' : 'text-[22px]'} font-normal leading-[1.28] tracking-[0.01em] ${
                                     usesDarkDetailTheme ? 'text-white/95' : 'text-[#2a2e33]/95'
                                     }`}>
                                     {splitParagraphs(section.text).map((paragraph, index) => (

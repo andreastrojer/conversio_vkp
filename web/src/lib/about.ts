@@ -119,6 +119,7 @@ export type AboutPageData = {
 
 const aboutClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
+const fullBleedAboutImageWidth = 8000
 const fallbackHeadline = 'WER WIR SIND'
 const fallbackActiveRegion = {
   label: 'Aktiv in:',
@@ -204,9 +205,9 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
       .map((section) => ({
         ...section,
-        imageUrl: buildImageUrl(section.image, 3000, undefined, 100),
+        imageUrl: buildImageUrl(section.image, fullBleedAboutImageWidth, undefined, 100),
         imageObjectPosition: resolveImageObjectPosition(section.image),
-        mediaImageUrl: buildImageUrl(section.media?.image, 3000, undefined, 100),
+        mediaImageUrl: buildImageUrl(section.media?.image, fullBleedAboutImageWidth, undefined, 100),
         mediaImageObjectPosition: resolveImageObjectPosition(section.media?.image),
         mediaTitle: section.media?.title,
         mediaAltText: section.media?.altText,
@@ -245,7 +246,8 @@ export async function getAboutPageData(customerType: CustomerGroup): Promise<Abo
         '',
       navigationArrowUrl: buildLogoUrl(arrowImage) || buildImageUrl(arrowImage, 96, undefined, 100),
       businessMapUrl:
-        buildLogoUrl(businessMap?.image) || buildImageUrl(businessMap?.image, 1200, undefined, 100),
+        buildLogoUrl(businessMap?.image) ||
+        buildImageUrl(businessMap?.image, fullBleedAboutImageWidth, undefined, 100),
       businessMapObjectPosition: resolveImageObjectPosition(businessMap?.image),
       businessMapAlt: businessMap?.altText || businessMap?.title || '',
     }

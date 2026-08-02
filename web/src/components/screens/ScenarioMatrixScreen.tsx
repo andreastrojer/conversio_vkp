@@ -1,6 +1,7 @@
 'use client'
 
 import {PresentationViewport} from '@/components/layout/PresentationViewport'
+import {BottomBackLink} from '@/components/navigation/BottomBackLink'
 import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
 import {
   brandLogoImageClassName,
@@ -92,7 +93,7 @@ const b2cSliderKeys = new Set([
   'ladepunkte',
   'lastspitze',
 ])
-const matrixContentShiftClassName = 'translate-y-[-88px] max-[1600px]:translate-y-[-72px] [@media(max-height:920px)]:translate-y-[-72px] [@media(min-width:768px)_and_(max-width:1366px)]:translate-y-[-60px]'
+const matrixContentShiftClassName = 'translate-y-[-88px] max-[1600px]:translate-y-[-72px] [@media(max-height:920px)]:translate-y-[-72px] [@media(min-width:768px)_and_(max-width:1366px)]:translate-y-[-60px] [@media(min-width:1000px)_and_(max-height:900px)]:!translate-y-[-34px]'
 
 function normalizeCmsKey(value: string) {
   return value
@@ -613,18 +614,18 @@ function SliderControl({
 
       <div className="group relative h-[26px]">
         <span
-          className={`absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full [@media(min-width:768px)_and_(max-width:1366px)]:h-[8px] ${
+          className={`absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full [@media(min-width:768px)_and_(max-width:1366px)]:h-[8px] [@media(min-width:1000px)_and_(max-height:900px)]:!h-[7px] ${
             isBusiness ? 'bg-white/80' : 'bg-[#2a2e33]/55'
           }`}
           aria-hidden="true"
         />
         <span
-          className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-[#efb804] [@media(min-width:768px)_and_(max-width:1366px)]:h-[8px]"
+          className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-[#efb804] [@media(min-width:768px)_and_(max-width:1366px)]:h-[8px] [@media(min-width:1000px)_and_(max-height:900px)]:!h-[7px]"
           style={{width: `${percentage}%`}}
           aria-hidden="true"
         />
         <span
-          className="absolute top-1/2 h-[22px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[5px] border-[#efb804] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-shadow group-focus-within:shadow-[0_0_0_3px_rgba(255,255,255,0.38)]"
+          className="absolute top-1/2 h-[22px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[5px] border-[#efb804] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-shadow group-focus-within:shadow-[0_0_0_3px_rgba(255,255,255,0.38)] [@media(min-width:1000px)_and_(max-height:900px)]:!h-[25px] [@media(min-width:1000px)_and_(max-height:900px)]:!w-[25px]"
           style={{left: `${percentage}%`}}
           aria-hidden="true"
         />
@@ -1171,7 +1172,11 @@ export function ScenarioMatrixScreen({
                 {calculateButtonLabel ? (
                   <button
                     type="button"
-                    className="group inline-flex h-[36px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase leading-none tracking-[0.025em] text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[38px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px]"
+                    className={`group inline-flex h-[36px] min-w-[228px] items-center justify-between rounded-full bg-[#efb804] px-[25px] text-[16px] font-semibold uppercase leading-none tracking-[0.025em] text-[#2a2e33] transition-transform hover:-translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efb804] max-[1600px]:h-[38px] max-[1600px]:min-w-[244px] max-[1600px]:text-[18px] [@media(max-height:920px)]:h-[38px] [@media(max-height:920px)]:min-w-[244px] [@media(max-height:920px)]:text-[18px] ${
+                      isBusiness
+                        ? '[@media(min-width:1000px)_and_(max-height:900px)]:absolute [@media(min-width:1000px)_and_(max-height:900px)]:bottom-[32px] [@media(min-width:1000px)_and_(max-height:900px)]:left-[700px] [@media(min-width:1000px)_and_(max-height:900px)]:!mt-0'
+                        : ''
+                    }`}
                     onClick={handleCalculate}
                   >
                     <span>{calculateButtonLabel}</span>
@@ -1224,16 +1229,9 @@ export function ScenarioMatrixScreen({
 
         {isCalculation && calculationCtaLabel ? (
           <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[8] flex items-end justify-between max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-[60px] [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-[60px] [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[52px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[72px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[72px]">
-            <Link
-              href={`/needs?type=${customerType}`}
-              className="group w-[332px] text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
-            >
-              <span className="flex items-center justify-between pb-[20px]">
-                <ArrowLeft className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1" strokeWidth={2.8} aria-hidden="true" />
-                <span>Was passt zu Ihnen</span>
-              </span>
-              <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
-            </Link>
+            <BottomBackLink href={`/needs?type=${customerType}`}>
+              Was passt zu Ihnen
+            </BottomBackLink>
             <div className="w-[262px]">
               <Link
                 href={calculationCtaHrefWithState}

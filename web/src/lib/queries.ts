@@ -133,6 +133,8 @@ export const ABOUT_SCREEN_QUERY = defineQuery(groq`coalesce(
     title,
     eyebrow,
     text,
+    detailTitle,
+    detailText,
     visibleFor,
     layout,
     sortOrder,

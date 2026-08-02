@@ -197,7 +197,7 @@ function AboutDetailContent({
         )}
       </div>
 
-      <div className="absolute left-[58.5%] top-[314px] z-[2] flex w-[min(39%,600px)] flex-col items-start">
+      <div className="absolute left-[var(--about-content-left)] top-[314px] z-[2] flex w-[min(39%,600px)] flex-col items-start [--about-content-left:58.5%] [@media(min-width:1367px)_and_(max-width:1600px)]:[--about-content-left:65%] [@media(min-width:1601px)_and_(max-height:1100px)]:[--about-content-left:65%]">
         <div
           className={`inline-block max-w-full bg-[#efb804] py-[9px] shadow-[0_14px_28px_rgba(0,0,0,0.10)] ${
             isBusiness ? 'px-[24px]' : 'px-[32px]'

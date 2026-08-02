@@ -1,6 +1,7 @@
 'use client'
 
 import {PresentationViewport} from '@/components/layout/PresentationViewport'
+import {BottomBackLink} from '@/components/navigation/BottomBackLink'
 import {ChapterNavigation} from '@/components/navigation/ChapterNavigation'
 import type {ChapterNavigationItem} from '@/lib/about'
 import {
@@ -10,7 +11,7 @@ import {
 import type {CustomerGroup} from '@/lib/customerSelection'
 import type {ProcessSection} from '@/lib/process'
 import {motion} from 'framer-motion'
-import {ArrowLeft, ArrowRight, Hexagon} from 'lucide-react'
+import {ArrowRight, Hexagon} from 'lucide-react'
 import Link from 'next/link'
 import {useState} from 'react'
 
@@ -144,13 +145,13 @@ export function ProcessScreen({
   const activeFallbackDetail = processDetailFallbacks[safeActiveIndex]
   const activeDetailTitle =
     activeSection?.detailTitle?.trim() ||
-    activeFallbackDetail?.title ||
     activeSection?.title?.trim() ||
+    activeFallbackDetail?.title ||
     ''
   const activeDetailText =
     activeSection?.detailText?.trim() ||
-    activeFallbackDetail?.text ||
     activeSection?.text?.trim() ||
+    activeFallbackDetail?.text ||
     ''
   const activeDetailParagraphs = splitProcessDetailText(activeDetailText)
 
@@ -198,7 +199,7 @@ export function ProcessScreen({
         </div>
 
         <p
-          className={`absolute bottom-[174px] left-[110px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] ${
+          className={`absolute bottom-[174px] left-[82px] z-[3] origin-left -rotate-90 whitespace-nowrap text-[16px] font-medium uppercase tracking-[0.32em] max-[1600px]:text-[18px] [@media(max-height:920px)]:text-[18px] [@media(min-width:1367px)_and_(max-width:1600px)]:bottom-[150px] [@media(min-width:1601px)_and_(max-height:1100px)]:bottom-[150px] ${
             isBusiness ? 'text-white/90' : 'text-[#2a2e33]/90'
           }`}
         >
@@ -364,20 +365,7 @@ export function ProcessScreen({
 
         {primaryCta?.label ? (
           <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
-            <Link
-              href={backHref}
-              className="group w-[260px] font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]"
-            >
-              <span className="flex items-center justify-between pb-[20px]">
-                <ArrowLeft
-                  className="h-[16px] w-[22px] transition-transform group-hover:-translate-x-1"
-                  strokeWidth={2.8}
-                  aria-hidden="true"
-                />
-                <span>Was wir bieten</span>
-              </span>
-              <span className="block h-px w-full bg-[#efb804]" aria-hidden="true" />
-            </Link>
+            <BottomBackLink href={backHref}>Was wir bieten</BottomBackLink>
             <div className="w-[276px]">
               <Link
                 href={ctaHref}
