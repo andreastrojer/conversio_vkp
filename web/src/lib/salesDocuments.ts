@@ -1,5 +1,10 @@
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {
+  buildImageUrl,
+  buildLogoUrl,
+  type SanityImage,
+} from '@/lib/authBranding'
+import {
   NEXT_STEP_EMAIL_TEMPLATE_QUERY,
   NEXT_STEP_SCENARIO_DOCUMENT_CATEGORIES_QUERY,
 } from '@/lib/queries'
@@ -36,8 +41,20 @@ export type ScenarioDocumentSelection = {
 export type SalesEmailTemplate = {
   subject?: string
   body?: string
+  signatureIntro?: string
+  signatureJobTitle?: string
+  signaturePhone?: string
+  signatureLogoUrl?: string
+  signatureLogoAlt?: string
+  signatureBannerUrl?: string
+  signatureBannerAlt?: string
   signatureHint?: string
   includeSignature?: boolean
+}
+
+export type SalesEmailTemplates = {
+  customer?: SalesEmailTemplate
+  internal?: SalesEmailTemplate
 }
 
 type RawSalesDocument = {
@@ -78,13 +95,26 @@ type RawScenarioDocuments = {
 type RawEmailTemplate = {
   subject?: string | null
   body?: string | null
+  signatureIntro?: string | null
+  signatureJobTitle?: string | null
+  signaturePhone?: string | null
+  signatureLogoMedia?: RawSignatureMedia
+  signatureBannerMedia?: RawSignatureMedia
   signatureHint?: string | null
   includeSignature?: boolean | null
+} | null
+
+type RawSignatureMedia = {
+  title?: string | null
+  altText?: string | null
+  image?: SanityImage
 } | null
 
 type RawEmailTemplateQueryResult = {
   screenTemplate?: RawEmailTemplate
   defaultTemplate?: RawEmailTemplate
+  internalScreenTemplate?: RawEmailTemplate
+  internalDefaultTemplate?: RawEmailTemplate
 }
 
 const salesDocumentsClient = sanityClient.withConfig({useCdn: false})
@@ -225,6 +255,12 @@ function normalizeScenarioDocuments(
 
 function normalizeEmailTemplate(template: RawEmailTemplate | undefined): SalesEmailTemplate | undefined {
   const subject = normalizeText(template?.subject)
+  const signatureLogoUrl =
+    buildLogoUrl(template?.signatureLogoMedia?.image) ||
+    buildImageUrl(template?.signatureLogoMedia?.image, 420, undefined, 100)
+  const signatureBannerUrl =
+    buildImageUrl(template?.signatureBannerMedia?.image, 900, undefined, 90) ||
+    buildLogoUrl(template?.signatureBannerMedia?.image)
 
   if (!subject && !normalizeText(template?.body)) {
     return undefined
@@ -233,6 +269,19 @@ function normalizeEmailTemplate(template: RawEmailTemplate | undefined): SalesEm
   return {
     subject: subject || undefined,
     body: normalizeText(template?.body) || undefined,
+    signatureIntro: normalizeText(template?.signatureIntro) || undefined,
+    signatureJobTitle: normalizeText(template?.signatureJobTitle) || undefined,
+    signaturePhone: normalizeText(template?.signaturePhone) || undefined,
+    signatureLogoUrl,
+    signatureLogoAlt:
+      normalizeText(template?.signatureLogoMedia?.altText) ||
+      normalizeText(template?.signatureLogoMedia?.title) ||
+      undefined,
+    signatureBannerUrl,
+    signatureBannerAlt:
+      normalizeText(template?.signatureBannerMedia?.altText) ||
+      normalizeText(template?.signatureBannerMedia?.title) ||
+      undefined,
     signatureHint: normalizeText(template?.signatureHint) || undefined,
     includeSignature: template?.includeSignature !== false,
   }
@@ -254,17 +303,27 @@ export async function fetchScenarioDocumentSelection({
   return normalizeScenarioDocuments(rawScenario, customerType, scenarioId)
 }
 
-export async function fetchSalesEmailTemplate(customerType: CustomerGroup) {
+export async function fetchSalesEmailTemplates(customerType: CustomerGroup): Promise<SalesEmailTemplates> {
   const result = await salesDocumentsClient.fetch<RawEmailTemplateQueryResult>(
     NEXT_STEP_EMAIL_TEMPLATE_QUERY,
     {customerType},
     freshFetchOptions,
   )
 
-  return (
-    normalizeEmailTemplate(result.screenTemplate) ||
-    normalizeEmailTemplate(result.defaultTemplate)
-  )
+  return {
+    customer:
+      normalizeEmailTemplate(result.screenTemplate) ||
+      normalizeEmailTemplate(result.defaultTemplate),
+    internal:
+      normalizeEmailTemplate(result.internalScreenTemplate) ||
+      normalizeEmailTemplate(result.internalDefaultTemplate),
+  }
+}
+
+export async function fetchSalesEmailTemplate(customerType: CustomerGroup) {
+  const templates = await fetchSalesEmailTemplates(customerType)
+
+  return templates.customer
 }
 
 export function flattenAllowedDocuments(selection: ScenarioDocumentSelection) {

@@ -2,12 +2,17 @@ import { defineField, defineType } from 'sanity'
 
 const placeholderOptions = [
   { title: 'Kundenname', value: '{{customerName}}' },
+  { title: 'Kunden-E-Mail', value: '{{customerEmail}}' },
+  { title: 'Kundentelefon', value: '{{customerPhone}}' },
   { title: 'Firmenname', value: '{{customerCompany}}' },
   { title: 'Vertriebsmitarbeiter', value: '{{salesPersonName}}' },
   { title: 'E-Mail Vertriebsmitarbeiter', value: '{{salesPersonEmail}}' },
+  { title: 'Position Vertriebsmitarbeiter', value: '{{salesPersonRole}}' },
+  { title: 'Telefon Vertriebsmitarbeiter', value: '{{salesPersonPhone}}' },
   { title: 'Ausgewähltes Bundle', value: '{{selectedScenario}}' },
   { title: 'Ausgewählte Unterlagen', value: '{{selectedDocuments}}' },
   { title: 'Berechnungszusammenfassung', value: '{{calculationSummary}}' },
+  { title: 'Versandzeitpunkt', value: '{{sentAt}}' },
   { title: 'Termin-Datum', value: '{{appointmentDate}}' },
   { title: 'Termin-Uhrzeit', value: '{{appointmentTime}}' },
   { title: 'Termin-Ort', value: '{{appointmentLocation}}' },
@@ -163,11 +168,57 @@ export const emailTemplateType = defineType({
 
     defineField({
       name: 'signatureIntro',
-      title: 'Text vor der Signatur',
+      title: 'Grußformel vor der Signatur',
       type: 'string',
       group: 'content',
       initialValue: 'Freundliche Grüße',
       hidden: ({ document }) => document?.includeSignature !== true,
+    }),
+
+    defineField({
+      name: 'signatureJobTitle',
+      title: 'Position in Signatur optional',
+      type: 'string',
+      group: 'content',
+      description:
+        'Fallback, falls im Microsoft-Profil keine Position gepflegt ist.',
+      hidden: ({ document }) => document?.includeSignature !== true,
+    }),
+
+    defineField({
+      name: 'signaturePhone',
+      title: 'Telefon in Signatur optional',
+      type: 'string',
+      group: 'content',
+      description:
+        'Fallback, falls im Microsoft-Profil keine Telefonnummer gepflegt ist.',
+      hidden: ({ document }) => document?.includeSignature !== true,
+    }),
+
+    defineField({
+      name: 'signatureLogoMedia',
+      title: 'Signatur-Logo optional',
+      type: 'reference',
+      group: 'relations',
+      to: [{ type: 'mediaAsset' }],
+      hidden: ({ document }) => document?.includeSignature !== true,
+      options: {
+        filter: 'mediaType == $mediaType && isActive != false',
+        filterParams: { mediaType: 'image' },
+      },
+    }),
+
+    defineField({
+      name: 'signatureBannerMedia',
+      title: 'Signatur-Banner optional',
+      type: 'reference',
+      group: 'relations',
+      to: [{ type: 'mediaAsset' }],
+      hidden: ({ document }) => document?.includeSignature !== true,
+      options: {
+        filter: 'mediaType == $mediaType && isActive != false',
+        filterParams: { mediaType: 'image' },
+      },
     }),
 
     defineField({

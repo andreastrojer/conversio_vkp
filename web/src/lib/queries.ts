@@ -1255,6 +1255,94 @@ export const NEXT_STEP_EMAIL_TEMPLATE_QUERY = defineQuery(groq`{
     title,
     subject,
     body,
+    signatureIntro,
+    signatureJobTitle,
+    signaturePhone,
+    signatureLogoMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    signatureBannerMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    signatureHint,
+    includeSignature
+  },
+  "internalScreenTemplate": coalesce(
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      targetAudience == $customerType &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.internalEmailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenKey.current == "next-step" &&
+      targetAudience == $customerType &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.internalEmailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      targetAudience == "both" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.internalEmailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenKey.current == "next-step" &&
+      targetAudience == "both" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.internalEmailTemplate->,
+    *[
+      _type == "appScreen" &&
+      screenType == "documentSelection" &&
+      isActive == true
+    ] | order(coalesce(sortOrder, 999999) asc)[0].documentSelectionConfig.internalEmailTemplate->
+  ){
+    _id,
+    title,
+    subject,
+    body,
+    signatureIntro,
+    signatureJobTitle,
+    signaturePhone,
+    signatureLogoMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    signatureBannerMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
     signatureHint,
     includeSignature
   },
@@ -1268,6 +1356,69 @@ export const NEXT_STEP_EMAIL_TEMPLATE_QUERY = defineQuery(groq`{
     title,
     subject,
     body,
+    signatureIntro,
+    signatureJobTitle,
+    signaturePhone,
+    signatureLogoMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    signatureBannerMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    signatureHint,
+    includeSignature
+  },
+  "internalDefaultTemplate": *[
+    _type == "emailTemplate" &&
+    isActive != false &&
+    templateType == "internal" &&
+    (!defined(targetGroup) || targetGroup in [$customerType, "both"])
+  ] | order(coalesce(sortOrder, 999999) asc)[0]{
+    _id,
+    title,
+    subject,
+    body,
+    signatureIntro,
+    signatureJobTitle,
+    signaturePhone,
+    signatureLogoMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
+    signatureBannerMedia->{
+      title,
+      altText,
+      image{
+        ...,
+        "assetUrl": asset->url,
+        "mimeType": asset->mimeType,
+        "extension": asset->extension,
+        "originalFilename": asset->originalFilename
+      }
+    },
     signatureHint,
     includeSignature
   }

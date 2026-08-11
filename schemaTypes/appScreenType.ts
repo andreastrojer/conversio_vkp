@@ -702,9 +702,25 @@ export const appScreenType = defineType({
         }),
         defineField({
           name: 'emailTemplate',
-          title: 'E-Mail-Vorlage',
+          title: 'E-Mail-Vorlage für Kunden',
           type: 'reference',
           to: [{ type: 'emailTemplate' }],
+          options: {
+            filter: 'templateType == $templateType && isActive != false',
+            filterParams: { templateType: 'customer' },
+          },
+        }),
+        defineField({
+          name: 'internalEmailTemplate',
+          title: 'Interne E-Mail-Vorlage an Vertrieb',
+          type: 'reference',
+          to: [{ type: 'emailTemplate' }],
+          description:
+            'Optional: separate Bestätigung an den angemeldeten Vertriebsmitarbeiter.',
+          options: {
+            filter: 'templateType == $templateType && isActive != false',
+            filterParams: { templateType: 'internal' },
+          },
         }),
       ],
     }),

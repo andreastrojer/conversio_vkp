@@ -14,7 +14,7 @@ import {
 } from '@/lib/consultation'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {
-  fetchSalesEmailTemplate,
+  fetchSalesEmailTemplates,
   fetchScenarioDocumentSelection,
   flattenAllowedDocuments,
   type AllowedSalesDocument,
@@ -42,9 +42,17 @@ type PdfAttachment = {
   contentBytes: string
 }
 
+type MailBodyContentType = 'Text' | 'HTML'
+
 type MailContent = {
   subject: string
   body: string
+  contentType: MailBodyContentType
+}
+
+type SalesPersonProfile = {
+  jobTitle?: string
+  phone?: string
 }
 
 type UnknownRecord = Record<string, unknown>
@@ -225,6 +233,8 @@ function formatCalculation(result: ConsultationCalculationResult | undefined) {
     return ''
   }
 
+  const numberFormatter = new Intl.NumberFormat('de-AT', {maximumFractionDigits: 1})
+
   return [
     result.autarkyPercent !== undefined
       ? `Autarkie: ${Math.round(result.autarkyPercent)}%`
@@ -233,25 +243,91 @@ function formatCalculation(result: ConsultationCalculationResult | undefined) {
       ? `Ersparnis: ${Math.round(result.annualSavingsEur)} EUR pro Jahr`
       : '',
     result.peakLoadReductionKw !== undefined
-      ? `Lastspitzenreduktion: ${new Intl.NumberFormat('de-AT', {maximumFractionDigits: 1}).format(result.peakLoadReductionKw)} kW`
+      ? `Lastspitzenreduktion: ${numberFormatter.format(result.peakLoadReductionKw)} kW`
+      : '',
+    result.pvSizeKwp !== undefined
+      ? `PV-Leistung: ${numberFormatter.format(result.pvSizeKwp)} kWp`
+      : '',
+    result.storageSizeKwh !== undefined
+      ? `Speichergröße: ${numberFormatter.format(result.storageSizeKwh)} kWh`
+      : '',
+    result.chargingStations !== undefined
+      ? `Ladepunkte: ${Math.round(result.chargingStations)}`
       : '',
   ].filter(Boolean).join('\n')
+}
+
+function formatSentAt() {
+  return new Intl.DateTimeFormat('de-AT', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date())
+}
+
+function resolveSalesPersonRole({
+  salesPersonProfile,
+  template,
+}: {
+  salesPersonProfile?: SalesPersonProfile
+  template?: SalesEmailTemplate
+}) {
+  return salesPersonProfile?.jobTitle || template?.signatureJobTitle || ''
+}
+
+function resolveSalesPersonPhone({
+  salesPersonProfile,
+  template,
+}: {
+  salesPersonProfile?: SalesPersonProfile
+  template?: SalesEmailTemplate
+}) {
+  return salesPersonProfile?.phone || template?.signaturePhone || ''
 }
 
 function buildSignature({
   salesPersonName,
   salesPersonEmail,
+  salesPersonProfile,
   template,
 }: {
   salesPersonName: string
   salesPersonEmail: string
+  salesPersonProfile?: SalesPersonProfile
   template?: SalesEmailTemplate
 }) {
+  const salesPersonRole = resolveSalesPersonRole({salesPersonProfile, template})
+  const salesPersonPhone = resolveSalesPersonPhone({salesPersonProfile, template})
+
   return [
+    template?.signatureIntro,
     salesPersonName,
+    salesPersonRole,
+    salesPersonPhone,
     salesPersonEmail,
     template?.signatureHint,
   ].filter(Boolean).join('\n')
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function formatTextAsHtml(value: string) {
+  return escapeHtml(value)
+    .replace(/\r\n/g, '\n')
+    .split('\n\n')
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map(
+      (paragraph) =>
+        `<div style="margin:0 0 14px 0;">${paragraph.replace(/\n/g, '<br>')}</div>`,
+    )
+    .join('')
 }
 
 function replaceTemplatePlaceholders(
@@ -265,29 +341,45 @@ function replaceTemplatePlaceholders(
   )
 }
 
-function buildMailContent({
-  payload,
-  documents,
-  scenarioTitle,
-  salesPersonName,
-  salesPersonEmail,
-  template,
-}: {
+type MailContentContext = {
   payload: ValidatedSendDocumentsRequest
   documents: AllowedSalesDocument[]
   scenarioTitle: string
   salesPersonName: string
   salesPersonEmail: string
+  salesPersonProfile?: SalesPersonProfile
   template?: SalesEmailTemplate
-}): MailContent {
-  const selectedDocuments = documents.map((document) => `- ${document.title}`).join('\n')
-  const calculation = formatCalculation(payload.calculationResult)
-  const replacements = {
+}
+
+function buildTemplateReplacements({
+  payload,
+  documents,
+  scenarioTitle,
+  salesPersonName,
+  salesPersonEmail,
+  salesPersonProfile,
+  template,
+}: MailContentContext): Record<string, string> {
+  const calculationSummary = formatCalculation(payload.calculationResult)
+  const salesPersonRole = resolveSalesPersonRole({salesPersonProfile, template})
+  const salesPersonPhone = resolveSalesPersonPhone({salesPersonProfile, template})
+
+  return {
     customerName: payload.customer.name,
+    customerEmail: payload.recipientEmail || payload.customer.email,
+    customerPhone: payload.customer.phone,
+    customerCompany: '',
     salesPersonName,
-    selectedDocuments,
+    salesPersonEmail,
+    salesPersonRole,
+    salesPersonPhone,
+    selectedDocuments: documents.map((document) => `- ${document.title}`).join('\n'),
     selectedScenario: scenarioTitle,
+    calculationSummary,
+    sentAt: formatSentAt(),
     appointmentDate: '',
+    appointmentTime: '',
+    appointmentLocation: '',
     autarkyPercent:
       payload.calculationResult?.autarkyPercent !== undefined
         ? `${Math.round(payload.calculationResult.autarkyPercent)}%`
@@ -297,54 +389,282 @@ function buildMailContent({
         ? `${Math.round(payload.calculationResult.annualSavingsEur)} EUR`
         : '',
   }
+}
+
+function buildMailContent({
+  payload,
+  documents,
+  scenarioTitle,
+  salesPersonName,
+  salesPersonEmail,
+  salesPersonProfile,
+  template,
+  fallbackSubject,
+  fallbackBody,
+  includeFallbackSignature,
+}: MailContentContext & {
+  fallbackSubject: string
+  fallbackBody: string
+  includeFallbackSignature: boolean
+}): MailContent {
+  const replacements = buildTemplateReplacements({
+    payload,
+    documents,
+    scenarioTitle,
+    salesPersonName,
+    salesPersonEmail,
+    salesPersonProfile,
+    template,
+  })
   const subject = replaceTemplatePlaceholders(
-    template?.subject || `Ihre Conversio Unterlagen: ${scenarioTitle}`,
+    template?.subject || fallbackSubject,
     replacements,
   )
-  const baseBody = template?.body
-    ? replaceTemplatePlaceholders(template.body, replacements)
-    : [
-        `Guten Tag ${payload.customer.name},`,
-        '',
-        'anbei erhalten Sie die ausgewählten Unterlagen aus der Beratung.',
-        '',
-        `Scenario: ${scenarioTitle}`,
-        '',
-        'Produktblätter:',
-        selectedDocuments,
-        calculation ? ['', calculation].join('\n') : '',
-      ].filter(Boolean).join('\n')
-  const signature = buildSignature({salesPersonName, salesPersonEmail, template})
+  const baseBody = replaceTemplatePlaceholders(template?.body || fallbackBody, replacements)
+  const signature = buildSignature({salesPersonName, salesPersonEmail, salesPersonProfile, template})
+  const includeSignature = template?.includeSignature ?? includeFallbackSignature
 
   return {
     subject,
-    body: template?.includeSignature === false || !signature
+    body: !includeSignature || !signature
       ? baseBody
       : `${baseBody}\n\n${signature}`,
+    contentType: 'Text',
+  }
+}
+
+function buildHtmlImage({
+  src,
+  alt,
+  width,
+  maxWidth,
+}: {
+  src?: string
+  alt: string
+  width: number
+  maxWidth: number
+}) {
+  if (!src) {
+    return ''
+  }
+
+  return [
+    `<img src="${escapeHtml(src)}"`,
+    `alt="${escapeHtml(alt)}"`,
+    `width="${width}"`,
+    `style="display:block;width:100%;max-width:${maxWidth}px;height:auto;border:0;outline:none;text-decoration:none;"`,
+    '/>',
+  ].join(' ')
+}
+
+function buildCustomerHtmlSignature({
+  salesPersonName,
+  salesPersonEmail,
+  salesPersonProfile,
+  template,
+}: MailContentContext) {
+  const intro = template?.signatureIntro || 'Liebe Grüße'
+  const salesPersonRole = resolveSalesPersonRole({salesPersonProfile, template})
+  const salesPersonPhone = resolveSalesPersonPhone({salesPersonProfile, template})
+  const contactLines = [
+    salesPersonRole
+      ? `<div style="font-size:13px;line-height:18px;color:#3f464d;margin-top:3px;">${escapeHtml(salesPersonRole)}</div>`
+      : '',
+    salesPersonPhone
+      ? `<div style="font-size:13px;line-height:18px;color:#3f464d;margin-top:22px;">${escapeHtml(salesPersonPhone)}</div>`
+      : '',
+    salesPersonEmail
+      ? `<div style="font-size:13px;line-height:18px;color:#3f464d;margin-top:4px;">${escapeHtml(salesPersonEmail)}</div>`
+      : '',
+  ].filter(Boolean).join('')
+  const logo = buildHtmlImage({
+    src: template?.signatureLogoUrl,
+    alt: template?.signatureLogoAlt || 'Conversio',
+    width: 300,
+    maxWidth: 300,
+  })
+  const banner = buildHtmlImage({
+    src: template?.signatureBannerUrl,
+    alt: template?.signatureBannerAlt || '',
+    width: 760,
+    maxWidth: 760,
+  })
+  const signatureHint = template?.signatureHint
+    ? `<div style="font-size:12px;line-height:17px;color:#59616a;margin-top:18px;">${formatTextAsHtml(template.signatureHint)}</div>`
+    : ''
+
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:30px;width:100%;max-width:760px;">
+      <tr>
+        <td style="font-family:Arial,Helvetica,sans-serif;color:#2f3439;padding:0;">
+          <div style="font-size:18px;line-height:24px;margin:0 0 32px 0;">${escapeHtml(intro)}</div>
+          <div style="font-size:18px;line-height:24px;font-weight:400;margin:0;">${escapeHtml(salesPersonName)}</div>
+          ${contactLines}
+          ${logo ? `<div style="margin-top:30px;max-width:300px;">${logo}</div>` : ''}
+          ${banner ? `<div style="margin-top:34px;max-width:760px;">${banner}</div>` : ''}
+          ${signatureHint}
+        </td>
+      </tr>
+    </table>
+  `
+}
+
+function buildCustomerHtmlBody({
+  baseBody,
+  includeSignature,
+  context,
+}: {
+  baseBody: string
+  includeSignature: boolean
+  context: MailContentContext
+}) {
+  const signature = includeSignature ? buildCustomerHtmlSignature(context) : ''
+
+  return `
+    <!doctype html>
+    <html>
+      <body style="margin:0;padding:0;background:#ffffff;">
+        <div style="font-family:Arial,Helvetica,sans-serif;color:#2f3439;font-size:15px;line-height:22px;max-width:760px;">
+          ${formatTextAsHtml(baseBody)}
+          ${signature}
+        </div>
+      </body>
+    </html>
+  `
+}
+
+function buildCustomerMailContent(context: MailContentContext): MailContent {
+  const fallbackBody = [
+    'Guten Tag {{customerName}},',
+    '',
+    'anbei erhalten Sie die ausgewählten Unterlagen aus der Beratung.',
+    '',
+    'Scenario: {{selectedScenario}}',
+    '',
+    'Produktblätter:',
+    '{{selectedDocuments}}',
+    '',
+    '{{calculationSummary}}',
+  ].join('\n').trim()
+  const replacements = buildTemplateReplacements(context)
+  const subject = replaceTemplatePlaceholders(
+    context.template?.subject || `Ihre Conversio Unterlagen: ${context.scenarioTitle}`,
+    replacements,
+  )
+  const baseBody = replaceTemplatePlaceholders(context.template?.body || fallbackBody, replacements)
+
+  return {
+    subject,
+    body: buildCustomerHtmlBody({
+      baseBody,
+      includeSignature: context.template?.includeSignature !== false,
+      context,
+    }),
+    contentType: 'HTML',
+  }
+}
+
+function buildInternalMailContent(context: MailContentContext): MailContent {
+  return buildMailContent({
+    ...context,
+    fallbackSubject: `Unterlagen an ${context.payload.customer.name} versendet`,
+    fallbackBody: [
+      'Hallo {{salesPersonName}},',
+      '',
+      'die Unterlagen wurden an den Kunden versendet.',
+      '',
+      'Kunde: {{customerName}}',
+      'Empfänger-E-Mail: {{customerEmail}}',
+      'Telefon: {{customerPhone}}',
+      'Scenario: {{selectedScenario}}',
+      'Versandzeitpunkt: {{sentAt}}',
+      '',
+      'Produktblätter:',
+      '{{selectedDocuments}}',
+      '',
+      '{{calculationSummary}}',
+    ].join('\n').trim(),
+    includeFallbackSignature: false,
+  })
+}
+
+function buildGraphRecipients(emailAddresses: string[]) {
+  return emailAddresses.map((address) => ({
+    emailAddress: {
+      address,
+    },
+  }))
+}
+
+async function readGraphError(response: Response) {
+  try {
+    const payload = await response.clone().json()
+    const message =
+      typeof payload?.error?.message === 'string'
+        ? payload.error.message
+        : typeof payload?.message === 'string'
+          ? payload.message
+          : ''
+
+    return message.trim()
+  } catch {
+    try {
+      return (await response.text()).trim()
+    } catch {
+      return ''
+    }
+  }
+}
+
+function getFirstGraphPhone(value: unknown) {
+  if (!Array.isArray(value)) {
+    return ''
+  }
+
+  return normalizeText(value.find((item) => normalizeText(item)))
+}
+
+async function fetchSalesPersonProfile(accessToken: string): Promise<SalesPersonProfile> {
+  try {
+    const response = await fetch(
+      'https://graph.microsoft.com/v1.0/me?$select=jobTitle,businessPhones,mobilePhone',
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: 'no-store',
+      },
+    )
+
+    if (!response.ok) {
+      return {}
+    }
+
+    const payload = await response.json()
+
+    return {
+      jobTitle: normalizeText(payload?.jobTitle) || undefined,
+      phone: normalizeText(payload?.mobilePhone) || getFirstGraphPhone(payload?.businessPhones) || undefined,
+    }
+  } catch {
+    return {}
   }
 }
 
 async function sendGraphMail({
   accessToken,
   recipientEmail,
-  salesPersonEmail,
   mailContent,
   attachments,
+  errorMessage = 'Microsoft Graph hat den Versand abgelehnt. Bitte Berechtigung Mail.Send prüfen.',
 }: {
   accessToken: string
   recipientEmail: string
-  salesPersonEmail: string
   mailContent: MailContent
-  attachments: PdfAttachment[]
+  attachments?: PdfAttachment[]
+  errorMessage?: string
 }) {
-  const bccRecipients =
-    salesPersonEmail && salesPersonEmail.toLowerCase() !== recipientEmail.toLowerCase()
-      ? [{
-          emailAddress: {
-            address: salesPersonEmail,
-          },
-        }]
-      : []
+  const fileAttachments = attachments || []
 
   const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
     method: 'POST',
@@ -356,16 +676,11 @@ async function sendGraphMail({
       message: {
         subject: mailContent.subject,
         body: {
-          contentType: 'Text',
+          contentType: mailContent.contentType,
           content: mailContent.body,
         },
-        toRecipients: [{
-          emailAddress: {
-            address: recipientEmail,
-          },
-        }],
-        bccRecipients,
-        attachments: attachments.map((attachment) => ({
+        toRecipients: buildGraphRecipients([recipientEmail]),
+        attachments: fileAttachments.map((attachment) => ({
           '@odata.type': '#microsoft.graph.fileAttachment',
           name: attachment.name,
           contentType: attachment.contentType,
@@ -377,7 +692,10 @@ async function sendGraphMail({
   })
 
   if (!response.ok) {
-    fail('Microsoft Graph hat den Versand abgelehnt. Bitte Berechtigung Mail.Send prüfen.', 502)
+    const graphError = await readGraphError(response)
+    const details = graphError ? ` (${response.status}: ${graphError})` : ` (${response.status})`
+
+    fail(`${errorMessage}${details}`, 502)
   }
 }
 
@@ -407,18 +725,11 @@ export async function POST(request: Request) {
       payload.selectedSalesDocumentIds,
     )
     const attachments = await Promise.all(selectedDocuments.map(fetchPdfAttachment))
-    const template = await fetchSalesEmailTemplate(payload.customerType)
+    const templates = await fetchSalesEmailTemplates(payload.customerType)
     const salesPersonName = session.user.name?.trim() || 'Conversio'
     const salesPersonEmail = session.user.email?.trim() || ''
-    const mailContent = buildMailContent({
-      payload,
-      documents: selectedDocuments,
-      scenarioTitle: documentSelection.scenario.title,
-      salesPersonName,
-      salesPersonEmail,
-      template,
-    })
     const sendMode = resolveSendMode()
+    let salesNotificationSent = false
 
     if (sendMode === 'graph') {
       const accessToken = await getMicrosoftAccessToken()
@@ -427,19 +738,51 @@ export async function POST(request: Request) {
         fail('Microsoft Graph Access Token fehlt. Bitte erneut anmelden.', 401)
       }
 
+      if (!isValidEmail(salesPersonEmail)) {
+        fail('Die E-Mail-Adresse des Vertriebsmitarbeiters fehlt in der Microsoft-Anmeldung.', 400)
+      }
+
+      const salesPersonProfile = await fetchSalesPersonProfile(accessToken)
+      const baseMailContext = {
+        payload,
+        documents: selectedDocuments,
+        scenarioTitle: documentSelection.scenario.title,
+        salesPersonName,
+        salesPersonEmail,
+        salesPersonProfile,
+      }
+      const customerMailContent = buildCustomerMailContent({
+        ...baseMailContext,
+        template: templates.customer,
+      })
+      const internalMailContent = buildInternalMailContent({
+        ...baseMailContext,
+        template: templates.internal,
+      })
+
       await sendGraphMail({
         accessToken,
         recipientEmail: payload.recipientEmail,
-        salesPersonEmail,
-        mailContent,
+        mailContent: customerMailContent,
         attachments,
       })
+
+      await sendGraphMail({
+        accessToken,
+        recipientEmail: salesPersonEmail,
+        mailContent: internalMailContent,
+        errorMessage:
+          'Die Kundenmail wurde versendet, aber die interne Vertriebsbestätigung konnte nicht versendet werden.',
+      })
+
+      salesNotificationSent = true
     }
 
     return NextResponse.json({
       success: true,
       sendMode,
       checkedAttachmentCount: attachments.length,
+      salesNotificationSent,
       sentDocumentIds: selectedDocuments.map((document) => document.id),
     })
   } catch (error) {
