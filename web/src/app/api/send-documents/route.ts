@@ -578,10 +578,10 @@ function buildHtmlImage({
 function buildHtmlSummaryRows(rows: SummaryRow[]) {
   return rows.map((row) => `
     <tr>
-      <td style="padding:7px 14px 7px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:#687078;vertical-align:top;">
+      <td style="padding:6px 18px 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#4d5358;vertical-align:top;">
         ${escapeHtml(row.label)}
       </td>
-      <td style="padding:7px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:#2f3439;font-weight:600;text-align:right;vertical-align:top;">
+      <td style="padding:6px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#2f3439;font-weight:600;text-align:right;vertical-align:top;">
         ${escapeHtml(row.value)}
       </td>
     </tr>
@@ -590,10 +590,18 @@ function buildHtmlSummaryRows(rows: SummaryRow[]) {
 
 function buildHtmlDocumentList(documents: AllowedSalesDocument[]) {
   return documents.map((document) => `
-    <div style="margin:0 0 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:#2f3439;">
+    <div style="margin:0 0 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#2f3439;">
       ${escapeHtml(document.title)}
     </div>
   `).join('')
+}
+
+function buildHtmlSummaryHeading(value: string) {
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:21px;font-weight:700;color:#2f3439;margin:18px 0 7px 0;">
+      ${escapeHtml(value)}
+    </div>
+  `
 }
 
 function buildCustomerSummarySection({
@@ -612,41 +620,35 @@ function buildCustomerSummarySection({
   const bundleTitle = selectedBundle?.title || scenarioTitle
 
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;margin:22px 0 26px 0;width:100%;max-width:760px;background:#f6f7f7;border:1px solid #e2e5e7;border-radius:12px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:22px 0 26px 0;width:100%;max-width:760px;border-top:1px solid #d8dcdf;border-bottom:1px solid #d8dcdf;">
       <tr>
-        <td style="padding:22px 24px 20px 24px;font-family:Arial,Helvetica,sans-serif;color:#2f3439;">
-          <div style="font-size:11px;line-height:15px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:0 0 6px 0;">
-            Beratungszusammenfassung
+        <td style="padding:18px 0 17px 0;font-family:Arial,Helvetica,sans-serif;color:#2f3439;">
+          <div style="font-size:16px;line-height:23px;font-weight:700;color:#2f3439;margin:0 0 4px 0;">
+            Zusammenfassung
           </div>
-          <div style="font-size:18px;line-height:24px;font-weight:700;color:#2f3439;margin:0 0 16px 0;">
+          <div style="font-size:15px;line-height:21px;color:#4d5358;margin:0 0 14px 0;">
             ${escapeHtml(bundleTitle)}
           </div>
 
-          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border-top:1px solid #e2e5e7;">
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">
             ${buildHtmlSummaryRows(contactRows)}
           </table>
 
           ${bundleRows.length > 0 ? `
-            <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:18px 0 6px 0;">
-              Im Bundle enthalten
-            </div>
-            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border-top:1px solid #e2e5e7;">
+            ${buildHtmlSummaryHeading('Im Bundle enthalten')}
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">
               ${buildHtmlSummaryRows(bundleRows)}
             </table>
           ` : ''}
 
           ${calculationRows.length > 0 ? `
-            <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:18px 0 6px 0;">
-              Berechnete Kennwerte
-            </div>
-            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border-top:1px solid #e2e5e7;">
+            ${buildHtmlSummaryHeading('Berechnete Kennwerte')}
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">
               ${buildHtmlSummaryRows(calculationRows)}
             </table>
           ` : ''}
 
-          <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:18px 0 8px 0;">
-            Produktblätter
-          </div>
+          ${buildHtmlSummaryHeading('Produktblätter')}
           ${buildHtmlDocumentList(documents)}
         </td>
       </tr>
