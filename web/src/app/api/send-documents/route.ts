@@ -95,9 +95,9 @@ function fail(message: string, status = 400): never {
 }
 
 function resolveSendMode(): SendMode {
-  return process.env.EMAIL_SEND_MODE?.trim().toLowerCase() === 'graph'
-    ? 'graph'
-    : 'mock'
+  return process.env.EMAIL_SEND_MODE?.trim().toLowerCase() === 'mock'
+    ? 'mock'
+    : 'graph'
 }
 
 async function readRequestBody(request: Request) {
