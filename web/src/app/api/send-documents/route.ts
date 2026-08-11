@@ -6,10 +6,12 @@ import {
   isCustomerGroup,
   isValidEmail,
   normalizeCalculationResult,
+  normalizeBundle,
   normalizeCustomer,
   sanitizeSalesDocumentIds,
   validateConsultationCustomer,
   type ConsultationCalculationResult,
+  type ConsultationBundle,
   type ConsultationCustomer,
 } from '@/lib/consultation'
 import type {CustomerGroup} from '@/lib/customerSelection'
@@ -32,6 +34,7 @@ type ValidatedSendDocumentsRequest = {
   scenarioId: string
   selectedSalesDocumentIds: string[]
   customer: ConsultationCustomer
+  selectedBundle?: ConsultationBundle
   matrixValues: Record<string, number>
   calculationResult?: ConsultationCalculationResult
 }
@@ -55,7 +58,15 @@ type SalesPersonProfile = {
   phone?: string
 }
 
+type SummaryRow = {
+  label: string
+  value: string
+}
+
 type UnknownRecord = Record<string, unknown>
+
+const signatureLogoLinkUrl = 'https://www.conversiogroup.at/'
+const signatureBannerLinkUrl = 'https://conversiumbeg.at/'
 
 class SendDocumentsError extends Error {
   status: number
@@ -158,6 +169,7 @@ function parseSendDocumentsRequest(value: unknown): ValidatedSendDocumentsReques
     scenarioId,
     selectedSalesDocumentIds,
     customer,
+    selectedBundle: normalizeBundle(value.selectedBundle),
     matrixValues: normalizeMatrixValues(value.matrixValues),
     calculationResult: normalizeCalculationResult(value.calculationResult),
   }
@@ -228,33 +240,131 @@ async function fetchPdfAttachment(document: AllowedSalesDocument): Promise<PdfAt
   }
 }
 
-function formatCalculation(result: ConsultationCalculationResult | undefined) {
-  if (!result) {
-    return ''
-  }
+function formatNumber(value: number, maximumFractionDigits = 1) {
+  return new Intl.NumberFormat('de-AT', {maximumFractionDigits}).format(value)
+}
 
-  const numberFormatter = new Intl.NumberFormat('de-AT', {maximumFractionDigits: 1})
+function formatInteger(value: number) {
+  return new Intl.NumberFormat('de-AT', {maximumFractionDigits: 0}).format(Math.round(value))
+}
+
+function formatCalculationRows(result: ConsultationCalculationResult | undefined): SummaryRow[] {
+  if (!result) {
+    return []
+  }
 
   return [
     result.autarkyPercent !== undefined
-      ? `Autarkie: ${Math.round(result.autarkyPercent)}%`
-      : '',
+      ? {label: 'Autarkie', value: `${formatInteger(result.autarkyPercent)}%`}
+      : undefined,
     result.annualSavingsEur !== undefined
-      ? `Ersparnis: ${Math.round(result.annualSavingsEur)} EUR pro Jahr`
-      : '',
+      ? {label: 'Ersparnis', value: `${formatInteger(result.annualSavingsEur)} EUR pro Jahr`}
+      : undefined,
     result.peakLoadReductionKw !== undefined
-      ? `Lastspitzenreduktion: ${numberFormatter.format(result.peakLoadReductionKw)} kW`
-      : '',
+      ? {label: 'Lastspitzenreduktion', value: `${formatNumber(result.peakLoadReductionKw)} kW`}
+      : undefined,
     result.pvSizeKwp !== undefined
-      ? `PV-Leistung: ${numberFormatter.format(result.pvSizeKwp)} kWp`
-      : '',
+      ? {label: 'PV-Leistung', value: `${formatNumber(result.pvSizeKwp)} kWp`}
+      : undefined,
     result.storageSizeKwh !== undefined
-      ? `Speichergröße: ${numberFormatter.format(result.storageSizeKwh)} kWh`
-      : '',
+      ? {label: 'Speichergröße', value: `${formatNumber(result.storageSizeKwh)} kWh`}
+      : undefined,
     result.chargingStations !== undefined
-      ? `Ladepunkte: ${Math.round(result.chargingStations)}`
-      : '',
-  ].filter(Boolean).join('\n')
+      ? {label: 'Ladepunkte', value: formatInteger(result.chargingStations)}
+      : undefined,
+  ].filter((row): row is SummaryRow => Boolean(row))
+}
+
+function formatCalculation(result: ConsultationCalculationResult | undefined) {
+  return formatCalculationRows(result)
+    .map((row) => `${row.label}: ${row.value}`)
+    .join('\n')
+}
+
+function normalizeDisplayKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss')
+    .toLowerCase()
+}
+
+function splitBundleItem(item: ConsultationBundle['includedItems'][number]) {
+  const amount = item.amount?.trim()
+  const label = item.label.trim()
+
+  if (amount) {
+    return {amount, label}
+  }
+
+  const leadingAmountMatch = label.match(
+    /^(\d+(?:[,.]\d+)?\s*(?:kWp|kWh|MWp|MWh|kW|MW|%|x)?)(?:\s+)(.+)$/i,
+  )
+
+  if (!leadingAmountMatch) {
+    return {amount: '', label}
+  }
+
+  return {
+    amount: leadingAmountMatch[1].trim(),
+    label: leadingAmountMatch[2].trim(),
+  }
+}
+
+function formatChargingStations(value: number) {
+  return `${formatInteger(Math.max(0, value))}x`
+}
+
+function formatBundleItems(
+  selectedBundle: ConsultationBundle | undefined,
+  result: ConsultationCalculationResult | undefined,
+): SummaryRow[] {
+  if (!selectedBundle) {
+    return []
+  }
+
+  const configuredRows = selectedBundle.includedItems.map((item) => {
+    const display = splitBundleItem(item)
+    const labelKey = normalizeDisplayKey(`${display.label} ${item.label}`)
+    let value = display.amount
+
+    if (labelKey.includes('photovoltaik') && result?.pvSizeKwp !== undefined) {
+      value = `${formatNumber(result.pvSizeKwp)} kWp`
+    } else if (labelKey.includes('speicher') && result?.storageSizeKwh !== undefined) {
+      value = `${formatNumber(result.storageSizeKwh)} kWh`
+    } else if (
+      (
+        labelKey.includes('ladestation') ||
+        labelKey.includes('ladepunkt') ||
+        labelKey.includes('wallbox') ||
+        labelKey.includes('ladesaule')
+      ) &&
+      result?.chargingStations !== undefined
+    ) {
+      value = formatChargingStations(result.chargingStations)
+    }
+
+    return {
+      label: display.label,
+      value: value || 'enthalten',
+    }
+  })
+
+  if (configuredRows.length > 0 || !result) {
+    return configuredRows
+  }
+
+  return [
+    result.pvSizeKwp !== undefined
+      ? {label: 'Photovoltaik', value: `${formatNumber(result.pvSizeKwp)} kWp`}
+      : undefined,
+    result.storageSizeKwh !== undefined
+      ? {label: 'Speicher', value: `${formatNumber(result.storageSizeKwh)} kWh`}
+      : undefined,
+    result.chargingStations !== undefined
+      ? {label: 'Ladestation', value: formatChargingStations(result.chargingStations)}
+      : undefined,
+  ].filter((row): row is SummaryRow => Boolean(row))
 }
 
 function formatSentAt() {
@@ -325,7 +435,7 @@ function formatTextAsHtml(value: string) {
     .filter(Boolean)
     .map(
       (paragraph) =>
-        `<div style="margin:0 0 14px 0;">${paragraph.replace(/\n/g, '<br>')}</div>`,
+        `<div style="margin:0 0 12px 0;">${paragraph.replace(/\n/g, '<br>')}</div>`,
     )
     .join('')
 }
@@ -438,23 +548,110 @@ function buildHtmlImage({
   alt,
   width,
   maxWidth,
+  href,
 }: {
   src?: string
   alt: string
   width: number
   maxWidth: number
+  href?: string
 }) {
   if (!src) {
     return ''
   }
 
-  return [
+  const image = [
     `<img src="${escapeHtml(src)}"`,
     `alt="${escapeHtml(alt)}"`,
     `width="${width}"`,
     `style="display:block;width:100%;max-width:${maxWidth}px;height:auto;border:0;outline:none;text-decoration:none;"`,
     '/>',
   ].join(' ')
+
+  if (!href) {
+    return image
+  }
+
+  return `<a href="${escapeHtml(href)}" style="display:block;text-decoration:none;border:0;">${image}</a>`
+}
+
+function buildHtmlSummaryRows(rows: SummaryRow[]) {
+  return rows.map((row) => `
+    <tr>
+      <td style="padding:7px 14px 7px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:#687078;vertical-align:top;">
+        ${escapeHtml(row.label)}
+      </td>
+      <td style="padding:7px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:#2f3439;font-weight:600;text-align:right;vertical-align:top;">
+        ${escapeHtml(row.value)}
+      </td>
+    </tr>
+  `).join('')
+}
+
+function buildHtmlDocumentList(documents: AllowedSalesDocument[]) {
+  return documents.map((document) => `
+    <div style="margin:0 0 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:#2f3439;">
+      ${escapeHtml(document.title)}
+    </div>
+  `).join('')
+}
+
+function buildCustomerSummarySection({
+  payload,
+  documents,
+  scenarioTitle,
+}: MailContentContext) {
+  const selectedBundle = payload.selectedBundle
+  const bundleRows = formatBundleItems(selectedBundle, payload.calculationResult)
+  const calculationRows = formatCalculationRows(payload.calculationResult)
+  const contactRows = [
+    {label: 'Kunde', value: payload.customer.name},
+    {label: 'E-Mail', value: payload.recipientEmail || payload.customer.email},
+    payload.customer.phone ? {label: 'Telefon', value: payload.customer.phone} : undefined,
+  ].filter((row): row is SummaryRow => Boolean(row))
+  const bundleTitle = selectedBundle?.title || scenarioTitle
+
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;margin:22px 0 26px 0;width:100%;max-width:760px;background:#f6f7f7;border:1px solid #e2e5e7;border-radius:12px;">
+      <tr>
+        <td style="padding:22px 24px 20px 24px;font-family:Arial,Helvetica,sans-serif;color:#2f3439;">
+          <div style="font-size:11px;line-height:15px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:0 0 6px 0;">
+            Beratungszusammenfassung
+          </div>
+          <div style="font-size:18px;line-height:24px;font-weight:700;color:#2f3439;margin:0 0 16px 0;">
+            ${escapeHtml(bundleTitle)}
+          </div>
+
+          <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border-top:1px solid #e2e5e7;">
+            ${buildHtmlSummaryRows(contactRows)}
+          </table>
+
+          ${bundleRows.length > 0 ? `
+            <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:18px 0 6px 0;">
+              Im Bundle enthalten
+            </div>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border-top:1px solid #e2e5e7;">
+              ${buildHtmlSummaryRows(bundleRows)}
+            </table>
+          ` : ''}
+
+          ${calculationRows.length > 0 ? `
+            <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:18px 0 6px 0;">
+              Berechnete Kennwerte
+            </div>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border-top:1px solid #e2e5e7;">
+              ${buildHtmlSummaryRows(calculationRows)}
+            </table>
+          ` : ''}
+
+          <div style="font-size:12px;line-height:16px;font-weight:700;letter-spacing:0;text-transform:uppercase;color:#8a9299;margin:18px 0 8px 0;">
+            Produktblätter
+          </div>
+          ${buildHtmlDocumentList(documents)}
+        </td>
+      </tr>
+    </table>
+  `
 }
 
 function buildCustomerHtmlSignature({
@@ -482,26 +679,28 @@ function buildCustomerHtmlSignature({
     alt: template?.signatureLogoAlt || 'Conversio',
     width: 300,
     maxWidth: 300,
+    href: signatureLogoLinkUrl,
   })
   const banner = buildHtmlImage({
     src: template?.signatureBannerUrl,
     alt: template?.signatureBannerAlt || '',
     width: 760,
     maxWidth: 760,
+    href: signatureBannerLinkUrl,
   })
   const signatureHint = template?.signatureHint
     ? `<div style="font-size:12px;line-height:17px;color:#59616a;margin-top:18px;">${formatTextAsHtml(template.signatureHint)}</div>`
     : ''
 
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:30px;width:100%;max-width:760px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:28px;width:100%;max-width:760px;">
       <tr>
         <td style="font-family:Arial,Helvetica,sans-serif;color:#2f3439;padding:0;">
-          <div style="font-size:18px;line-height:24px;margin:0 0 32px 0;">${escapeHtml(intro)}</div>
-          <div style="font-size:18px;line-height:24px;font-weight:400;margin:0;">${escapeHtml(salesPersonName)}</div>
+          <div style="font-size:15px;line-height:22px;margin:0 0 24px 0;">${escapeHtml(intro)}</div>
+          <div style="font-size:16px;line-height:22px;font-weight:600;margin:0;color:#2f3439;">${escapeHtml(salesPersonName)}</div>
           ${contactLines}
-          ${logo ? `<div style="margin-top:30px;max-width:300px;">${logo}</div>` : ''}
-          ${banner ? `<div style="margin-top:34px;max-width:760px;">${banner}</div>` : ''}
+          ${logo ? `<div style="margin-top:24px;max-width:300px;">${logo}</div>` : ''}
+          ${banner ? `<div style="margin-top:30px;max-width:760px;">${banner}</div>` : ''}
           ${signatureHint}
         </td>
       </tr>
@@ -519,6 +718,7 @@ function buildCustomerHtmlBody({
   context: MailContentContext
 }) {
   const signature = includeSignature ? buildCustomerHtmlSignature(context) : ''
+  const summarySection = buildCustomerSummarySection(context)
 
   return `
     <!doctype html>
@@ -526,6 +726,7 @@ function buildCustomerHtmlBody({
       <body style="margin:0;padding:0;background:#ffffff;">
         <div style="font-family:Arial,Helvetica,sans-serif;color:#2f3439;font-size:15px;line-height:22px;max-width:760px;">
           ${formatTextAsHtml(baseBody)}
+          ${summarySection}
           ${signature}
         </div>
       </body>
@@ -538,13 +739,6 @@ function buildCustomerMailContent(context: MailContentContext): MailContent {
     'Guten Tag {{customerName}},',
     '',
     'anbei erhalten Sie die ausgewählten Unterlagen aus der Beratung.',
-    '',
-    'Scenario: {{selectedScenario}}',
-    '',
-    'Produktblätter:',
-    '{{selectedDocuments}}',
-    '',
-    '{{calculationSummary}}',
   ].join('\n').trim()
   const replacements = buildTemplateReplacements(context)
   const subject = replaceTemplatePlaceholders(

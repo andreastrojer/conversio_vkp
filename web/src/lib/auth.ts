@@ -17,7 +17,18 @@ const MICROSOFT_GRAPH_PHOTO_ENDPOINTS = [
 
 type MicrosoftJwt = JWT & {
   microsoftAccessToken?: unknown
+  microsoftRefreshToken?: unknown
+  microsoftAccessTokenExpiresAt?: unknown
+  microsoftTokenRefreshError?: unknown
 }
+
+type MicrosoftTokenRefreshResult = {
+  accessToken?: string
+  refreshToken?: string
+  expiresAt?: number
+}
+
+const accessTokenRefreshBufferMs = 60_000
 
 function readEnvValue(name: string) {
   const value = process.env[name]?.trim()
@@ -68,6 +79,14 @@ function getMicrosoftIssuerTenant(issuer: string | undefined) {
   return normalizedIssuer
     .slice(MICROSOFT_ISSUER_PREFIX.length, -MICROSOFT_ISSUER_SUFFIX.length)
     .trim()
+}
+
+function getMicrosoftTokenEndpoint() {
+  const tenant = getMicrosoftIssuerTenant(microsoftIssuer)
+
+  return tenant
+    ? `${MICROSOFT_ISSUER_PREFIX}${tenant}/oauth2/v2.0/token`
+    : undefined
 }
 
 function isValidMicrosoftIssuer(issuer: string | undefined) {
@@ -197,6 +216,109 @@ function createMicrosoftEntraProvider() {
   }
 }
 
+function getTokenExpiresAt(expiresAt: unknown, expiresIn: unknown) {
+  if (typeof expiresAt === 'number' && Number.isFinite(expiresAt)) {
+    return expiresAt * 1000
+  }
+
+  if (typeof expiresIn === 'number' && Number.isFinite(expiresIn)) {
+    return Date.now() + expiresIn * 1000
+  }
+
+  return Date.now() + 60 * 60 * 1000
+}
+
+function hasUsableAccessToken(token: MicrosoftJwt) {
+  const accessToken = typeof token.microsoftAccessToken === 'string'
+    ? token.microsoftAccessToken
+    : undefined
+  const expiresAt = typeof token.microsoftAccessTokenExpiresAt === 'number'
+    ? token.microsoftAccessTokenExpiresAt
+    : 0
+
+  return Boolean(accessToken && expiresAt > Date.now() + accessTokenRefreshBufferMs)
+}
+
+async function refreshMicrosoftAccessToken(refreshToken: string): Promise<MicrosoftTokenRefreshResult> {
+  const tokenEndpoint = getMicrosoftTokenEndpoint()
+
+  if (!tokenEndpoint || !microsoftClientId || !microsoftClientSecret) {
+    return {}
+  }
+
+  try {
+    const body = new URLSearchParams({
+      client_id: microsoftClientId,
+      client_secret: microsoftClientSecret,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    })
+
+    if (microsoftAuthorizationScope) {
+      body.set('scope', microsoftAuthorizationScope)
+    }
+
+    const response = await fetch(tokenEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body,
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return {}
+    }
+
+    const payload = await response.json()
+    const accessToken =
+      typeof payload.access_token === 'string' ? payload.access_token : undefined
+
+    if (!accessToken) {
+      return {}
+    }
+
+    return {
+      accessToken,
+      refreshToken:
+        typeof payload.refresh_token === 'string' ? payload.refresh_token : refreshToken,
+      expiresAt: getTokenExpiresAt(payload.expires_at, payload.expires_in),
+    }
+  } catch {
+    return {}
+  }
+}
+
+async function refreshMicrosoftJwt(token: MicrosoftJwt) {
+  if (hasUsableAccessToken(token)) {
+    return token
+  }
+
+  const refreshToken = typeof token.microsoftRefreshToken === 'string'
+    ? token.microsoftRefreshToken
+    : undefined
+
+  if (!refreshToken) {
+    token.microsoftTokenRefreshError = 'missing_refresh_token'
+    return token
+  }
+
+  const refreshedToken = await refreshMicrosoftAccessToken(refreshToken)
+
+  if (!refreshedToken.accessToken) {
+    token.microsoftTokenRefreshError = 'refresh_failed'
+    return token
+  }
+
+  token.microsoftAccessToken = refreshedToken.accessToken
+  token.microsoftRefreshToken = refreshedToken.refreshToken || refreshToken
+  token.microsoftAccessTokenExpiresAt = refreshedToken.expiresAt
+  token.microsoftTokenRefreshError = undefined
+
+  return token
+}
+
 async function fetchMicrosoftPhotoDataUrl(accessToken: string) {
   for (const endpoint of MICROSOFT_GRAPH_PHOTO_ENDPOINTS) {
     try {
@@ -249,8 +371,11 @@ export async function getMicrosoftAccessToken() {
       secret: authSecret,
       secureCookie: process.env.NODE_ENV === 'production',
     })) as MicrosoftJwt | null
+    const refreshedToken = token ? await refreshMicrosoftJwt(token) : null
     const accessToken =
-      typeof token?.microsoftAccessToken === 'string' ? token.microsoftAccessToken : undefined
+      typeof refreshedToken?.microsoftAccessToken === 'string'
+        ? refreshedToken.microsoftAccessToken
+        : undefined
 
     return accessToken
   } catch {
@@ -283,9 +408,17 @@ export const {handlers, auth, signIn, signOut} = NextAuth({
     async jwt({token, account}) {
       if (account?.access_token) {
         token.microsoftAccessToken = account.access_token
+        token.microsoftRefreshToken = account.refresh_token || token.microsoftRefreshToken
+        token.microsoftAccessTokenExpiresAt = getTokenExpiresAt(
+          account.expires_at,
+          account.expires_in,
+        )
+        token.microsoftTokenRefreshError = undefined
+
+        return token
       }
 
-      return token
+      return refreshMicrosoftJwt(token as MicrosoftJwt)
     },
   },
   providers: [

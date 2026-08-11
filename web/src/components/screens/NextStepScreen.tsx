@@ -586,6 +586,7 @@ export function NextStepScreen({
           scenarioId,
           selectedSalesDocumentIds: selectedDocumentIds,
           customer: customerForSending,
+          selectedBundle: displayBundle,
           matrixValues: consultation.matrixValues,
           calculationResult: consultation.calculationResult,
         }),
