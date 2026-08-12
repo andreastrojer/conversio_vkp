@@ -437,7 +437,7 @@ export function OfferScreen({
       </section>
 
       {primaryCta?.label ? (
-        <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
+        <div className="absolute bottom-[58px] left-[64px] right-[72px] z-[4] flex items-end justify-between">
           <BottomBackLink href={backHref} markerUrl={catalogDetailPointActiveUrl}>
             Wer wir sind
           </BottomBackLink>

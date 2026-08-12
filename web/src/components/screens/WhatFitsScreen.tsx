@@ -1121,7 +1121,7 @@ export function WhatFitsScreen({
               </div>
 
               {selectedProduct?.catalogCtaLabel ? (
-                <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
+                <div className="absolute bottom-[58px] left-[64px] right-[72px] z-[4] flex items-end justify-between">
                   <BottomBackLink href={catalogBackHref} markerUrl={catalogDetailPointActiveUrl}>
                     Der Prozess
                   </BottomBackLink>

@@ -1229,7 +1229,7 @@ export function ScenarioMatrixScreen({
         </AnimatePresence>
 
         {isCalculation && calculationCtaLabel ? (
-          <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[8] flex items-end justify-between max-[1600px]:bottom-[26px] max-[1600px]:left-[60px] max-[1600px]:right-[60px] [@media(max-height:920px)]:bottom-[26px] [@media(max-height:920px)]:left-[60px] [@media(max-height:920px)]:right-[60px] [@media(min-width:768px)_and_(max-width:1366px)]:bottom-[52px] [@media(min-width:768px)_and_(max-width:1366px)]:left-[72px] [@media(min-width:768px)_and_(max-width:1366px)]:right-[72px]">
+          <div className="absolute bottom-[58px] left-[64px] right-[72px] z-[8] flex items-end justify-between">
             <BottomBackLink
               href={`/needs?type=${customerType}`}
               markerUrl={catalogDetailPointActiveUrl}
