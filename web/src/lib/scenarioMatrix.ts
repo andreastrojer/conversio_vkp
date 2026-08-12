@@ -211,6 +211,7 @@ export type ScenarioMatrixPageData = {
   productNavigationLeftArrowUrl?: string
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
+  catalogDetailPointActiveUrl?: string
   calculateButtonArrowUrl?: string
 }
 
@@ -504,6 +505,7 @@ export async function getScenarioMatrixPageData(
       productNavigationLeftArrowUrl: shared.productNavigationLeftArrowUrl,
       productNavigationRightArrowUrl: shared.productNavigationRightArrowUrl,
       productNavigationCatalogIconUrl: shared.productNavigationCatalogIconUrl,
+      catalogDetailPointActiveUrl: shared.catalogDetailPointActiveUrl,
       calculateButtonArrowUrl: shared.calculateButtonArrowUrl,
     }
   } catch {
@@ -531,6 +533,7 @@ export async function getScenarioMatrixPageData(
       productNavigationLeftArrowUrl: shared.productNavigationLeftArrowUrl,
       productNavigationRightArrowUrl: shared.productNavigationRightArrowUrl,
       productNavigationCatalogIconUrl: shared.productNavigationCatalogIconUrl,
+      catalogDetailPointActiveUrl: shared.catalogDetailPointActiveUrl,
       calculateButtonArrowUrl: shared.calculateButtonArrowUrl,
     }
   }

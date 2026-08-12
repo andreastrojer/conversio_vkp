@@ -32,6 +32,7 @@ type ProcessScreenProps = {
   patternUrl?: string
   patternAlt: string
   navigationArrowUrl?: string
+  catalogDetailPointActiveUrl?: string
 }
 
 const patternClassName =
@@ -133,6 +134,7 @@ export function ProcessScreen({
   patternUrl,
   patternAlt,
   navigationArrowUrl,
+  catalogDetailPointActiveUrl,
 }: ProcessScreenProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const safeActiveIndex = sections.length > 0 ? Math.min(activeIndex, sections.length - 1) : 0
@@ -364,8 +366,10 @@ export function ProcessScreen({
         </section>
 
         {primaryCta?.label ? (
-          <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
-            <BottomBackLink href={backHref}>Was wir bieten</BottomBackLink>
+          <div className="absolute bottom-[58px] left-[64px] right-[72px] z-[4] flex items-end justify-between">
+            <BottomBackLink href={backHref} markerUrl={catalogDetailPointActiveUrl}>
+              Was wir bieten
+            </BottomBackLink>
             <div className="w-[276px]">
               <Link
                 href={ctaHref}

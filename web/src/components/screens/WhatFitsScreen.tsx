@@ -1122,7 +1122,9 @@ export function WhatFitsScreen({
 
               {selectedProduct?.catalogCtaLabel ? (
                 <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
-                  <BottomBackLink href={catalogBackHref}>Der Prozess</BottomBackLink>
+                  <BottomBackLink href={catalogBackHref} markerUrl={catalogDetailPointActiveUrl}>
+                    Der Prozess
+                  </BottomBackLink>
                   <button
                     type="button"
                     className={`group ${hasLongCatalogCta ? 'w-[292px]' : 'w-[246px]'} text-left font-sans text-[22px] font-bold uppercase leading-none tracking-[0.02em] text-[#efb804] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-6 focus-visible:outline-[#efb804]`}

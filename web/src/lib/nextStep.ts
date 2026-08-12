@@ -105,6 +105,7 @@ export type NextStepPageData = {
   patternAlt: string
   navigationArrowUrl?: string
   sendButtonArrowUrl?: string
+  catalogDetailPointActiveUrl?: string
 }
 
 const nextStepClient = sanityClient.withConfig({useCdn: false})
@@ -286,5 +287,6 @@ export async function getNextStepPageData({
     patternAlt: scenarioMatrix.patternAlt,
     navigationArrowUrl: scenarioMatrix.navigationArrowUrl,
     sendButtonArrowUrl: resolveIconUrl(businessButtonArrow?.image),
+    catalogDetailPointActiveUrl: scenarioMatrix.catalogDetailPointActiveUrl,
   }
 }

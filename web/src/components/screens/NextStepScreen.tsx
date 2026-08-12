@@ -411,6 +411,7 @@ export function NextStepScreen({
   patternAlt,
   navigationArrowUrl,
   sendButtonArrowUrl,
+  catalogDetailPointActiveUrl,
   salesPerson,
 }: NextStepScreenProps) {
   const consultation = useConsultationStore()
@@ -867,7 +868,8 @@ export function NextStepScreen({
 
         <BottomBackLink
           href={`/needs?type=${customerType}`}
-          className="absolute bottom-[48px] left-[64px] z-[4]"
+          markerUrl={catalogDetailPointActiveUrl}
+          className="absolute bottom-[58px] left-[64px] z-[8]"
         >
           Was passt zu Ihnen
         </BottomBackLink>

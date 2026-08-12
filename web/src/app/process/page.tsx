@@ -45,6 +45,7 @@ export default async function ProcessPage({searchParams}: ProcessPageProps) {
       patternUrl={content.patternUrl}
       patternAlt={content.patternAlt}
       navigationArrowUrl={content.navigationArrowUrl}
+      catalogDetailPointActiveUrl={content.catalogDetailPointActiveUrl}
     />
   )
 }

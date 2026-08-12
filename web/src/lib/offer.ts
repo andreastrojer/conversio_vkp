@@ -266,6 +266,8 @@ export type OfferPageData = {
   productNavigationRightArrowUrl?: string
   productNavigationCatalogIconUrl?: string
   productNavigationCatalogActiveIconUrl?: string
+  catalogDetailPointActiveUrl?: string
+  catalogDetailPointInactiveUrl?: string
 }
 
 const offerClient = sanityClient.withConfig({useCdn: false})
@@ -754,6 +756,9 @@ export async function getOfferPageData(
       productNavigationRightArrowUrl: navigationAssetUrl('Rechter Nav Pfeil'),
       productNavigationCatalogIconUrl: navigationAssetUrl('Linker Navbutton'),
       productNavigationCatalogActiveIconUrl: navigationAssetUrl('Linker Navbutton 2'),
+      catalogDetailPointActiveUrl: navigationAssetUrl('Katalogdetailpunktorange'),
+      catalogDetailPointInactiveUrl:
+        navigationAssetUrl('Katalogdetailpunktweiß') || navigationAssetUrl('Katalogdetailpunktweiss'),
     }
   } catch {
     const sharedContent = await sharedContentPromise

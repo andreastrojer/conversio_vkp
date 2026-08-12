@@ -47,6 +47,8 @@ export default async function OfferPage({searchParams}: OfferPageProps) {
       patternUrl={content.patternUrl}
       patternAlt={content.patternAlt}
       navigationArrowUrl={content.navigationArrowUrl}
+      catalogDetailPointActiveUrl={content.catalogDetailPointActiveUrl}
+      catalogDetailPointInactiveUrl={content.catalogDetailPointInactiveUrl}
     />
   )
 }

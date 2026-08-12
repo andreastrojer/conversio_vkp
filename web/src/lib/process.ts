@@ -1,7 +1,7 @@
 import {getAboutPageData, type ChapterNavigationItem} from '@/lib/about'
 import {buildImageUrl, buildLogoUrl, type SanityImage} from '@/lib/authBranding'
 import type {CustomerGroup} from '@/lib/customerSelection'
-import {PROCESS_SCREEN_QUERY} from '@/lib/queries'
+import {CATALOG_DETAIL_POINT_ACTIVE_QUERY, PROCESS_SCREEN_QUERY} from '@/lib/queries'
 import {sanityClient} from '@/lib/sanity'
 
 type ProcessMedia = {
@@ -54,6 +54,12 @@ type ProcessScreenDocument = {
   sections?: ProcessSection[] | null
 } | null
 
+type MediaAssetDocument = {
+  title?: string | null
+  altText?: string | null
+  image?: SanityImage
+} | null
+
 export type ProcessPageData = {
   headline?: string | null
   subline?: string | null
@@ -72,6 +78,7 @@ export type ProcessPageData = {
   patternUrl?: string
   patternAlt: string
   navigationArrowUrl?: string
+  catalogDetailPointActiveUrl?: string
 }
 
 const processClient = sanityClient.withConfig({useCdn: false})
@@ -89,13 +96,16 @@ export async function getProcessPageData(customerType: CustomerGroup): Promise<P
   const screenKey = customerType === 'b2c' ? 'process' : 'process2'
 
   try {
-    const [screen, sharedContent] = await Promise.all([
+    const [screen, sharedContent, catalogDetailPointActive] = await Promise.all([
       processClient.fetch<ProcessScreenDocument>(
         PROCESS_SCREEN_QUERY,
         {screenKey},
         freshFetchOptions,
       ),
       sharedContentPromise,
+      processClient
+        .fetch<MediaAssetDocument>(CATALOG_DETAIL_POINT_ACTIVE_QUERY, {}, freshFetchOptions)
+        .catch(() => null),
     ])
 
     const sections = (screen?.sections || [])
@@ -125,6 +135,9 @@ export async function getProcessPageData(customerType: CustomerGroup): Promise<P
       patternUrl: sharedContent.patternUrl,
       patternAlt: sharedContent.patternAlt,
       navigationArrowUrl: sharedContent.navigationArrowUrl,
+      catalogDetailPointActiveUrl:
+        buildLogoUrl(catalogDetailPointActive?.image) ||
+        buildImageUrl(catalogDetailPointActive?.image, 96, undefined, 100),
     }
   } catch {
     const sharedContent = await sharedContentPromise

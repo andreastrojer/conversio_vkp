@@ -36,6 +36,8 @@ type OfferScreenProps = {
   patternUrl?: string
   patternAlt: string
   navigationArrowUrl?: string
+  catalogDetailPointActiveUrl?: string
+  catalogDetailPointInactiveUrl?: string
 }
 
 type ResolvedMedia = {
@@ -51,6 +53,8 @@ type OfferTextBlock =
 
 const patternClassName =
   'pointer-events-none absolute bottom-[-215px] right-[-240px] z-0 h-[850px] w-[850px] bg-contain bg-center bg-no-repeat'
+const lightBackgroundMarkerFilterClassName =
+  '[filter:brightness(0)_saturate(100%)_invert(24%)_sepia(8%)_saturate(413%)_hue-rotate(176deg)_brightness(91%)_contrast(87%)]'
 
 function sectionKey(section: OfferSection, index: number) {
   return section._key || `offer-section-${index}`
@@ -166,6 +170,43 @@ function resolveTarget(target: string | null | undefined, customerType: Customer
   return screenKey ? `/${screenKey}?type=${customerType}` : undefined
 }
 
+function OfferSectionMarker({
+  active,
+  isBusiness,
+  activeUrl,
+  inactiveUrl,
+}: {
+  active: boolean
+  isBusiness: boolean
+  activeUrl?: string
+  inactiveUrl?: string
+}) {
+  const imageUrl = active ? activeUrl : inactiveUrl
+  const imageFilterClassName = !active && !isBusiness ? lightBackgroundMarkerFilterClassName : ''
+
+  if (imageUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={imageUrl}
+        alt=""
+        className={`h-[21px] w-[21px] shrink-0 object-contain ${imageFilterClassName}`}
+        aria-hidden="true"
+      />
+    )
+  }
+
+  return (
+    <Hexagon
+      className={`h-[21px] w-[21px] shrink-0 ${
+        active ? 'text-[#efb804]' : isBusiness ? 'text-white' : 'text-[#2a2e33]'
+      }`}
+      strokeWidth={2.4}
+      aria-hidden="true"
+    />
+  )
+}
+
 export function OfferScreen({
   customerType,
   sections,
@@ -182,6 +223,8 @@ export function OfferScreen({
   patternUrl,
   patternAlt,
   navigationArrowUrl,
+  catalogDetailPointActiveUrl,
+  catalogDetailPointInactiveUrl,
 }: OfferScreenProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const safeActiveIndex = sections.length > 0 ? Math.min(activeIndex, sections.length - 1) : 0
@@ -323,10 +366,11 @@ export function OfferScreen({
                       onClick={() => setActiveIndex(index)}
                     >
                       <span>{section.title || section.eyebrow || `Angebot ${index + 1}`}</span>
-                      <Hexagon
-                        className="h-[21px] w-[21px] shrink-0"
-                        strokeWidth={2.4}
-                        aria-hidden="true"
+                      <OfferSectionMarker
+                        active={isActive}
+                        isBusiness={isBusiness}
+                        activeUrl={catalogDetailPointActiveUrl}
+                        inactiveUrl={catalogDetailPointInactiveUrl}
                       />
                     </button>
 
@@ -394,7 +438,9 @@ export function OfferScreen({
 
       {primaryCta?.label ? (
         <div className="absolute bottom-[58px] left-[72px] right-[72px] z-[4] flex items-end justify-between">
-          <BottomBackLink href={backHref}>Wer wir sind</BottomBackLink>
+          <BottomBackLink href={backHref} markerUrl={catalogDetailPointActiveUrl}>
+            Wer wir sind
+          </BottomBackLink>
           <div className="w-[208px]">
             {ctaHref ? (
               <Link

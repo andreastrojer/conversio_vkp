@@ -224,7 +224,10 @@ export const OFFER_SCREEN_QUERY = defineQuery(groq`coalesce(
       "Linker Nav Pfeil",
       "Rechter Nav Pfeil",
       "Linker Navbutton",
-      "Linker Navbutton 2"
+      "Linker Navbutton 2",
+      "Katalogdetailpunktorange",
+      "Katalogdetailpunktweiß",
+      "Katalogdetailpunktweiss"
     ]
   ] | order(coalesce(sortOrder, 999999) asc, _createdAt asc){
     title,
@@ -2150,6 +2153,24 @@ export const BUSINESS_BUTTON_ARROW_QUERY = defineQuery(groq`*[
       )
     )
   )
+] | order(sortOrder asc, _updatedAt desc)[0]{
+  title,
+  altText,
+  image{
+    ...,
+    "assetUrl": asset->url,
+    "mimeType": asset->mimeType,
+    "extension": asset->extension,
+    "originalFilename": asset->originalFilename
+  }
+}`)
+
+export const CATALOG_DETAIL_POINT_ACTIVE_QUERY = defineQuery(groq`*[
+  _type == "mediaAsset" &&
+  mediaType == "image" &&
+  isActive != false &&
+  defined(image.asset) &&
+  title in ["Katalogdetailpunktorange"]
 ] | order(sortOrder asc, _updatedAt desc)[0]{
   title,
   altText,
