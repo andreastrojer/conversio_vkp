@@ -563,7 +563,7 @@ export function CustomerSelectionScreen({
                 {error ? (
                   <p
                     id={`${fieldId}-error`}
-                    className={`mt-2 flex ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} items-center gap-2 text-[12px] font-semibold leading-[1.25] text-[#6f757b] before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-[#efb804] before:shadow-[0_0_0_4px_rgba(239,184,4,0.14)] max-[1600px]:text-[14px] [@media(max-height:920px)]:text-[14px]`}
+                    className={`mt-2 block ${customerInfoFullWidthClassName} ${customerInfoTranslateClassName} text-[12px] font-semibold leading-[1.25] text-[#6f757b] max-[1600px]:text-[14px] [@media(max-height:920px)]:text-[14px]`}
                   >
                     {error.message}
                   </p>

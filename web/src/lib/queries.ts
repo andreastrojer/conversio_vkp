@@ -1219,6 +1219,93 @@ export const NEXT_STEP_SCENARIO_DOCUMENT_CATEGORIES_QUERY = defineQuery(groq`*[
   }
 }`)
 
+export const NEXT_STEP_PRODUCT_DOCUMENT_CATEGORIES_QUERY = defineQuery(groq`coalesce(
+  *[
+    _type == "appScreen" &&
+    screenType == "documentSelection" &&
+    targetAudience == $customerType &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenKey.current == "next-step" &&
+    targetAudience == $customerType &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenType == "documentSelection" &&
+    targetAudience == "both" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenKey.current == "next-step" &&
+    targetAudience == "both" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0],
+  *[
+    _type == "appScreen" &&
+    screenType == "documentSelection" &&
+    isActive == true
+  ] | order(coalesce(sortOrder, 999999) asc)[0]
+).documentSelectionConfig.productDocumentCategories[
+  isActive != false &&
+  defined(category._ref) &&
+  (!defined(targetGroup) || targetGroup in [$customerType, "both"])
+] | order(coalesce(sortOrder, 999999) asc){
+  "_id": category->_id,
+  "title": coalesce(title, category->navigationLabel, category->title),
+  "navigationLabel": coalesce(title, category->navigationLabel),
+  "slug": category->slug.current,
+  "categoryType": category->categoryType,
+  "targetGroup": coalesce(targetGroup, category->targetGroup),
+  "isActive": category->isActive,
+  sortOrder,
+  "documents": category->documents[]->[
+    isActive != false &&
+    status == "active" &&
+    (!defined(targetGroup) || targetGroup in [$customerType, "both"]) &&
+    defined(pdfFile.asset)
+  ] | order(coalesce(sortOrder, 999999) asc){
+    _id,
+    title,
+    description,
+    documentType,
+    targetGroup,
+    status,
+    isActive,
+    version,
+    sortOrder,
+    "scenarioIds": scenarios[]._ref,
+    "pdfUrl": pdfFile.asset->url,
+    "pdfMimeType": pdfFile.asset->mimeType,
+    "pdfOriginalFilename": pdfFile.asset->originalFilename
+  },
+  "referencedDocuments": *[
+    _type == "salesDocument" &&
+    references(^.category._ref) &&
+    isActive != false &&
+    status == "active" &&
+    (!defined(targetGroup) || targetGroup in [$customerType, "both"]) &&
+    defined(pdfFile.asset)
+  ] | order(coalesce(sortOrder, 999999) asc){
+    _id,
+    title,
+    description,
+    documentType,
+    targetGroup,
+    status,
+    isActive,
+    version,
+    sortOrder,
+    "scenarioIds": scenarios[]._ref,
+    "pdfUrl": pdfFile.asset->url,
+    "pdfMimeType": pdfFile.asset->mimeType,
+    "pdfOriginalFilename": pdfFile.asset->originalFilename
+  }
+}`)
+
 export const NEXT_STEP_EMAIL_TEMPLATE_QUERY = defineQuery(groq`{
   "screenTemplate": coalesce(
     *[

@@ -16,6 +16,7 @@ import {
 } from '@/lib/consultation'
 import type {CustomerGroup} from '@/lib/customerSelection'
 import {
+  fetchProductDocumentSelection,
   fetchSalesEmailTemplates,
   fetchScenarioDocumentSelection,
   flattenAllowedDocuments,
@@ -31,7 +32,7 @@ type SendMode = 'mock' | 'graph'
 type ValidatedSendDocumentsRequest = {
   recipientEmail: string
   customerType: CustomerGroup
-  scenarioId: string
+  scenarioId?: string
   selectedSalesDocumentIds: string[]
   customer: ConsultationCustomer
   selectedBundle?: ConsultationBundle
@@ -146,10 +147,6 @@ function parseSendDocumentsRequest(value: unknown): ValidatedSendDocumentsReques
 
   const scenarioId = normalizeText(value.scenarioId)
 
-  if (!scenarioId) {
-    fail('Das ausgewählte Scenario fehlt.')
-  }
-
   const selectedSalesDocumentIds = parseSelectedDocumentIds(value.selectedSalesDocumentIds)
 
   if (selectedSalesDocumentIds.length === 0) {
@@ -166,7 +163,7 @@ function parseSendDocumentsRequest(value: unknown): ValidatedSendDocumentsReques
   return {
     recipientEmail,
     customerType: value.customerType,
-    scenarioId,
+    scenarioId: scenarioId || undefined,
     selectedSalesDocumentIds,
     customer,
     selectedBundle: normalizeBundle(value.selectedBundle),
@@ -907,13 +904,19 @@ export async function POST(request: Request) {
     }
 
     const payload = parseSendDocumentsRequest(await readRequestBody(request))
-    const documentSelection = await fetchScenarioDocumentSelection({
-      customerType: payload.customerType,
-      scenarioId: payload.scenarioId,
-    })
+    const documentSelection = payload.scenarioId
+      ? await fetchScenarioDocumentSelection({
+          customerType: payload.customerType,
+          scenarioId: payload.scenarioId,
+        })
+      : await fetchProductDocumentSelection(payload.customerType)
 
     if (!documentSelection) {
-      fail('Das ausgewählte Scenario ist nicht freigegeben oder wurde nicht gefunden.')
+      fail(
+        payload.scenarioId
+          ? 'Das ausgewählte Scenario ist nicht freigegeben oder wurde nicht gefunden.'
+          : 'Keine freigegebenen Produktblätter gefunden.',
+      )
     }
 
     const selectedDocuments = selectRequestedDocuments(

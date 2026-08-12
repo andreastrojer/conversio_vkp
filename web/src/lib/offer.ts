@@ -271,6 +271,7 @@ export type OfferPageData = {
 const offerClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
 const largeOfferImageWidth = 8000
+const productDocumentsNavigationLabel = 'Produktblätter'
 
 function sortSections(a: OfferSection, b: OfferSection) {
   const aOrder = typeof a.sortOrder === 'number' ? a.sortOrder : Number.POSITIVE_INFINITY
@@ -285,6 +286,15 @@ function resolveMediaUrl(media: OfferMedia | undefined) {
 
 function resolveImageUrl(image: SanityImage | undefined, width = 3200) {
   return buildImageUrl(image, width, undefined, 100) || buildLogoUrl(image)
+}
+
+function isMatrixNavigationTarget(screenKey: string, label?: string) {
+  const value = `${screenKey} ${label || ''}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+  return value.includes('matrix') || /szenario[-\s]?matrix/.test(value)
 }
 
 function normalizeB2cMedia(
@@ -614,11 +624,15 @@ function normalizeB2cNavigationItems(
     const label = item.label?.trim()
 
     if (item.itemType === 'screen' && screenKey && label) {
+      const isMatrixTarget = isMatrixNavigationTarget(screenKey, label)
+
       return [{
         key: item._key,
-        label,
+        label: isMatrixTarget ? productDocumentsNavigationLabel : label,
         kind: 'screen',
-        href: screenKey.startsWith('/') ? screenKey : `/${screenKey}?type=b2c`,
+        href: isMatrixTarget
+          ? '/next-step?type=b2c'
+          : screenKey.startsWith('/') ? screenKey : `/${screenKey}?type=b2c`,
       }]
     }
 

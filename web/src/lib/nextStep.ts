@@ -10,6 +10,7 @@ import {
   NEXT_STEP_PAGE_QUERY,
 } from '@/lib/queries'
 import {
+  fetchProductDocumentSelection,
   fetchScenarioDocumentSelection,
   type ScenarioDocumentSelection,
 } from '@/lib/salesDocuments'
@@ -133,15 +134,28 @@ function isStorageTitle(value: string) {
 }
 
 function normalizeFeatureTitleForCustomer(title: string, customerType: CustomerGroup) {
+  const key = compactCmsKey(title)
+
+  if (key === 'ems' || key.includes('energiemanagement')) {
+    return 'EMS'
+  }
+
   if (!isStorageTitle(title)) {
     return title
   }
 
-  return customerType === 'b2b' ? 'Gewerbespeicher' : 'Batteriespeicher'
+  return customerType === 'b2b' ? 'Gewerbespeicher' : 'Speicher'
 }
 
 function isExcludedNextStepCategoryTitle(title: string, customerType: CustomerGroup) {
-  return customerType === 'b2b' && compactCmsKey(title).includes('energiegemeinschaft')
+  const key = compactCmsKey(title)
+
+  return (
+    customerType === 'b2b' &&
+    key.includes('energiegemeinschaft') &&
+    key !== 'ems' &&
+    !key.includes('energiemanagement')
+  )
 }
 
 function resolveImageUrl(image: SanityImage | undefined, width = 1800) {
@@ -216,9 +230,9 @@ export async function getNextStepPageData({
       .fetch<MediaAssetDocument>(BUSINESS_BUTTON_ARROW_QUERY, {}, freshFetchOptions)
       .catch(() => null),
   ])
-  const selectedBundle =
-    scenarioMatrix.bundles.find((bundle) => bundle.id === bundleId || bundle.slug === bundleId) ||
-    scenarioMatrix.bundles[0]
+  const selectedBundle = bundleId
+    ? scenarioMatrix.bundles.find((bundle) => bundle.id === bundleId || bundle.slug === bundleId)
+    : undefined
   const config = nextStep.screen?.documentSelectionConfig
   const emailTemplate = config?.emailTemplate || nextStep.defaultEmailTemplate
   const contactImage = findContactImage(nextStep.screen, customerType)
@@ -230,6 +244,12 @@ export async function getNextStepPageData({
         customerType,
         scenarioId: selectedBundle.id,
       })
+    } catch {
+      documentSelection = undefined
+    }
+  } else {
+    try {
+      documentSelection = await fetchProductDocumentSelection(customerType)
     } catch {
       documentSelection = undefined
     }

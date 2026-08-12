@@ -6,6 +6,7 @@ import {
 } from '@/lib/authBranding'
 import {
   NEXT_STEP_EMAIL_TEMPLATE_QUERY,
+  NEXT_STEP_PRODUCT_DOCUMENT_CATEGORIES_QUERY,
   NEXT_STEP_SCENARIO_DOCUMENT_CATEGORIES_QUERY,
 } from '@/lib/queries'
 import {sanityClient} from '@/lib/sanity'
@@ -152,6 +153,19 @@ function isExcludedNextStepCategory(
     return false
   }
 
+  const categoryIdentities = [
+    category.slug,
+    category.navigationLabel,
+    category.title,
+  ].map((value) => compactCmsKey(normalizeText(value)))
+  const isEnergyManagementCategory = categoryIdentities.some(
+    (identity) => identity === 'ems' || identity.includes('energiemanagement'),
+  )
+
+  if (isEnergyManagementCategory) {
+    return false
+  }
+
   const categoryIdentity = compactCmsKey(
     [
       category.categoryType,
@@ -164,14 +178,25 @@ function isExcludedNextStepCategory(
   return categoryIdentity.includes('energiegemeinschaft')
 }
 
+function normalizeProductDocumentCategoryTitle(title: string) {
+  const key = compactCmsKey(title)
+
+  if (key === 'ems' || key.includes('energiemanagement')) {
+    return 'EMS'
+  }
+
+  return compactCmsKey(title) === 'batteriespeicher' ? 'Speicher' : title
+}
+
 function normalizeDocument(
   document: RawSalesDocument | null,
   customerType: CustomerGroup,
-  scenarioId: string,
+  scenarioId?: string,
 ): AllowedSalesDocument | undefined {
   const id = normalizeText(document?._id)
   const title = normalizeText(document?.title)
   const pdfUrl = normalizeText(document?.pdfUrl)
+  const scenarioIds = document?.scenarioIds || []
 
   if (
     !id ||
@@ -180,7 +205,7 @@ function normalizeDocument(
     document?.isActive === false ||
     document?.status !== 'active' ||
     !matchesAudience(document?.targetGroup, customerType) ||
-    (Boolean(document?.scenarioIds?.length) && !document?.scenarioIds?.includes(scenarioId))
+    (scenarioId ? scenarioIds.length > 0 && !scenarioIds.includes(scenarioId) : false)
   ) {
     return undefined
   }
@@ -253,6 +278,72 @@ function normalizeScenarioDocuments(
   }
 }
 
+function normalizeProductDocumentSelection(
+  rawCategories: RawDocumentCategory[] | null | undefined,
+  customerType: CustomerGroup,
+): ScenarioDocumentSelection | undefined {
+  const categories: ScenarioDocumentCategory[] = []
+  const categoryByTitle = new Map<string, ScenarioDocumentCategory>()
+
+  ;(rawCategories || []).forEach((category, index) => {
+    const categoryTitle = normalizeText(category?.navigationLabel) || normalizeText(category?.title)
+
+    if (
+      !category ||
+      !categoryTitle ||
+      !matchesAudience(category.targetGroup, customerType)
+    ) {
+      return
+    }
+
+    const displayTitle = normalizeProductDocumentCategoryTitle(categoryTitle)
+    const rawDocuments = [
+      ...(category.documents || []),
+      ...(category.referencedDocuments || []),
+    ]
+    const documents = rawDocuments
+      .map((document) => normalizeDocument(document, customerType))
+      .filter((document): document is AllowedSalesDocument => Boolean(document))
+      .filter(
+        (document, documentIndex, list) =>
+          list.findIndex((item) => item.id === document.id) === documentIndex,
+      )
+
+    const categoryKey = compactCmsKey(displayTitle)
+    const existingCategory = categoryByTitle.get(categoryKey)
+
+    if (existingCategory) {
+      const existingDocumentIds = new Set(existingCategory.documents.map((document) => document.id))
+      existingCategory.documents.push(
+        ...documents.filter((document) => !existingDocumentIds.has(document.id)),
+      )
+      return
+    }
+
+    const normalizedCategory = {
+      key: normalizeCategoryKey(category, index),
+      title: displayTitle,
+      documents,
+    }
+
+    categoryByTitle.set(categoryKey, normalizedCategory)
+    categories.push(normalizedCategory)
+  })
+
+  if (categories.length === 0) {
+    return undefined
+  }
+
+  return {
+    scenario: {
+      id: 'product-documents',
+      title: 'Produktblätter',
+      targetGroup: customerType,
+    },
+    categories,
+  }
+}
+
 function normalizeEmailTemplate(template: RawEmailTemplate | undefined): SalesEmailTemplate | undefined {
   const subject = normalizeText(template?.subject)
   const signatureLogoUrl =
@@ -301,6 +392,16 @@ export async function fetchScenarioDocumentSelection({
   )
 
   return normalizeScenarioDocuments(rawScenario, customerType, scenarioId)
+}
+
+export async function fetchProductDocumentSelection(customerType: CustomerGroup) {
+  const rawCategories = await salesDocumentsClient.fetch<RawDocumentCategory[]>(
+    NEXT_STEP_PRODUCT_DOCUMENT_CATEGORIES_QUERY,
+    {customerType},
+    freshFetchOptions,
+  )
+
+  return normalizeProductDocumentSelection(rawCategories, customerType)
 }
 
 export async function fetchSalesEmailTemplates(customerType: CustomerGroup): Promise<SalesEmailTemplates> {

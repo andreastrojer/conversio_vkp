@@ -269,6 +269,7 @@ export type WhatFitsPageData = {
 
 const whatFitsClient = sanityClient.withConfig({useCdn: false})
 const freshFetchOptions = {cache: 'no-store' as const}
+const productDocumentsNavigationLabel = 'Produktblätter'
 
 function isSvgImage(image: SanityImage | undefined) {
   const directAssetUrl = image?.assetUrl || image?.asset?.url
@@ -490,6 +491,19 @@ function resolveScreenHref(target: string, customerType: CustomerGroup) {
   return `/${target}?type=${customerType}`
 }
 
+function resolveProductDocumentsHref(customerType: CustomerGroup) {
+  return `/next-step?type=${customerType}`
+}
+
+function isMatrixNavigationTarget(target?: string, label?: string) {
+  const value = `${target || ''} ${label || ''}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+  return value.includes('matrix') || /szenario[-\s]?matrix/.test(value)
+}
+
 function normalizeBottomNavigation(
   screen: WhatFitsScreenDocument,
   documents: RawBottomNavigationItem[] | null | undefined,
@@ -548,13 +562,15 @@ function normalizeBottomNavigation(
     }
 
     if (target) {
-      const isMatrixTarget = /matrix/i.test(target) || /szenario[-\s]?matrix/i.test(label)
+      const isMatrixTarget = isMatrixNavigationTarget(target, label)
 
       return [{
         key: item._key || item._id || `screen-${target}-${index}`,
-        label: isMatrixTarget ? 'Matrix' : label,
+        label: isMatrixTarget ? productDocumentsNavigationLabel : label,
         kind: 'screen',
-        href: resolveScreenHref(target, customerType),
+        href: isMatrixTarget
+          ? resolveProductDocumentsHref(customerType)
+          : resolveScreenHref(target, customerType),
         iconUrl: resolveImageUrl(item.iconImage, 256),
       }]
     }
@@ -564,18 +580,19 @@ function normalizeBottomNavigation(
 
   const matrixLabel = matrixStep?.title?.trim() || matrixStep?.screen?.title?.trim()
   const matrixTarget = matrixStep?.screen?.screenKey?.trim() || matrixStep?.stepKey?.trim()
+  const productDocumentsHref = resolveProductDocumentsHref(customerType)
 
   if (normalizedItems.length > 0) {
-    const hasMatrixItem = normalizedItems.some((item) =>
-      item.kind === 'screen' && item.href === (matrixTarget ? resolveScreenHref(matrixTarget, customerType) : undefined),
+    const hasProductDocumentsItem = normalizedItems.some(
+      (item) => item.kind === 'screen' && item.href === productDocumentsHref,
     )
 
-    if (!hasMatrixItem && matrixLabel && matrixTarget) {
+    if (!hasProductDocumentsItem && matrixLabel && matrixTarget) {
       normalizedItems.push({
         key: `screen-${matrixTarget}`,
-        label: 'Matrix',
+        label: productDocumentsNavigationLabel,
         kind: 'screen',
-        href: resolveScreenHref(matrixTarget, customerType),
+        href: productDocumentsHref,
       })
     }
 
@@ -600,9 +617,9 @@ function normalizeBottomNavigation(
   if (matrixLabel && matrixTarget) {
     fallbackItems.push({
       key: `screen-${matrixTarget}`,
-      label: 'Matrix',
+      label: productDocumentsNavigationLabel,
       kind: 'screen',
-      href: resolveScreenHref(matrixTarget, customerType),
+      href: productDocumentsHref,
     })
   }
 

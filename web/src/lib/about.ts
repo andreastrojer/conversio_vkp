@@ -162,6 +162,8 @@ function resolveNavigationItems(
             ? `/offer?type=${customerType}`
             : fallback.key === 'needs'
               ? `/needs?type=${customerType}`
+            : fallback.key === 'next-step'
+              ? `/next-step?type=${customerType}`
             : undefined,
     }
   })

@@ -1285,7 +1285,7 @@ export function ScenarioMatrixScreen({
                 const isCatalog = item.kind === 'catalog'
                 const slotClassName = getB2cBottomNavigationSlotClassName(item)
                 const catalogIconUrl = productNavigationCatalogIconUrl || item.iconUrl
-                const className = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+                const className = `relative inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
                   isMatrix && !isCatalog ? 'bg-[#efb804] text-[#2a2e33]' : 'text-white'
                   } ${
                   isCatalog
@@ -1294,7 +1294,7 @@ export function ScenarioMatrixScreen({
                       : 'h-[26px] min-w-[66px] rounded-full bg-white px-[12px] text-[#2a2e33]'
                     : isMatrix && !isCatalog
                       ? 'h-[32px] px-[26px]'
-                      : 'h-[26px] px-[12px]'
+                      : 'h-[26px] px-[12px] before:pointer-events-none before:absolute before:inset-x-[-14px] before:inset-y-[-3px] before:rounded-full before:bg-[#efb804]/20 before:opacity-0 before:transition-opacity hover:before:opacity-100'
                 }`
                 const content = isCatalog ? (
                   catalogIconUrl ? (

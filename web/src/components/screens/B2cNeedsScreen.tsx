@@ -94,6 +94,10 @@ function getBottomNavigationSlotClassName(item: B2cNavigationItem) {
     return 'w-[198px]'
   }
 
+  if (label.includes('produktblatter')) {
+    return 'w-[148px]'
+  }
+
   if (label.includes('matrix')) {
     return 'w-[76px]'
   }
@@ -409,7 +413,7 @@ function ProductBottomNavigation({
             usesActiveCatalogIcon
               ? catalogActiveIconUrl || catalogIconUrl || item.iconUrl
               : catalogIconUrl || item.iconUrl
-          const commonClassName = `inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
+          const commonClassName = `relative inline-flex items-center justify-center rounded-full whitespace-nowrap text-[16px] font-semibold uppercase leading-none tracking-[0.02em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#efb804] ${
             isActive ? 'bg-[#efb804] text-[#2a2e33]' : 'text-white'
           } ${
             isCatalog
@@ -420,7 +424,7 @@ function ProductBottomNavigation({
                   }`
               : isActive
                 ? 'h-[32px] px-[26px]'
-                : 'h-[26px] px-[12px]'
+                : 'h-[26px] px-[12px] before:pointer-events-none before:absolute before:inset-x-[-14px] before:inset-y-[-3px] before:rounded-full before:bg-[#efb804]/20 before:opacity-0 before:transition-opacity hover:before:opacity-100'
           }`
           const content = isCatalog ? (
             <>

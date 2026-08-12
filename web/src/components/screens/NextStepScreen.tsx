@@ -396,6 +396,7 @@ export function NextStepScreen({
   documentsHeadline,
   emailLabel,
   sendButtonLabel,
+  emptyDocumentsText,
   selectedBundle,
   bundleImageUrl,
   bundleImageAlt,
@@ -425,9 +426,12 @@ export function NextStepScreen({
   const foregroundClassName = isBusiness ? 'text-white' : 'text-[#2a2e33]'
   const metricClassName = isBusiness ? 'text-[#efb804]' : 'text-[#2a2e33]'
   const displayBundle =
-    consultation.customerType === customerType && consultation.selectedBundle
+    selectedBundle &&
+    consultation.customerType === customerType &&
+    consultation.selectedBundle?.id === selectedBundle.id
       ? consultation.selectedBundle
       : selectedBundle
+  const hasBundleSummary = Boolean(displayBundle)
   const displayResult =
     displayBundle && consultation.selectedBundle?.id === displayBundle.id
       ? consultation.calculationResult
@@ -443,6 +447,8 @@ export function NextStepScreen({
   const nextStepLaptopLiftClassName =
     '[@media(min-width:1000px)_and_(max-height:900px)]:-translate-y-[22px]'
   const scenarioId = displayBundle?.id
+  const documentSectionLeftClassName = hasBundleSummary ? 'left-[507px]' : 'left-[60px]'
+  const emailSectionLeftClassName = hasBundleSummary ? 'left-[952px]' : 'left-[507px]'
   const visibleDocumentCategories = documentCategoriesOverride || documentCategories
   const documentTitleById = useMemo(
     () => buildDocumentTitleMap(visibleDocumentCategories),
@@ -477,7 +483,6 @@ export function NextStepScreen({
   const successStatus = sendStatus === 'mock-success' || sendStatus === 'graph-success'
   const sendDisabled =
     !emailIsValid ||
-    !scenarioId ||
     selectedDocumentIds.length === 0 ||
     !customerValidation.success ||
     sendStatus === 'sending' ||
@@ -553,9 +558,9 @@ export function NextStepScreen({
   }
 
   async function handleSendDocuments() {
-    if (!scenarioId || !customerForSending) {
+    if (!customerForSending) {
       setSendStatus('error')
-      setStatusMessage('Die Beratung ist unvollständig. Bitte Kundendaten, Bundle und Produktblätter prüfen.')
+      setStatusMessage('Die Beratung ist unvollständig. Bitte Kundendaten und Produktblätter prüfen.')
       return
     }
 
@@ -681,8 +686,11 @@ export function NextStepScreen({
         </h1>
 
         <section
-          className={`absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)] ${nextStepLaptopLiftClassName}`}
+          className={`absolute left-[60px] top-[368px] z-[4] grid h-[500px] w-[316px] grid-rows-[42px_252px_118px_minmax(0,1fr)] ${nextStepLaptopLiftClassName} ${
+            hasBundleSummary ? '' : 'hidden'
+          }`}
           aria-label="Ausgewähltes Bundle"
+          aria-hidden={!hasBundleSummary}
         >
           {displayBundle ? (
             <>
@@ -757,29 +765,35 @@ export function NextStepScreen({
           ) : null}
         </section>
 
-        <section className={`absolute left-[507px] top-[368px] z-[4] w-[350px] ${nextStepLaptopLiftClassName}`} aria-labelledby="documents-heading">
+        <section className={`absolute ${documentSectionLeftClassName} top-[368px] z-[4] w-[350px] ${nextStepLaptopLiftClassName}`} aria-labelledby="documents-heading">
           <h2 id="documents-heading" className={`text-[36px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {documentsHeadline}
           </h2>
 
-          <div className="mt-[38px] space-y-[26px]">
-            {visibleDocumentCategories.map((category) => (
-              <DocumentCategory
-                key={category.key}
-                category={category}
-                active={category.key === activeCategoryKey}
-                onSelect={() =>
-                  setRequestedActiveCategoryKey((current) => current === category.key ? '' : category.key)
-                }
-                selectedDocumentIds={selectedDocumentIds}
-                onToggleDocument={handleToggleDocument}
-                isBusiness={isBusiness}
-              />
-            ))}
-          </div>
+          {visibleDocumentCategories.length > 0 ? (
+            <div className="mt-[38px] space-y-[26px]">
+              {visibleDocumentCategories.map((category) => (
+                <DocumentCategory
+                  key={category.key}
+                  category={category}
+                  active={category.key === activeCategoryKey}
+                  onSelect={() =>
+                    setRequestedActiveCategoryKey((current) => current === category.key ? '' : category.key)
+                  }
+                  selectedDocumentIds={selectedDocumentIds}
+                  onToggleDocument={handleToggleDocument}
+                  isBusiness={isBusiness}
+                />
+              ))}
+            </div>
+          ) : emptyDocumentsText ? (
+            <p className={`mt-[38px] text-[18px] font-medium leading-[1.35] ${foregroundClassName}`}>
+              {emptyDocumentsText}
+            </p>
+          ) : null}
         </section>
 
-        <section className={`absolute left-[952px] top-[431px] z-[4] w-[410px] ${nextStepLaptopLiftClassName}`} aria-labelledby="email-heading">
+        <section className={`absolute ${emailSectionLeftClassName} top-[431px] z-[4] w-[410px] ${nextStepLaptopLiftClassName}`} aria-labelledby="email-heading">
           <h2 id="email-heading" className={`text-[18px] font-bold uppercase leading-none tracking-[0.02em] ${foregroundClassName}`}>
             {emailLabel}
           </h2>
@@ -852,10 +866,10 @@ export function NextStepScreen({
         ) : null}
 
         <BottomBackLink
-          href={`/scenario-matrix?type=${customerType}`}
+          href={`/needs?type=${customerType}`}
           className="absolute bottom-[48px] left-[64px] z-[4]"
         >
-          Was rechnet sich
+          Was passt zu Ihnen
         </BottomBackLink>
 
         <ChapterNavigation

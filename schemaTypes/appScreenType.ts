@@ -701,6 +701,70 @@ export const appScreenType = defineType({
           initialValue: '',
         }),
         defineField({
+          name: 'productDocumentCategories',
+          title: 'Produktblatt-Bereiche',
+          type: 'array',
+          description:
+            'Explizite Bereiche für die Produktblatt-Auswahl. Diese Liste steuert die sichtbaren Bereiche auf der Seite.',
+          of: [
+            defineArrayMember({
+              name: 'productDocumentCategory',
+              title: 'Produktblatt-Bereich',
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'title',
+                  title: 'Anzeigename',
+                  type: 'string',
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'targetGroup',
+                  title: 'Sichtbar für',
+                  type: 'string',
+                  initialValue: 'both',
+                  options: {
+                    list: targetAudienceOptions,
+                    layout: 'radio',
+                  },
+                }),
+                defineField({
+                  name: 'category',
+                  title: 'Produktkategorie',
+                  type: 'reference',
+                  to: [{ type: 'productCategory' }],
+                  validation: (Rule) => Rule.required(),
+                }),
+                defineField({
+                  name: 'sortOrder',
+                  title: 'Reihenfolge',
+                  type: 'number',
+                  initialValue: 0,
+                }),
+                defineField({
+                  name: 'isActive',
+                  title: 'Aktiv',
+                  type: 'boolean',
+                  initialValue: true,
+                }),
+              ],
+              preview: {
+                select: {
+                  title: 'title',
+                  categoryTitle: 'category.title',
+                  targetGroup: 'targetGroup',
+                },
+                prepare({ title, categoryTitle, targetGroup }) {
+                  return {
+                    title: title || categoryTitle || 'Produktblatt-Bereich',
+                    subtitle: targetGroup || 'both',
+                  }
+                },
+              },
+            }),
+          ],
+        }),
+        defineField({
           name: 'emailTemplate',
           title: 'E-Mail-Vorlage für Kunden',
           type: 'reference',
